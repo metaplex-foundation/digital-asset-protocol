@@ -95,7 +95,7 @@ pub enum Action<'raw> {
     /// Discriminator 1
     Create {
         standard: Standard,
-        layout: ::std::collections::HashMap<u8, Module<'raw>>,
+        layout: ::std::collections::HashMap<u32, Module<'raw>>,
     },
 
     /// Discriminator 2
@@ -106,7 +106,7 @@ pub enum Action<'raw> {
 
     /// Discriminator 4
     Update {
-        layout: ::std::collections::HashMap<u8, Module<'raw>>,
+        layout: ::std::collections::HashMap<u32, Module<'raw>>,
     },
 
     /// Discriminator 5
@@ -682,7 +682,7 @@ pub mod owned {
         /// Discriminator 1
         Create {
             standard: Standard,
-            layout: ::std::collections::HashMap<u8, Module>,
+            layout: ::std::collections::HashMap<u32, Module>,
         },
 
         /// Discriminator 2
@@ -693,7 +693,7 @@ pub mod owned {
 
         /// Discriminator 4
         Update {
-            layout: ::std::collections::HashMap<u8, Module>,
+            layout: ::std::collections::HashMap<u32, Module>,
         },
 
         /// Discriminator 5

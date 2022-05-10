@@ -10,12 +10,12 @@ enum Standard {
 union Action {
     1 -> struct Create {
         Standard standard;
-        map[uint8, Module] layout;
+        map[uint32, Module] layout;
     };
     2 -> struct Transfer {};
     3 -> struct Destroy {};
     4 -> struct Update {
-        map[uint8, Module] layout;
+        map[uint32, Module] layout;
     };
     5 -> struct Extend {};
 }
