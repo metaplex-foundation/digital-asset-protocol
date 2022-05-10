@@ -1,0 +1,84 @@
+namespace DigitalAsset;
+
+
+
+
+union Module {Royalty, Creators, Supply}
+enum LifeCycle:ubyte {
+      Transfer = 0,
+      ListForSale = 1,
+      CancelListing = 2,
+      Update = 3,
+      Sale = 4,
+      Create = 5,
+      Delete = 6,
+      SupplyChange  = 7,
+      Freeze = 8,
+      Burn = 9,
+      Decompose = 10,
+}
+
+table ModuleWrap {
+    module: Module;
+}
+
+table Create {
+    module: [ModuleWrap];
+}
+
+table Transfer {
+    new_owner: [ubyte];
+}
+
+
+union ActionPayload {
+ Create,
+ Transfer
+}
+
+table Action {
+    event: LifeCycle;
+    payload: ActionPayload;
+}
+
+
+
+table Asset {
+    address: [ubyte];
+    owner:[ubyte];
+    module: [ModuleWrap];
+}
+
+
+enum RoyaltyTarget:byte {
+    Address = 0,
+    Fanout = 1,
+    Creators = 2
+}
+
+table Royalty {
+    royalty_target: RoyaltyTarget;
+    royalty_percentage: uint8;
+}
+
+table Creators {
+    creators: [Creator];
+}
+
+table Creator {
+    address: [ubyte];
+    share: uint8;
+    verified: bool;
+}
+
+struct C {
+    address:[byte:32];
+    share: uint8;
+    verified: bool;
+}
+
+table Supply {
+    suppply: uint64;
+}
+
+root_type Asset;
