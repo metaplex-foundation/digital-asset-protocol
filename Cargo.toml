@@ -1,0 +1,38 @@
+[package]
+name = "mpl-asset"
+version = "0.0.1"
+description = "Metaplex Asset Protocl"
+authors = ["Metaplex Developers <dev@metaplex.com>"]
+repository = "https://github.com/metaplex-foundation/metaplex-program-library"
+license = "AGPL-3.0"
+edition = "2021"
+readme = "README.md"
+
+[features]
+no-entrypoint = []
+test-bpf = []
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+solana-program = "1.10.9"
+borsh = "0.9.3"
+spl-token = { version ="3.3.0", features = ["no-entrypoint"] }
+shank="0.0.2"
+thiserror = "~1.0"
+flatbuffers = "2.1.2"
+num-traits = "~0.2"
+num-derive = "~0.3"
+bebop = "2.4.2"
+
+
+[dev-dependencies]
+solana-sdk = "1.10.9"
+solana-program-test = "1.10.9"
+
+
+[build-dependencies]
+bebop-tools = "2.4.2"

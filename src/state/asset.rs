@@ -26,11 +26,11 @@ pub struct Asset<'a> {
 }
 
 impl Asset<'_> {
-    pub fn modules(self) -> BTreeSet<Module> {
-        self.data.into_keys().map(|ik|{
+    pub fn modules(&self) -> BTreeSet<&Module> {
+        self.data.keys().map(|ik|{
             match ik {
                 BlobId::Module(m) => m,
-                _ => Module::Extension
+                _ => &Module::Extension
             }
         }).collect()
     }
@@ -47,7 +47,7 @@ impl Asset<'_> {
         for (id, blob) in self.runtime.data.iter_mut() {
             if blob.dirty() {
                 self.data.entry(id.to_owned()).and_modify(move |ve| {
-                    let blob_c = Blob::<T>::blob::<T>(*blob).unwrap();
+                    let blob_c = Blob::<T>::blob::<T>(blob).unwrap();
                     // TODO -> Dont fail silently
                     Blob::serialize(blob_c, ve)
                         .map_err(|_| {

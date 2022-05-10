@@ -1,0 +1,75 @@
+enum Standard {
+    Unknown = 0;
+    NFTv1 = 1;
+    NFT = 2;
+    NFTPrintable = 3;
+    NFTGroup = 4;
+    FungibleAsset = 5;
+}
+
+union Action {
+    1 -> struct Create {
+        Standard standard;
+        map[uint8, Module] layout;
+    };
+    2 -> struct Transfer {};
+    3 -> struct Destroy {};
+    4 -> struct Update {
+        map[uint8, Module] layout;
+    };
+    5 -> struct Extend {};
+}
+
+union Module {
+    1 -> struct Ownership {
+             OwnershipModel model;
+             byte[] owner;
+         };
+    2 -> struct Royalty {
+             uint8 royalty_percent;
+             RoyaltyModel model;
+             RoyaltyTarget[] target;
+             bool locked;
+         };
+    3 -> struct Creators {
+             Creator[] creator_list;
+         };
+}
+
+const int32 MAX_MODULES = 10;
+
+enum ModuleType {
+    Invalid = 0;
+    Ownership = 1;
+    Royalty = 2;
+    Creators = 3;
+}
+
+enum OwnershipModel {
+    Invalid = 0;
+    Single = 1;
+    Token = 2;
+}
+
+enum RoyaltyModel {
+    Invalid = 0;
+    Address = 1;
+    Fanout = 2;
+    Creators = 3;
+}
+
+struct RoyaltyTarget {
+   byte[] address;
+   uint8 share;
+}
+
+struct Creator {
+    byte[] address;
+    uint8 share;
+    bool verified;
+}
+
+
+struct Asset {
+    map[uint32, Module] layout;
+}

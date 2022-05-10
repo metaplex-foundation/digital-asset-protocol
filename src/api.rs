@@ -1,5 +1,3 @@
-use num_derive::FromPrimitive;
-use num_traits::FromPrimitive;
 use solana_program::{
     decode_error::DecodeError,
     msg,
@@ -7,13 +5,19 @@ use solana_program::{
 };
 use thiserror::Error;
 
-
 #[derive(Error, Debug)]
 pub enum DigitalAssetProtocolError {
-    #[error("Not Supported")]
-    NotSupportedYet,
-    #[error("Parse Error {0}")]
-    InstructionParseError(&'static str)
+    #[error("Error in Module: {0}")]
+    ModuleError(String),
+
+    #[error("Error in EntryPoint: {0}")]
+    EntryPointError(String),
+
+    #[error("Error in Action Parsing: {0}")]
+    ActionError(String),
+
+    #[error("Deserialization failed: {0}")]
+    DeError(String),
 }
 
 impl PrintProgramError for DigitalAssetProtocolError {
@@ -34,5 +38,3 @@ impl<T> DecodeError<T> for DigitalAssetProtocolError {
         "Dasset Error"
     }
 }
-
-

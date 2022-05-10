@@ -1,241 +1,166 @@
 #![cfg(all(target_arch = "bpf", not(feature = "no-entrypoint")))]
 
-
-use std::collections::BTreeMap;
-use std::time::Duration;
-use borsh::{BorshDeserialize, BorshSerialize};
-use thiserror::Error;
-use solana_program::{
-    entrypoint,
-    entrypoint::{
-        ProgramResult
-    },
-    program_error::ProgramError,
-    msg,
-    pubkey::Pubkey,
-    account_info::{
-        AccountInfo
-    },
-};
 use crate::api::DigitalAssetProtocolError;
-use crate::state::{Lifecycle, Standard};
+use crate::generated::schema::{ModuleType,
+                               OwnershipModel,
+                               RoyaltyModel,
+                               Action,
+                               Asset,
+                               Module,
+                               Standard,
+};
+use bebop::prelude::*;
+use solana_program::{
+    account_info::AccountInfo,
+    entrypoint,
+    entrypoint::ProgramResult,
+    msg,
+    program_error::ProgramError,
+    pubkey::Pubkey,
+};
+use std::collections::HashMap;
+use thiserror::Error;
+use core::pin::Pin;
 
-pub struct ProgramContext<'a> {
-    accounts: Vec<AccountInfo<'a>>,
-    cpi: bool,
+
+pub trait ActionContext {
+    fn validate(&self) -> Result<(), DigitalAssetProtocolError>;
+    fn act(
+        &self,
+        modules: HashMap<ModuleType, Module>) -> Result<Asset, DigitalAssetProtocolError>;
 }
 
-impl ProgramContext {
-    pub fn new(program: &Pubkey, accounts: &[AccountInfo]) -> Self {
-        ProgramContext {
-            accounts: accounts.to_vec(),
-            cpi: program != crate::id(),
-        }
-    }
-}
-
-pub trait Payload {}
-
-impl Payload for Action::Create {
-    fn validate(&self, pc: ProgramContext) -> Result<(), DigitalAssetProtocolError> {
-        match &self {}
-    }
-}
-
-impl Payload for Action::Delete {
-    fn validate(&self, pc: ProgramContext) -> Result<(), DigitalAssetProtocolError> {
-        match &self {}
-    }
-}
-
-#[derive(FromPrimitive)]
-pub enum Action<'a> {
-    Transfer(Standard, TransferAction<'a>),
-    Update(Standard, UpdateAction<'a>),
-    Create(Standard, CreateAction<'a>),
-    Delete(Standard, DeleteAction<'a>),
-    // SupplyChange(Standard, Vec<u8>),
-    Freeze(Standard, FreezeAction<'a>),
-    // Burn(Standard, Vec<u8>),
-}
-
-
-#[derive(BorshSerialize, BorshDeserialize)]
-pub struct CreateAction<'a> {
-    asset: AccountInfo<'a>,
+pub struct CreateNFTContext<'a> {
+    address: AccountInfo<'a>,
     owner: AccountInfo<'a>,
     payer: AccountInfo<'a>,
-    data: Data
-}
-
-#[derive(BorshSerialize, BorshDeserialize)]
-pub struct UpdateAction<'a> {
-    asset: AccountInfo<'a>,
-    owner: AccountInfo<'a>,
     authority: AccountInfo<'a>,
-    payer: AccountInfo<'a>,
-    data: Data
+    remaining_accounts: &'a [AccountInfo<'a>],
 }
 
-#[derive(BorshSerialize, BorshDeserialize)]
-pub struct FreezeActionParams {
-    duration: Option<u64>,
-    delegate: Option<Pubkey>
-}
-
-#[derive(BorshSerialize, BorshDeserialize)]
-pub struct FreezeAction<'a> {
-    asset: AccountInfo<'a>,
-    owner: AccountInfo<'a>,
-    payer: AccountInfo<'a>,
-    data: FreezeActionParams
-}
-
-
-#[derive(BorshSerialize, BorshDeserialize)]
-pub struct TransferAction<'a> {
-    asset: AccountInfo<'a>,
-    current_owner: AccountInfo<'a>,
-    new_owner: AccountInfo<'a>,
-    payer: AccountInfo<'a>,
-}
-
-#[derive(BorshSerialize, BorshDeserialize)]
-pub struct DeleteAction<'a> {
-    asset: AccountInfo<'a>,
-    owner: AccountInfo<'a>,
-    payer: AccountInfo<'a>,
-}
-
-
-#[derive(BorshSerialize, BorshDeserialize, Debug, Clone, Hash, Ord, PartialOrd, Eq, PartialEq, Copy)]
-pub enum Module {
-    Ownership,
-    // Governance,
-    // Creators,
-    // Royalty,
-    // Rights,
-    // Supply,
-    // Grouped,
-    // Provenance,
-    // Signature,
-    // Usage,
-    Extension,
-}
-
-#[derive(BorshSerialize, BorshDeserialize, Debug, Clone, Hash, Ord, PartialOrd, Eq, PartialEq)]
-pub enum ModuleData {
-    Ownership(OwnershipData),
-    // Governance(GovernanceData),
-    // Creators(CreatorsData),
-    // Royalty(RoyaltyData),
-    //Rights(),
-    // Supply,
-    // Grouped,
-    // Provenance,
-    // Signature,
-    // Usage,
-    // Extension(BTreeMap<String, Vec<u8>>),
-}
-
-
-#[derive(BorshSerialize, BorshDeserialize)]
-enum OwnershipModel {
-    Token,
-    Single,
-}
-
-#[derive(BorshSerialize, BorshDeserialize)]
-pub struct OwnershipModuleData {
-    ownership_model: OwnershipModel,
-    owner: Pubkey,
-}
-
-#[derive(BorshSerialize, BorshDeserialize)]
-pub struct Data {
-    items: Vec<ModuleData>
-}
-
-#[derive(BorshSerialize, BorshDeserialize)]
-pub struct Asset {
-    pub address: Pubkey,
-    pub data: Data,
-}
-
-pub fn parse_action(instruction_data: &[u8]) -> Result<Action, DigitalAssetProtocolError> {
-    BorshDeserialize::try_from_slice::<Action>(instruction_data).map_err(|e| {
-        DigitalAssetProtocolError::NotSupportedYet
-    })
-}
-
-
-pub fn run_actions<'a>(a: ActionType, accounts: &'a [AccountInfo<'a>]) -> Result<ActionType, DigitalAssetProtocolError> {
-    match a {
-        (Lifecycle::Create, Standard::NFT) => {
-
+impl ActionContext for CreateNFTContext<'_> {
+    fn validate(&self) -> Result<(), DigitalAssetProtocolError> {
+        if !self.payer.is_signer {
+            return Err(DigitalAssetProtocolError::ActionError("Payer must sign".to_string()));
         }
-        _ => Err(DigitalAssetProtocolError::NotSupportedYet)
+        Ok(())
     }
+    fn act(
+        &self,
+        modules: HashMap<ModuleType, Module>,
+    ) -> Result<Asset, DigitalAssetProtocolError> {
+        let mut asset = Asset {
+            layout: HashMap::new(),
+        };
+        for (ind, m) in modules.iter_mut() {
+            create(*ind, self, &mut asset, m);
+        }
+        Ok(asset)
+    }
+}
+
+fn create<'a>(
+    id: ModuleType,
+    ctx: &'a CreateNFTContext<'a>,
+    asset: &'a mut Asset,
+    module: &'a mut Module,
+) -> Result<(), DigitalAssetProtocolError> {
+    match id {
+        ModuleType::Ownership => create_ownership(ctx, asset, module),
+        ModuleType::Royalty => create_royalty(ctx, asset, module),
+        ModuleType::Creators => create_creators(ctx, asset, module),
+        _ => Err(DigitalAssetProtocolError::ActionError(
+            "Not Implemented".to_string(),
+        )),
+    }
+}
+
+fn create_ownership<'a>(
+    ctx: &'a CreateNFTContext<'a>,
+    asset: &'a mut Asset,
+    module: &'a mut Module,
+) -> Result<(), DigitalAssetProtocolError> {
+    // validation of create ownership specific stuff
+    let Module::Ownership { model, owner } = module;
+    if *model == OwnershipModel::Token && ctx.owner.owner != &spl_token::id() {
+        return Err(DigitalAssetProtocolError::ModuleError(
+            "Token Owner must be a Mint".to_string(),
+        ));
+    }
+    asset.layout.entry(ModuleType::Ownership as u32).and_modify(move |m| {
+        m = module
+    });
+    Ok(())
+}
+
+fn create_royalty<'a>(
+    ctx: &'a CreateNFTContext<'a>,
+    asset: &'a mut Asset,
+    module: &'a mut Module,
+) -> Result<(), DigitalAssetProtocolError> {
+    // validation of create ownership specific stuff
+    let Module::Royalty { model, target, .. } = module;
+    let creators_model = model == &RoyaltyModel::Creators;
+    let creator_module = asset.layout.get(&ModuleType::Creators);
+    if creators_model && creator_module.is_none() {
+        return Err(DigitalAssetProtocolError::ModuleError(
+            "Creators Must be set".to_string(),
+        ));
+    }
+    if creators_model && !target.is_empty() {
+        *target = Vec::default()
+    }
+    asset.layout.entry(ModuleType::Royalty as u32).and_modify( move |m| {
+        m = module
+    });
+    Ok(())
+}
+
+fn create_creators<'a>(
+    ctx: &'a CreateNFTContext<'a>,
+    asset: &'a mut Asset,
+    module: &'a mut Module,
+) -> Result<(), DigitalAssetProtocolError> {
+    let Module::Creators { creator_list } = module;
+    if creator_list.is_empty() {
+        return Err(DigitalAssetProtocolError::ModuleError(
+            "1 or more creators must be present".to_string(),
+        ));
+    }
+    asset.layout.entry(ModuleType::Creators as u32).and_modify(move |m| {
+        m = module
+    });
+    Ok(())
 }
 
 entrypoint!(process_instruction);
 fn process_instruction<'a>(
     program_id: &'a Pubkey,
     accounts: &'a [AccountInfo<'a>],
-    instruction_data: &[u8],
+    instruction_data: &'a [u8],
 ) -> ProgramResult {
-    let action = parse_action(instruction_data)?;
+    let action = Action::deserialize(instruction_data)
+        .map_err(|e| DigitalAssetProtocolError::DeError(e.to_string()))?;
 
+    let ctx = match action {
+        Action::Unknown => Err(DigitalAssetProtocolError::ActionError(
+            "No Action Found".to_string(),
+        )),
+        Action::Create { layout, standard } => {
+            let address = accounts[0].clone();
+            let owner = accounts[1].clone();
+            let payer = accounts[2].clone();
+            let authority = accounts[3].clone();
 
-
+            Ok(CreateNFTContext {
+                address,
+                owner,
+                payer,
+                authority,
+                remaining_accounts: &accounts[4..],
+            })
+        }
+    };
+    ctx?.validate()?;
     Ok(())
-
-    // let action = instruction_to_context(program_id: &'a Pubkey,
-    //                                     accounts: &'a [AccountInfo<'a>],
-    //                                     instruction_data: &[u8])?;
-    // /// Check Action Preconditions
-    // action.valid()?;
-    // /// Gather Needed context data
-    // let standard = action.standard();
-    // let event = action.lifecycle();
-    // /// Inform
-    // msg!("Performing {} on a {} asset.", event, standard);
-    // /// Select Modules
-    // let module_standard = standard.get_instance();
-    //
-    // if module_standard.is_none() {
-    //     /// TODO Enforce payload header with modules
-    //     return Err(
-    //         ProcessorError::NotImplemented("Unknown Spec Not implemented".to_string()).into()
-    //     );
-    // }
-    // let concrete_standard = standard.get_instance().unwrap();
-    // let asset = action.asset()?;
-    // for module in concrete_standard.modules() {}
-
-    // match action_header {
-    //     ActionHeader(Standard::NFT, 1) => {
-    //         match action.lifecycle {
-    //             Lifecycle::Create => {
-    //                 let standard = NFTStandard::new();
-    //                 let asset_data = action.get_data();
-    //                 let asset = Asset::try_from_slice(asset_data)?;
-    //                 if standard.valid_asset(asset) {
-    //                     for m in standard.modules() {
-    //                         let module = asset.deserialize_module(m)?;
-    //                         module.modify(action, asset)?
-    //                     }
-    //                     let writer = BufWriter::
-    //
-    //                     asset.serialize(writer);
-    //                 } else {
-    //                     Err(io::Error::new(ErrorKind::InvalidData, format!("Modules are not correct for {} standard", standard.standard)))
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     _ => Err(Error::new(ErrorKind::InvalidData, "Unsupported Header"))
-    // }
 }
-
-
