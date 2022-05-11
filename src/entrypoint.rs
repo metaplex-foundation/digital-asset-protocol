@@ -54,9 +54,9 @@ impl<'a> CreateNFTContext<'_> {
             ModuleType::Royalty => {
                 create_royalty(self, asset_new)
             }
-            ModuleType::Creators => {
-                create_creators(self, asset_new)
-            }
+            // ModuleType::Creators => {
+            //     create_creators(self, asset_new)
+            // }
             _ => Err(DigitalAssetProtocolError::ActionError(
                 "Not Implemented".to_string(),
             )),
@@ -67,10 +67,11 @@ impl<'a> CreateNFTContext<'_> {
 }
 
 pub fn get_thing<T>(mtype: &ModuleType, map: &HashMap<ModuleType, Module>) -> Option<T> {
-    map.get(&(mtype as u32)).map(|m|{
+    map.get(&(mtype as u32)).map(|m| {
         m
     })
 }
+
 //
 // fn create_ownership<'a>(
 //     ctx: &CreateNFTContext,
@@ -93,57 +94,57 @@ fn create_royalty<'a>(
 ) -> Result<&'a mut Asset<'a>, DigitalAssetProtocolError> {
     // validation of create ownership specific stuff
     let module_data = asset.layout.get(&(ModuleType::Royalty as u32));
-    if module_data.is_none() {
-        return Err(DigitalAssetProtocolError::ModuleError(
-            "Creators Must be set".to_string(),
-        ));
-    }
-    let Module::Royalty {
-        model,
-        target,
-        royalty_percent,
-        locked
-    } = module_data.unwrap();
-    let creators_model = *model == RoyaltyModel::Creators;
-    let creator_module = asset.layout.get(&(ModuleType::Creators as u32));
-    if creators_model && creator_module.is_none() {
-        return Err(DigitalAssetProtocolError::ModuleError(
-            "Creators Must be set".to_string(),
-        ));
-    }
-    let target = if creators_model && !target.is_empty() {
-        Vec::default()
+    if let Some(Module::Royalty {
+                    model,
+                    target,
+                    royalty_percent,
+                    locked
+                }) = module_data {
+        let creators_model = *model == RoyaltyModel::Creators;
+        let creator_module = asset.layout.get(&(ModuleType::Creators as u32));
+        if creators_model && creator_module.is_none() {
+            return Err(DigitalAssetProtocolError::ModuleError(
+                "Creators Must be set".to_string(),
+            ));
+        }
+        let target = if creators_model && !target.is_empty() {
+            Vec::default()
+        } else {
+            target.clone()
+        };
+        asset.layout.insert(ModuleType::Royalty as u32, Module::Royalty {
+            model: *model,
+            target,
+            royalty_percent: 100,
+            locked: false,
+        });
     } else {
-        target.clone()
-    };
-    asset.layout.insert(ModuleType::Royalty as u32, Module::Royalty {
-        model: *model,
-        target,
-        royalty_percent: 100,
-        locked: false,
-    });
-    Ok(asset)
-}
-
-fn create_creators<'a>(
-    ctx: &CreateNFTContext,
-    asset: &'a mut Asset<'a>,
-) -> Result<&'a mut Asset<'a>, DigitalAssetProtocolError> {
-    let module_data = asset.layout.get(&(ModuleType::Creators as u32));
-    if module_data.is_none() {
-        return Err(DigitalAssetProtocolError::ModuleError(
-            "1 or more creators must be present".to_string(),
-        ));
-    }
-    let Module::Creators { creator_list } = module_data.unwrap();
-
-    if creator_list.is_empty() {
         return Err(DigitalAssetProtocolError::ModuleError(
             "1 or more creators must be present".to_string(),
         ));
     }
     Ok(asset)
 }
+
+// fn create_creators<'a>(
+//     ctx: &CreateNFTContext,
+//     asset: &'a mut Asset<'a>,
+// ) -> Result<&'a mut Asset<'a>, DigitalAssetProtocolError> {
+//     let module_data = asset.layout.get(&(ModuleType::Creators as u32));
+//     if module_data.is_none() {
+//         return Err(DigitalAssetProtocolError::ModuleError(
+//             "1 or more creators must be present".to_string(),
+//         ));
+//     }
+//     let Module::Creators { creator_list } = module_data.unwrap();
+//
+//     if creator_list.is_empty() {
+//         return Err(DigitalAssetProtocolError::ModuleError(
+//             "1 or more creators must be present".to_string(),
+//         ));
+//     }
+//     Ok(asset)
+// }
 
 entrypoint!(process_instruction);
 fn process_instruction(
