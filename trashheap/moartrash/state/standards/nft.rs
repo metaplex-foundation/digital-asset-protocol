@@ -7,11 +7,12 @@ pub struct NFTStandard {
 }
 
 impl NFTStandard {
+    
     pub fn new() -> Self {
         let mut mset = BTreeSet::new();
         mset.insert(Module::Ownership);
         mset.insert(Module::Governance);
-        mset.insert(Module::Data);
+        mset.insert(Module::Data(Schema));
         mset.insert(Module::Creators);
         mset.insert(Module::Royalty);
         NFTStandard {

@@ -1,57 +1,63 @@
-enum Standard {
+enum Interface: uint8 {
     Unknown = 0;
     NFTv1 = 1;
     NFT = 2;
     NFTPrintable = 3;
     NFTGroup = 4;
     FungibleAsset = 5;
+    IdentityAsset = 6;
 }
 
-union Action {
-    1 -> struct Create {
-        Standard standard;
-        map[uint32, Module] layout;
-    };
-    2 -> struct Transfer {};
-    3 -> struct Destroy {};
-    4 -> struct Update {
-        map[uint32, Module] layout;
-    };
-    5 -> struct Extend {};
+enum ModuleType: uint8 {
+    Invalid = 0;
+    Signature = 1;
+    Ownership = 2;
+    Creators = 3;
+    Data = 4;
+    Royalty = 5;
+    Rights = 6;
+    Extension = 7;
 }
 
-union Module {
-    1 -> struct Ownership {
-             OwnershipModel model;
-             byte[] owner;
-         };
-    2 -> struct Royalty {
-             uint8 royalty_percent;
-             RoyaltyModel model;
-             RoyaltyTarget[] target;
-             bool locked;
-         };
-    3 -> struct Creators {
-             Creator[] creator_list;
-         };
+union ModuleData {
+    1 -> struct CreatorsData {
+        Creator[] creators;
+    };
+    2 -> struct OwnershipData {
+        OwnershipModel model;
+        byte[] owner;
+    };
+    3 -> struct RoyaltyData {
+        uint8 royalty_percent;
+        RoyaltyModel model;
+        RoyaltyTarget[] target;
+        bool locked;
+    };
+}
+
+struct Action {
+    Interface standard;
+    ActionData data;
+}
+
+union ActionData {
+    1 -> struct CreateIdentity {
+        string uri;
+    };
+    2 -> struct Thing {
+        byte bill;
+    };
 }
 
 const int32 MAX_MODULES = 10;
 
-enum ModuleType {
-    Invalid = 0;
-    Ownership = 1;
-    Royalty = 2;
-    Creators = 3;
-}
-
-enum OwnershipModel {
+enum OwnershipModel: uint8 {
     Invalid = 0;
     Single = 1;
     Token = 2;
 }
 
-enum RoyaltyModel {
+enum RoyaltyModel: uint8 {
     Invalid = 0;
     Address = 1;
     Fanout = 2;
@@ -69,7 +75,18 @@ struct Creator {
     bool verified;
 }
 
-
-struct Asset {
-    map[uint32, Module] layout;
+enum Lifecycle: uint8 {
+    Invalid = 0;
+    Create = 1;
+    Transfer =2;
+    Destroy = 3;
+    Update = 4;
+    Freeze = 5;
+    Thaw = 6;
+    Split = 7;
+    Combine = 8;
+    SupplyIncrease = 9;
+    SupplyDecrease = 10;
+    ActivateExtension = 11;
+    DeactivateExtension = 12;
 }

@@ -1,0 +1,10 @@
+{
+  "inputDirectory": "schemas",
+  "namespace": "DigitalAssetTypes",
+  "generators": [
+    {
+      "alias": "ts",
+      "outputFile": "ts/generated/models.ts"
+    }
+  ]
+}

@@ -1,24 +1,19 @@
 import test from 'tape';
-import {ActionT} from "../ts-src/generated/digital-asset/action";
-import {LifeCycle} from "../ts-src/generated/digital-asset/life-cycle";
-import * as flatbuffers from 'flatbuffers';
-import {CreateT} from "../ts-src/generated/digital-asset/create";
-import {ModuleWrapT} from "../ts-src/generated/digital-asset/module-wrap";
-import {RoyaltyT} from "../ts-src/generated/digital-asset/royalty";
-import {RoyaltyTarget} from "../ts-src/generated/digital-asset/royalty-target";
-import {Module} from "../ts-src/generated/digital-asset/module";
 import {Amman, LOCALHOST} from '@metaplex-foundation/amman';
-import {Connection, PublicKey, Transaction, TransactionInstruction} from '@solana/web3.js';
+import * as web3 from '@solana/web3.js';
+import {Connection, Keypair, PublicKey, Transaction, TransactionInstruction} from '@solana/web3.js';
 import debug from 'debug';
-import {ActionPayload} from "../ts-src/generated/digital-asset/action-payload";
-import {CreatorsT} from "../ts-src/generated/digital-asset/creators";
-import {CreatorT} from "../ts-src/generated/asset";
+import * as beetSolana from '@metaplex-foundation/beet-solana';
+import * as beet from '@metaplex-foundation/beet';
+import {DigitalAssetTypes} from "../ts/generated/models";
+import nacl from 'tweetnacl';
+import {sha3_512} from "js-sha3";
 
 const persistLabelsPath = process.env.ADDRESS_LABEL_PATH;
 const PROGRAM = new PublicKey("assetbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
 export const logDebug = debug('dasset:test:debug');
-export async function init() {
 
+export async function init() {
     const a = Amman.instance();
     const [payer, payerPair] = await a.addr.genLabeledKeypair('payer');
     const connection = new Connection(LOCALHOST, 'confirmed');
@@ -34,9 +29,12 @@ export async function init() {
 }
 
 
-import * as web3 from '@solana/web3.js';
-import * as beetSolana from '@metaplex-foundation/beet-solana';
-import * as beet from '@metaplex-foundation/beet';
+import IAction = DigitalAssetTypes.IAction;
+import Interface = DigitalAssetTypes.Interface;
+import CreateIdentity = DigitalAssetTypes.CreateIdentity;
+import ICreateIdentity = DigitalAssetTypes.ICreateIdentity;
+import Action = DigitalAssetTypes.Action;
+
 export type Creator = {
     address: web3.PublicKey;
     verified: boolean;
@@ -57,54 +55,43 @@ export const creatorBeet = new beet.BeetArgsStruct<Creator>(
 );
 
 
-test("Flatbuffers", async () => {
+test("Create An Identity", async () => {
     const {a, transactionHandler, connection, payer, payerPair} = await init();
-    {
-        let [creator, creatorPair] = await a.addr.genLabeledKeypair("🔨 Creator 1");
-        const act = new CreatorT();
-        act.verified = true;
-        act.share = 100;
-        act.address = Array.from(creator.toBytes());
-        let fbb = new flatbuffers.Builder(0);
-        let off = act.pack(fbb);
-        fbb.finish(off);
-        let arr = Array.from(fbb.asUint8Array())
-        arr.unshift(0)
-        const ix = Buffer.from(arr);
-        let g = new Transaction();
-        g.add(new TransactionInstruction({
-            data: ix,
-            programId: PROGRAM,
-            keys: [
-                {isSigner: true, isWritable: true, pubkey: payer}
-            ]
-        }));
 
-        await transactionHandler.sendAndConfirmTransaction(g, [], {skipPreflight: true}, "🤓 Testing FlatBuffers");
-    }
+    let [owner, ownerPair] = await a.addr.genLabeledKeypair("🔨 Owner 1");
+    let sig = nacl.sign.detached(Uint8Array.from(Buffer.from("this is an identity")), ownerPair.secretKey)
+    const hash = sha3_512.arrayBuffer(sig);
+    const digest = Buffer.from(hash.slice(0, 32));
+    let idKeypair = Keypair.fromSeed(digest);
+    let [identity, bump] = await PublicKey.findProgramAddress([
+        Buffer.from("identity"),
+        owner.toBuffer(),
+    ], PROGRAM);
+    await a.addr.addLabel("Identity", identity);
+    let g = new Transaction();
+    let createIdentity: ICreateIdentity = {
+        name: 'first Identity ever'
+    };
+    let action: IAction = {
+        standard: Interface.IdentityAsset,
+        data: {discriminator: 1, value: createIdentity}
+    };
 
-    {
-        let [creator, creatorPair] = await a.addr.genLabeledKeypair("🔨 Creator 1");
-        let c: Creator = {
-            address: creator,
-            verified: true,
-            share: 100
-        };
-        let buf = Array.from(creatorBeet.serialize(c)[0]);
-        buf.unshift(1)
-        const ix = Buffer.from(buf);
-        console.log(ix);
+    g.add(new TransactionInstruction({
+        data: Buffer.from(Action.encode(action)),
+        programId: PROGRAM,
+        keys: [
+            {isSigner: true, isWritable: false, pubkey: idKeypair.publicKey},
+            {isSigner: true, isWritable: false, pubkey: owner},
+            {isSigner: false, isWritable: true, pubkey: identity},
+            {isSigner: true, isWritable: true, pubkey: owner}
+        ]
+    }));
 
-        let g = new Transaction();
-        g.add(new TransactionInstruction({
-            data: ix,
-            programId: PROGRAM,
-            keys: [
-                {isSigner: true, isWritable: true, pubkey: payer},
-                {isSigner: false, isWritable: false, pubkey: creator}
-            ]
-        }));
+    let tx = await transactionHandler.sendAndConfirmTransaction(g, [
+        idKeypair,
+        ownerPair
+    ], {skipPreflight: true}, "🤓 Testing Identity Creation");
 
-        await transactionHandler.sendAndConfirmTransaction(g, [], {skipPreflight: true}, "😡 Testing Borsh");
-    }
+
 });

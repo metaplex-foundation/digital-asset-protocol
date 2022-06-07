@@ -18,6 +18,7 @@ crate-type = ["cdylib", "lib"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+lazy_static = "1.4.0"
 solana-program = "1.10.9"
 borsh = "0.9.3"
 spl-token = { version ="3.3.0", features = ["no-entrypoint"] }

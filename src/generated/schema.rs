@@ -16,284 +16,245 @@
 
 #![allow(warnings)]
 
-use bebop::FixedSized as _;
-use core::convert::TryInto as _;
-use std::io::Write as _;
+use ::std::io::Write as _;
+use ::core::convert::TryInto as _;
+use ::bebop::FixedSized as _;
 
-#[repr(u32)]
+#[repr(u8)]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub enum Standard {
+pub enum Interface {
     Unknown = 0,
     NFTv1 = 1,
     Nft = 2,
     NFTPrintable = 3,
     NFTGroup = 4,
     FungibleAsset = 5,
+    IdentityAsset = 6,
 }
 
-impl ::core::convert::TryFrom<u32> for Standard {
+impl ::core::convert::TryFrom<u8> for Interface {
     type Error = ::bebop::DeserializeError;
 
-    fn try_from(value: u32) -> ::bebop::DeResult<Self> {
+    fn try_from(value: u8) -> ::bebop::DeResult<Self> {
         match value {
-            0 => Ok(Standard::Unknown),
-            1 => Ok(Standard::NFTv1),
-            2 => Ok(Standard::Nft),
-            3 => Ok(Standard::NFTPrintable),
-            4 => Ok(Standard::NFTGroup),
-            5 => Ok(Standard::FungibleAsset),
-            d => Err(::bebop::DeserializeError::InvalidEnumDiscriminator(
-                d.into(),
-            )),
+            0 => Ok(Interface::Unknown),
+            1 => Ok(Interface::NFTv1),
+            2 => Ok(Interface::Nft),
+            3 => Ok(Interface::NFTPrintable),
+            4 => Ok(Interface::NFTGroup),
+            5 => Ok(Interface::FungibleAsset),
+            6 => Ok(Interface::IdentityAsset),
+            d => Err(::bebop::DeserializeError::InvalidEnumDiscriminator(d.into())),
         }
     }
 }
 
-impl ::core::convert::From<Standard> for u32 {
-    fn from(value: Standard) -> Self {
+impl ::core::convert::From<Interface> for u8 {
+    fn from(value: Interface) -> Self {
         match value {
-            Standard::Unknown => 0,
-            Standard::NFTv1 => 1,
-            Standard::Nft => 2,
-            Standard::NFTPrintable => 3,
-            Standard::NFTGroup => 4,
-            Standard::FungibleAsset => 5,
+            Interface::Unknown => 0,
+            Interface::NFTv1 => 1,
+            Interface::Nft => 2,
+            Interface::NFTPrintable => 3,
+            Interface::NFTGroup => 4,
+            Interface::FungibleAsset => 5,
+            Interface::IdentityAsset => 6,
         }
     }
 }
 
-impl ::bebop::SubRecord<'_> for Standard {
-    const MIN_SERIALIZED_SIZE: usize = ::std::mem::size_of::<u32>();
-    const EXACT_SERIALIZED_SIZE: Option<usize> = Some(::std::mem::size_of::<u32>());
+impl ::bebop::SubRecord<'_> for Interface {
+    const MIN_SERIALIZED_SIZE: usize = ::std::mem::size_of::<u8>();
+    const EXACT_SERIALIZED_SIZE: Option<usize> = Some(::std::mem::size_of::<u8>());
 
     #[inline]
-    fn serialized_size(&self) -> usize {
-        ::std::mem::size_of::<u32>()
-    }
+    fn serialized_size(&self) -> usize { ::std::mem::size_of::<u8>() }
 
     #[inline]
     fn _serialize_chained<W: ::std::io::Write>(&self, dest: &mut W) -> ::bebop::SeResult<usize> {
-        u32::from(*self)._serialize_chained(dest)
+        u8::from(*self)._serialize_chained(dest)
     }
 
     #[inline]
     fn _deserialize_chained(raw: &[u8]) -> ::bebop::DeResult<(usize, Self)> {
-        let (n, v) = u32::_deserialize_chained(raw)?;
+        let (n, v) = u8::_deserialize_chained(raw)?;
         Ok((n, v.try_into()?))
     }
 }
 
-impl ::bebop::FixedSized for Standard {
-    const SERIALIZED_SIZE: usize = ::std::mem::size_of::<u32>();
+impl ::bebop::FixedSized for Interface {
+    const SERIALIZED_SIZE: usize = ::std::mem::size_of::<u8>();
 }
 
+
+#[repr(u8)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum ModuleType {
+    Invalid = 0,
+    Signature = 1,
+    Ownership = 2,
+    Creators = 3,
+    Data = 4,
+    Royalty = 5,
+    Rights = 6,
+    Extension = 7,
+}
+
+impl ::core::convert::TryFrom<u8> for ModuleType {
+    type Error = ::bebop::DeserializeError;
+
+    fn try_from(value: u8) -> ::bebop::DeResult<Self> {
+        match value {
+            0 => Ok(ModuleType::Invalid),
+            1 => Ok(ModuleType::Signature),
+            2 => Ok(ModuleType::Ownership),
+            3 => Ok(ModuleType::Creators),
+            4 => Ok(ModuleType::Data),
+            5 => Ok(ModuleType::Royalty),
+            6 => Ok(ModuleType::Rights),
+            7 => Ok(ModuleType::Extension),
+            d => Err(::bebop::DeserializeError::InvalidEnumDiscriminator(d.into())),
+        }
+    }
+}
+
+impl ::core::convert::From<ModuleType> for u8 {
+    fn from(value: ModuleType) -> Self {
+        match value {
+            ModuleType::Invalid => 0,
+            ModuleType::Signature => 1,
+            ModuleType::Ownership => 2,
+            ModuleType::Creators => 3,
+            ModuleType::Data => 4,
+            ModuleType::Royalty => 5,
+            ModuleType::Rights => 6,
+            ModuleType::Extension => 7,
+        }
+    }
+}
+
+impl ::bebop::SubRecord<'_> for ModuleType {
+    const MIN_SERIALIZED_SIZE: usize = ::std::mem::size_of::<u8>();
+    const EXACT_SERIALIZED_SIZE: Option<usize> = Some(::std::mem::size_of::<u8>());
+
+    #[inline]
+    fn serialized_size(&self) -> usize { ::std::mem::size_of::<u8>() }
+
+    #[inline]
+    fn _serialize_chained<W: ::std::io::Write>(&self, dest: &mut W) -> ::bebop::SeResult<usize> {
+        u8::from(*self)._serialize_chained(dest)
+    }
+
+    #[inline]
+    fn _deserialize_chained(raw: &[u8]) -> ::bebop::DeResult<(usize, Self)> {
+        let (n, v) = u8::_deserialize_chained(raw)?;
+        Ok((n, v.try_into()?))
+    }
+}
+
+impl ::bebop::FixedSized for ModuleType {
+    const SERIALIZED_SIZE: usize = ::std::mem::size_of::<u8>();
+}
+
+
 #[derive(Clone, Debug, PartialEq)]
-pub enum Action<'raw> {
+pub enum ModuleData<'raw> {
     /// An unknown type which is likely defined in a newer version of the schema.
     Unknown,
 
     /// Discriminator 1
-    Create {
-        standard: Standard,
-        layout: ::std::collections::HashMap<u32, Module<'raw>>,
+    CreatorsData {
+        creators: ::std::vec::Vec<Creator<'raw>>,
     },
 
     /// Discriminator 2
-    Transfer {},
-
-    /// Discriminator 3
-    Destroy {},
-
-    /// Discriminator 4
-    Update {
-        layout: ::std::collections::HashMap<u32, Module<'raw>>,
-    },
-
-    /// Discriminator 5
-    Extend {},
-}
-
-impl<'raw> ::bebop::SubRecord<'raw> for Action<'raw> {
-    const MIN_SERIALIZED_SIZE: usize = ::bebop::LEN_SIZE + 1;
-
-    fn serialized_size(&self) -> usize {
-        ::bebop::LEN_SIZE
-            + 1
-            + match self {
-                Action::Unknown => 0,
-                Self::Create {
-                    standard: ref _standard,
-                    layout: ref _layout,
-                } => _standard.serialized_size() + _layout.serialized_size(),
-                Self::Transfer {} => 0,
-                Self::Destroy {} => 0,
-                Self::Update {
-                    layout: ref _layout,
-                } => _layout.serialized_size(),
-                Self::Extend {} => 0,
-            }
-    }
-
-    fn _serialize_chained<W: ::std::io::Write>(&self, dest: &mut W) -> ::bebop::SeResult<usize> {
-        let size = self.serialized_size();
-        ::bebop::write_len(dest, size - ::bebop::LEN_SIZE - 1)?;
-        match self {
-            Action::Unknown => {
-                return Err(::bebop::SerializeError::CannotSerializeUnknownUnion);
-            }
-            Self::Create {
-                standard: ref _standard,
-                layout: ref _layout,
-            } => {
-                1u8._serialize_chained(dest)?;
-                _standard._serialize_chained(dest)?;
-                _layout._serialize_chained(dest)?;
-            }
-            Self::Transfer {} => {
-                2u8._serialize_chained(dest)?;
-            }
-            Self::Destroy {} => {
-                3u8._serialize_chained(dest)?;
-            }
-            Self::Update {
-                layout: ref _layout,
-            } => {
-                4u8._serialize_chained(dest)?;
-                _layout._serialize_chained(dest)?;
-            }
-            Self::Extend {} => {
-                5u8._serialize_chained(dest)?;
-            }
-        }
-        Ok(size)
-    }
-
-    fn _deserialize_chained(raw: &'raw [u8]) -> ::bebop::DeResult<(usize, Self)> {
-        let len = ::bebop::read_len(&raw)? + ::bebop::LEN_SIZE + 1;
-        let mut i = ::bebop::LEN_SIZE + 1;
-        let de = match raw[::bebop::LEN_SIZE] {
-            1 => {
-                let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                i += read;
-                let (read, v1) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                i += read;
-
-                Action::Create {
-                    standard: v0,
-                    layout: v1,
-                }
-            }
-            2 => Action::Transfer {},
-            3 => Action::Destroy {},
-            4 => {
-                let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                i += read;
-
-                Action::Update { layout: v0 }
-            }
-            5 => Action::Extend {},
-            _ => {
-                i = len;
-                Action::Unknown
-            }
-        };
-        if !cfg!(feature = "unchecked") && i != len {
-            debug_assert!(i > len);
-            Err(::bebop::DeserializeError::CorruptFrame)
-        } else {
-            Ok((i, de))
-        }
-    }
-}
-
-impl<'raw> ::bebop::Record<'raw> for Action<'raw> {}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum Module<'raw> {
-    /// An unknown type which is likely defined in a newer version of the schema.
-    Unknown,
-
-    /// Discriminator 1
-    Ownership {
+    OwnershipData {
         model: OwnershipModel,
         owner: ::bebop::SliceWrapper<'raw, u8>,
     },
 
-    /// Discriminator 2
-    Royalty {
+    /// Discriminator 3
+    RoyaltyData {
         royalty_percent: u8,
         model: RoyaltyModel,
         target: ::std::vec::Vec<RoyaltyTarget<'raw>>,
         locked: bool,
     },
-
-    /// Discriminator 3
-    Creators {
-        creator_list: ::std::vec::Vec<Creator<'raw>>,
-    },
 }
 
-impl<'raw> ::bebop::SubRecord<'raw> for Module<'raw> {
+impl<'raw> ::bebop::SubRecord<'raw> for ModuleData<'raw> {
     const MIN_SERIALIZED_SIZE: usize = ::bebop::LEN_SIZE + 1;
 
     fn serialized_size(&self) -> usize {
-        ::bebop::LEN_SIZE
-            + 1
-            + match self {
-                Module::Unknown => 0,
-                Self::Ownership {
-                    model: ref _model,
-                    owner: ref _owner,
-                } => _model.serialized_size() + _owner.serialized_size(),
-                Self::Royalty {
-                    royalty_percent: ref _royalty_percent,
-                    model: ref _model,
-                    target: ref _target,
-                    locked: ref _locked,
-                } => {
-                    _royalty_percent.serialized_size()
-                        + _model.serialized_size()
-                        + _target.serialized_size()
-                        + _locked.serialized_size()
-                }
-                Self::Creators {
-                    creator_list: ref _creator_list,
-                } => _creator_list.serialized_size(),
+        ::bebop::LEN_SIZE + 1 +
+        match self {
+            ModuleData::Unknown => {
+                0
             }
+            Self::CreatorsData {
+                creators: ref _creators,
+            }
+            => {
+                _creators.serialized_size()
+            }
+            Self::OwnershipData {
+                model: ref _model,
+                owner: ref _owner,
+            }
+            => {
+                _model.serialized_size() +
+                _owner.serialized_size()
+            }
+            Self::RoyaltyData {
+                royalty_percent: ref _royalty_percent,
+                model: ref _model,
+                target: ref _target,
+                locked: ref _locked,
+            }
+            => {
+                _royalty_percent.serialized_size() +
+                _model.serialized_size() +
+                _target.serialized_size() +
+                _locked.serialized_size()
+            }
+        }
     }
 
     fn _serialize_chained<W: ::std::io::Write>(&self, dest: &mut W) -> ::bebop::SeResult<usize> {
         let size = self.serialized_size();
         ::bebop::write_len(dest, size - ::bebop::LEN_SIZE - 1)?;
         match self {
-            Module::Unknown => {
+            ModuleData::Unknown => {
                 return Err(::bebop::SerializeError::CannotSerializeUnknownUnion);
             }
-            Self::Ownership {
+            Self::CreatorsData {
+                creators: ref _creators,
+            }
+            => {
+                1u8._serialize_chained(dest)?;
+                _creators._serialize_chained(dest)?;
+            }
+            Self::OwnershipData {
                 model: ref _model,
                 owner: ref _owner,
-            } => {
-                1u8._serialize_chained(dest)?;
+            }
+            => {
+                2u8._serialize_chained(dest)?;
                 _model._serialize_chained(dest)?;
                 _owner._serialize_chained(dest)?;
             }
-            Self::Royalty {
+            Self::RoyaltyData {
                 royalty_percent: ref _royalty_percent,
                 model: ref _model,
                 target: ref _target,
                 locked: ref _locked,
-            } => {
-                2u8._serialize_chained(dest)?;
+            }
+            => {
+                3u8._serialize_chained(dest)?;
                 _royalty_percent._serialize_chained(dest)?;
                 _model._serialize_chained(dest)?;
                 _target._serialize_chained(dest)?;
                 _locked._serialize_chained(dest)?;
-            }
-            Self::Creators {
-                creator_list: ref _creator_list,
-            } => {
-                3u8._serialize_chained(dest)?;
-                _creator_list._serialize_chained(dest)?;
             }
         }
         Ok(size)
@@ -306,15 +267,23 @@ impl<'raw> ::bebop::SubRecord<'raw> for Module<'raw> {
             1 => {
                 let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
                 i += read;
+
+                ModuleData::CreatorsData {
+                    creators: v0,
+                }
+            }
+            2 => {
+                let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                i += read;
                 let (read, v1) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
                 i += read;
 
-                Module::Ownership {
+                ModuleData::OwnershipData {
                     model: v0,
                     owner: v1,
                 }
             }
-            2 => {
+            3 => {
                 let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
                 i += read;
                 let (read, v1) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
@@ -324,234 +293,53 @@ impl<'raw> ::bebop::SubRecord<'raw> for Module<'raw> {
                 let (read, v3) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
                 i += read;
 
-                Module::Royalty {
+                ModuleData::RoyaltyData {
                     royalty_percent: v0,
                     model: v1,
                     target: v2,
                     locked: v3,
                 }
             }
-            3 => {
-                let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                i += read;
-
-                Module::Creators { creator_list: v0 }
-            }
             _ => {
                 i = len;
-                Module::Unknown
+                ModuleData::Unknown
             }
         };
         if !cfg!(feature = "unchecked") && i != len {
             debug_assert!(i > len);
             Err(::bebop::DeserializeError::CorruptFrame)
-        } else {
+        }
+        else {
             Ok((i, de))
         }
     }
+
 }
 
-impl<'raw> ::bebop::Record<'raw> for Module<'raw> {}
-
-pub const MAX_MODULES: i32 = 10;
-
-#[repr(u32)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub enum ModuleType {
-    Invalid = 0,
-    Ownership = 1,
-    Royalty = 2,
-    Creators = 3,
-}
-
-impl ::core::convert::TryFrom<u32> for ModuleType {
-    type Error = ::bebop::DeserializeError;
-
-    fn try_from(value: u32) -> ::bebop::DeResult<Self> {
-        match value {
-            0 => Ok(ModuleType::Invalid),
-            1 => Ok(ModuleType::Ownership),
-            2 => Ok(ModuleType::Royalty),
-            3 => Ok(ModuleType::Creators),
-            d => Err(::bebop::DeserializeError::InvalidEnumDiscriminator(
-                d.into(),
-            )),
-        }
-    }
-}
-
-impl ::core::convert::From<ModuleType> for u32 {
-    fn from(value: ModuleType) -> Self {
-        match value {
-            ModuleType::Invalid => 0,
-            ModuleType::Ownership => 1,
-            ModuleType::Royalty => 2,
-            ModuleType::Creators => 3,
-        }
-    }
-}
-
-impl ::bebop::SubRecord<'_> for ModuleType {
-    const MIN_SERIALIZED_SIZE: usize = ::std::mem::size_of::<u32>();
-    const EXACT_SERIALIZED_SIZE: Option<usize> = Some(::std::mem::size_of::<u32>());
-
-    #[inline]
-    fn serialized_size(&self) -> usize {
-        ::std::mem::size_of::<u32>()
-    }
-
-    #[inline]
-    fn _serialize_chained<W: ::std::io::Write>(&self, dest: &mut W) -> ::bebop::SeResult<usize> {
-        u32::from(*self)._serialize_chained(dest)
-    }
-
-    #[inline]
-    fn _deserialize_chained(raw: &[u8]) -> ::bebop::DeResult<(usize, Self)> {
-        let (n, v) = u32::_deserialize_chained(raw)?;
-        Ok((n, v.try_into()?))
-    }
-}
-
-impl ::bebop::FixedSized for ModuleType {
-    const SERIALIZED_SIZE: usize = ::std::mem::size_of::<u32>();
-}
-
-#[repr(u32)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub enum OwnershipModel {
-    Invalid = 0,
-    Single = 1,
-    Token = 2,
-}
-
-impl ::core::convert::TryFrom<u32> for OwnershipModel {
-    type Error = ::bebop::DeserializeError;
-
-    fn try_from(value: u32) -> ::bebop::DeResult<Self> {
-        match value {
-            0 => Ok(OwnershipModel::Invalid),
-            1 => Ok(OwnershipModel::Single),
-            2 => Ok(OwnershipModel::Token),
-            d => Err(::bebop::DeserializeError::InvalidEnumDiscriminator(
-                d.into(),
-            )),
-        }
-    }
-}
-
-impl ::core::convert::From<OwnershipModel> for u32 {
-    fn from(value: OwnershipModel) -> Self {
-        match value {
-            OwnershipModel::Invalid => 0,
-            OwnershipModel::Single => 1,
-            OwnershipModel::Token => 2,
-        }
-    }
-}
-
-impl ::bebop::SubRecord<'_> for OwnershipModel {
-    const MIN_SERIALIZED_SIZE: usize = ::std::mem::size_of::<u32>();
-    const EXACT_SERIALIZED_SIZE: Option<usize> = Some(::std::mem::size_of::<u32>());
-
-    #[inline]
-    fn serialized_size(&self) -> usize {
-        ::std::mem::size_of::<u32>()
-    }
-
-    #[inline]
-    fn _serialize_chained<W: ::std::io::Write>(&self, dest: &mut W) -> ::bebop::SeResult<usize> {
-        u32::from(*self)._serialize_chained(dest)
-    }
-
-    #[inline]
-    fn _deserialize_chained(raw: &[u8]) -> ::bebop::DeResult<(usize, Self)> {
-        let (n, v) = u32::_deserialize_chained(raw)?;
-        Ok((n, v.try_into()?))
-    }
-}
-
-impl ::bebop::FixedSized for OwnershipModel {
-    const SERIALIZED_SIZE: usize = ::std::mem::size_of::<u32>();
-}
-
-#[repr(u32)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub enum RoyaltyModel {
-    Invalid = 0,
-    Address = 1,
-    Fanout = 2,
-    Creators = 3,
-}
-
-impl ::core::convert::TryFrom<u32> for RoyaltyModel {
-    type Error = ::bebop::DeserializeError;
-
-    fn try_from(value: u32) -> ::bebop::DeResult<Self> {
-        match value {
-            0 => Ok(RoyaltyModel::Invalid),
-            1 => Ok(RoyaltyModel::Address),
-            2 => Ok(RoyaltyModel::Fanout),
-            3 => Ok(RoyaltyModel::Creators),
-            d => Err(::bebop::DeserializeError::InvalidEnumDiscriminator(
-                d.into(),
-            )),
-        }
-    }
-}
-
-impl ::core::convert::From<RoyaltyModel> for u32 {
-    fn from(value: RoyaltyModel) -> Self {
-        match value {
-            RoyaltyModel::Invalid => 0,
-            RoyaltyModel::Address => 1,
-            RoyaltyModel::Fanout => 2,
-            RoyaltyModel::Creators => 3,
-        }
-    }
-}
-
-impl ::bebop::SubRecord<'_> for RoyaltyModel {
-    const MIN_SERIALIZED_SIZE: usize = ::std::mem::size_of::<u32>();
-    const EXACT_SERIALIZED_SIZE: Option<usize> = Some(::std::mem::size_of::<u32>());
-
-    #[inline]
-    fn serialized_size(&self) -> usize {
-        ::std::mem::size_of::<u32>()
-    }
-
-    #[inline]
-    fn _serialize_chained<W: ::std::io::Write>(&self, dest: &mut W) -> ::bebop::SeResult<usize> {
-        u32::from(*self)._serialize_chained(dest)
-    }
-
-    #[inline]
-    fn _deserialize_chained(raw: &[u8]) -> ::bebop::DeResult<(usize, Self)> {
-        let (n, v) = u32::_deserialize_chained(raw)?;
-        Ok((n, v.try_into()?))
-    }
-}
-
-impl ::bebop::FixedSized for RoyaltyModel {
-    const SERIALIZED_SIZE: usize = ::std::mem::size_of::<u32>();
-}
+impl<'raw> ::bebop::Record<'raw> for ModuleData<'raw> {}
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct RoyaltyTarget<'raw> {
-    pub address: ::bebop::SliceWrapper<'raw, u8>,
-    pub share: u8,
+pub struct Action<'raw> {
+    pub standard: Interface,
+    pub data: ActionData<'raw>,
 }
 
-impl<'raw> ::bebop::SubRecord<'raw> for RoyaltyTarget<'raw> {
+impl<'raw> ::bebop::SubRecord<'raw> for Action<'raw> {
     const MIN_SERIALIZED_SIZE: usize =
-        <::bebop::SliceWrapper<'raw, u8>>::MIN_SERIALIZED_SIZE + <u8>::MIN_SERIALIZED_SIZE;
+        <Interface>::MIN_SERIALIZED_SIZE +
+        <ActionData<'raw>>::MIN_SERIALIZED_SIZE;
 
     #[inline]
     fn serialized_size(&self) -> usize {
-        self.address.serialized_size() + self.share.serialized_size()
+        self.standard.serialized_size() +
+        self.data.serialized_size()
     }
 
     fn _serialize_chained<W: ::std::io::Write>(&self, dest: &mut W) -> ::bebop::SeResult<usize> {
-        Ok(self.address._serialize_chained(dest)? + self.share._serialize_chained(dest)?)
+        Ok(
+            self.standard._serialize_chained(dest)? +
+            self.data._serialize_chained(dest)?
+        )
     }
 
     fn _deserialize_chained(raw: &'raw [u8]) -> ::bebop::DeResult<(usize, Self)> {
@@ -566,13 +354,273 @@ impl<'raw> ::bebop::SubRecord<'raw> for RoyaltyTarget<'raw> {
         let (read, v1) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
         i += read;
 
-        Ok((
-            i,
-            Self {
-                address: v0,
-                share: v1,
-            },
-        ))
+        Ok((i, Self {
+            standard: v0,
+            data: v1,
+        }))
+    }
+}
+
+impl<'raw> ::bebop::Record<'raw> for Action<'raw> {}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum ActionData<'raw> {
+    /// An unknown type which is likely defined in a newer version of the schema.
+    Unknown,
+
+    /// Discriminator 1
+    CreateIdentity {
+        uri: &'raw str,
+    },
+
+    /// Discriminator 2
+    Thing {
+        bill: u8,
+    },
+}
+
+impl<'raw> ::bebop::SubRecord<'raw> for ActionData<'raw> {
+    const MIN_SERIALIZED_SIZE: usize = ::bebop::LEN_SIZE + 1;
+
+    fn serialized_size(&self) -> usize {
+        ::bebop::LEN_SIZE + 1 +
+        match self {
+            ActionData::Unknown => {
+                0
+            }
+            Self::CreateIdentity {
+                uri: ref _uri,
+            }
+            => {
+                _uri.serialized_size()
+            }
+            Self::Thing {
+                bill: ref _bill,
+            }
+            => {
+                _bill.serialized_size()
+            }
+        }
+    }
+
+    fn _serialize_chained<W: ::std::io::Write>(&self, dest: &mut W) -> ::bebop::SeResult<usize> {
+        let size = self.serialized_size();
+        ::bebop::write_len(dest, size - ::bebop::LEN_SIZE - 1)?;
+        match self {
+            ActionData::Unknown => {
+                return Err(::bebop::SerializeError::CannotSerializeUnknownUnion);
+            }
+            Self::CreateIdentity {
+                uri: ref _uri,
+            }
+            => {
+                1u8._serialize_chained(dest)?;
+                _uri._serialize_chained(dest)?;
+            }
+            Self::Thing {
+                bill: ref _bill,
+            }
+            => {
+                2u8._serialize_chained(dest)?;
+                _bill._serialize_chained(dest)?;
+            }
+        }
+        Ok(size)
+    }
+
+    fn _deserialize_chained(raw: &'raw [u8]) -> ::bebop::DeResult<(usize, Self)> {
+        let len = ::bebop::read_len(&raw)? + ::bebop::LEN_SIZE + 1;
+        let mut i = ::bebop::LEN_SIZE + 1;
+        let de = match raw[::bebop::LEN_SIZE] {
+            1 => {
+                let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                i += read;
+
+                ActionData::CreateIdentity {
+                    uri: v0,
+                }
+            }
+            2 => {
+                let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                i += read;
+
+                ActionData::Thing {
+                    bill: v0,
+                }
+            }
+            _ => {
+                i = len;
+                ActionData::Unknown
+            }
+        };
+        if !cfg!(feature = "unchecked") && i != len {
+            debug_assert!(i > len);
+            Err(::bebop::DeserializeError::CorruptFrame)
+        }
+        else {
+            Ok((i, de))
+        }
+    }
+
+}
+
+impl<'raw> ::bebop::Record<'raw> for ActionData<'raw> {}
+
+pub const MAX_MODULES: i32 = 10;
+
+#[repr(u8)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum OwnershipModel {
+    Invalid = 0,
+    Single = 1,
+    Token = 2,
+}
+
+impl ::core::convert::TryFrom<u8> for OwnershipModel {
+    type Error = ::bebop::DeserializeError;
+
+    fn try_from(value: u8) -> ::bebop::DeResult<Self> {
+        match value {
+            0 => Ok(OwnershipModel::Invalid),
+            1 => Ok(OwnershipModel::Single),
+            2 => Ok(OwnershipModel::Token),
+            d => Err(::bebop::DeserializeError::InvalidEnumDiscriminator(d.into())),
+        }
+    }
+}
+
+impl ::core::convert::From<OwnershipModel> for u8 {
+    fn from(value: OwnershipModel) -> Self {
+        match value {
+            OwnershipModel::Invalid => 0,
+            OwnershipModel::Single => 1,
+            OwnershipModel::Token => 2,
+        }
+    }
+}
+
+impl ::bebop::SubRecord<'_> for OwnershipModel {
+    const MIN_SERIALIZED_SIZE: usize = ::std::mem::size_of::<u8>();
+    const EXACT_SERIALIZED_SIZE: Option<usize> = Some(::std::mem::size_of::<u8>());
+
+    #[inline]
+    fn serialized_size(&self) -> usize { ::std::mem::size_of::<u8>() }
+
+    #[inline]
+    fn _serialize_chained<W: ::std::io::Write>(&self, dest: &mut W) -> ::bebop::SeResult<usize> {
+        u8::from(*self)._serialize_chained(dest)
+    }
+
+    #[inline]
+    fn _deserialize_chained(raw: &[u8]) -> ::bebop::DeResult<(usize, Self)> {
+        let (n, v) = u8::_deserialize_chained(raw)?;
+        Ok((n, v.try_into()?))
+    }
+}
+
+impl ::bebop::FixedSized for OwnershipModel {
+    const SERIALIZED_SIZE: usize = ::std::mem::size_of::<u8>();
+}
+
+
+#[repr(u8)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum RoyaltyModel {
+    Invalid = 0,
+    Address = 1,
+    Fanout = 2,
+    Creators = 3,
+}
+
+impl ::core::convert::TryFrom<u8> for RoyaltyModel {
+    type Error = ::bebop::DeserializeError;
+
+    fn try_from(value: u8) -> ::bebop::DeResult<Self> {
+        match value {
+            0 => Ok(RoyaltyModel::Invalid),
+            1 => Ok(RoyaltyModel::Address),
+            2 => Ok(RoyaltyModel::Fanout),
+            3 => Ok(RoyaltyModel::Creators),
+            d => Err(::bebop::DeserializeError::InvalidEnumDiscriminator(d.into())),
+        }
+    }
+}
+
+impl ::core::convert::From<RoyaltyModel> for u8 {
+    fn from(value: RoyaltyModel) -> Self {
+        match value {
+            RoyaltyModel::Invalid => 0,
+            RoyaltyModel::Address => 1,
+            RoyaltyModel::Fanout => 2,
+            RoyaltyModel::Creators => 3,
+        }
+    }
+}
+
+impl ::bebop::SubRecord<'_> for RoyaltyModel {
+    const MIN_SERIALIZED_SIZE: usize = ::std::mem::size_of::<u8>();
+    const EXACT_SERIALIZED_SIZE: Option<usize> = Some(::std::mem::size_of::<u8>());
+
+    #[inline]
+    fn serialized_size(&self) -> usize { ::std::mem::size_of::<u8>() }
+
+    #[inline]
+    fn _serialize_chained<W: ::std::io::Write>(&self, dest: &mut W) -> ::bebop::SeResult<usize> {
+        u8::from(*self)._serialize_chained(dest)
+    }
+
+    #[inline]
+    fn _deserialize_chained(raw: &[u8]) -> ::bebop::DeResult<(usize, Self)> {
+        let (n, v) = u8::_deserialize_chained(raw)?;
+        Ok((n, v.try_into()?))
+    }
+}
+
+impl ::bebop::FixedSized for RoyaltyModel {
+    const SERIALIZED_SIZE: usize = ::std::mem::size_of::<u8>();
+}
+
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct RoyaltyTarget<'raw> {
+    pub address: ::bebop::SliceWrapper<'raw, u8>,
+    pub share: u8,
+}
+
+impl<'raw> ::bebop::SubRecord<'raw> for RoyaltyTarget<'raw> {
+    const MIN_SERIALIZED_SIZE: usize =
+        <::bebop::SliceWrapper<'raw, u8>>::MIN_SERIALIZED_SIZE +
+        <u8>::MIN_SERIALIZED_SIZE;
+
+    #[inline]
+    fn serialized_size(&self) -> usize {
+        self.address.serialized_size() +
+        self.share.serialized_size()
+    }
+
+    fn _serialize_chained<W: ::std::io::Write>(&self, dest: &mut W) -> ::bebop::SeResult<usize> {
+        Ok(
+            self.address._serialize_chained(dest)? +
+            self.share._serialize_chained(dest)?
+        )
+    }
+
+    fn _deserialize_chained(raw: &'raw [u8]) -> ::bebop::DeResult<(usize, Self)> {
+        let mut i = 0;
+        if raw.len() - i < Self::MIN_SERIALIZED_SIZE {
+            let missing = Self::MIN_SERIALIZED_SIZE - (raw.len() - i);
+            return Err(::bebop::DeserializeError::MoreDataExpected(missing));
+        }
+
+        let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+        i += read;
+        let (read, v1) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+        i += read;
+
+        Ok((i, Self {
+            address: v0,
+            share: v1,
+        }))
     }
 }
 
@@ -586,21 +634,24 @@ pub struct Creator<'raw> {
 }
 
 impl<'raw> ::bebop::SubRecord<'raw> for Creator<'raw> {
-    const MIN_SERIALIZED_SIZE: usize = <::bebop::SliceWrapper<'raw, u8>>::MIN_SERIALIZED_SIZE
-        + <u8>::MIN_SERIALIZED_SIZE
-        + <bool>::MIN_SERIALIZED_SIZE;
+    const MIN_SERIALIZED_SIZE: usize =
+        <::bebop::SliceWrapper<'raw, u8>>::MIN_SERIALIZED_SIZE +
+        <u8>::MIN_SERIALIZED_SIZE +
+        <bool>::MIN_SERIALIZED_SIZE;
 
     #[inline]
     fn serialized_size(&self) -> usize {
-        self.address.serialized_size()
-            + self.share.serialized_size()
-            + self.verified.serialized_size()
+        self.address.serialized_size() +
+        self.share.serialized_size() +
+        self.verified.serialized_size()
     }
 
     fn _serialize_chained<W: ::std::io::Write>(&self, dest: &mut W) -> ::bebop::SeResult<usize> {
-        Ok(self.address._serialize_chained(dest)?
-            + self.share._serialize_chained(dest)?
-            + self.verified._serialize_chained(dest)?)
+        Ok(
+            self.address._serialize_chained(dest)? +
+            self.share._serialize_chained(dest)? +
+            self.verified._serialize_chained(dest)?
+        )
     }
 
     fn _deserialize_chained(raw: &'raw [u8]) -> ::bebop::DeResult<(usize, Self)> {
@@ -617,335 +668,253 @@ impl<'raw> ::bebop::SubRecord<'raw> for Creator<'raw> {
         let (read, v2) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
         i += read;
 
-        Ok((
-            i,
-            Self {
-                address: v0,
-                share: v1,
-                verified: v2,
-            },
-        ))
+        Ok((i, Self {
+            address: v0,
+            share: v1,
+            verified: v2,
+        }))
     }
 }
 
 impl<'raw> ::bebop::Record<'raw> for Creator<'raw> {}
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct Asset<'raw> {
-    pub layout: ::std::collections::HashMap<u32, Module<'raw>>,
+#[repr(u8)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum Lifecycle {
+    Invalid = 0,
+    Create = 1,
+    Transfer = 2,
+    Destroy = 3,
+    Update = 4,
+    Freeze = 5,
+    Thaw = 6,
+    Split = 7,
+    Combine = 8,
+    SupplyIncrease = 9,
+    SupplyDecrease = 10,
+    ActivateExtension = 11,
+    DeactivateExtension = 12,
 }
 
-impl<'raw> ::bebop::SubRecord<'raw> for Asset<'raw> {
-    const MIN_SERIALIZED_SIZE: usize =
-        <::std::collections::HashMap<u32, Module<'raw>>>::MIN_SERIALIZED_SIZE;
+impl ::core::convert::TryFrom<u8> for Lifecycle {
+    type Error = ::bebop::DeserializeError;
+
+    fn try_from(value: u8) -> ::bebop::DeResult<Self> {
+        match value {
+            0 => Ok(Lifecycle::Invalid),
+            1 => Ok(Lifecycle::Create),
+            2 => Ok(Lifecycle::Transfer),
+            3 => Ok(Lifecycle::Destroy),
+            4 => Ok(Lifecycle::Update),
+            5 => Ok(Lifecycle::Freeze),
+            6 => Ok(Lifecycle::Thaw),
+            7 => Ok(Lifecycle::Split),
+            8 => Ok(Lifecycle::Combine),
+            9 => Ok(Lifecycle::SupplyIncrease),
+            10 => Ok(Lifecycle::SupplyDecrease),
+            11 => Ok(Lifecycle::ActivateExtension),
+            12 => Ok(Lifecycle::DeactivateExtension),
+            d => Err(::bebop::DeserializeError::InvalidEnumDiscriminator(d.into())),
+        }
+    }
+}
+
+impl ::core::convert::From<Lifecycle> for u8 {
+    fn from(value: Lifecycle) -> Self {
+        match value {
+            Lifecycle::Invalid => 0,
+            Lifecycle::Create => 1,
+            Lifecycle::Transfer => 2,
+            Lifecycle::Destroy => 3,
+            Lifecycle::Update => 4,
+            Lifecycle::Freeze => 5,
+            Lifecycle::Thaw => 6,
+            Lifecycle::Split => 7,
+            Lifecycle::Combine => 8,
+            Lifecycle::SupplyIncrease => 9,
+            Lifecycle::SupplyDecrease => 10,
+            Lifecycle::ActivateExtension => 11,
+            Lifecycle::DeactivateExtension => 12,
+        }
+    }
+}
+
+impl ::bebop::SubRecord<'_> for Lifecycle {
+    const MIN_SERIALIZED_SIZE: usize = ::std::mem::size_of::<u8>();
+    const EXACT_SERIALIZED_SIZE: Option<usize> = Some(::std::mem::size_of::<u8>());
 
     #[inline]
-    fn serialized_size(&self) -> usize {
-        self.layout.serialized_size()
-    }
+    fn serialized_size(&self) -> usize { ::std::mem::size_of::<u8>() }
 
+    #[inline]
     fn _serialize_chained<W: ::std::io::Write>(&self, dest: &mut W) -> ::bebop::SeResult<usize> {
-        Ok(self.layout._serialize_chained(dest)?)
+        u8::from(*self)._serialize_chained(dest)
     }
 
-    fn _deserialize_chained(raw: &'raw [u8]) -> ::bebop::DeResult<(usize, Self)> {
-        let mut i = 0;
-        if raw.len() - i < Self::MIN_SERIALIZED_SIZE {
-            let missing = Self::MIN_SERIALIZED_SIZE - (raw.len() - i);
-            return Err(::bebop::DeserializeError::MoreDataExpected(missing));
-        }
-
-        let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-        i += read;
-
-        Ok((i, Self { layout: v0 }))
+    #[inline]
+    fn _deserialize_chained(raw: &[u8]) -> ::bebop::DeResult<(usize, Self)> {
+        let (n, v) = u8::_deserialize_chained(raw)?;
+        Ok((n, v.try_into()?))
     }
 }
 
-impl<'raw> ::bebop::Record<'raw> for Asset<'raw> {}
+impl ::bebop::FixedSized for Lifecycle {
+    const SERIALIZED_SIZE: usize = ::std::mem::size_of::<u8>();
+}
+
 
 #[cfg(feature = "bebop-owned-all")]
 pub mod owned {
     #![allow(warnings)]
 
-    use bebop::FixedSized as _;
-    use core::convert::TryInto as _;
-    use std::io::Write as _;
+    use ::std::io::Write as _;
+    use ::core::convert::TryInto as _;
+    use ::bebop::FixedSized as _;
 
-    pub use super::Standard;
+    pub use super::Interface;
+
+    pub use super::ModuleType;
 
     #[derive(Clone, Debug, PartialEq)]
-    pub enum Action {
+    pub enum ModuleData {
         /// An unknown type which is likely defined in a newer version of the schema.
         Unknown,
 
         /// Discriminator 1
-        Create {
-            standard: Standard,
-            layout: ::std::collections::HashMap<u32, Module>,
+        CreatorsData {
+            creators: ::std::vec::Vec<Creator>,
         },
 
         /// Discriminator 2
-        Transfer {},
-
-        /// Discriminator 3
-        Destroy {},
-
-        /// Discriminator 4
-        Update {
-            layout: ::std::collections::HashMap<u32, Module>,
-        },
-
-        /// Discriminator 5
-        Extend {},
-    }
-
-    impl<'raw> ::core::convert::From<super::Action<'raw>> for Action {
-        fn from(value: super::Action) -> Self {
-            match value {
-                super::Action::Unknown => Self::Unknown,
-                super::Action::Create {
-                    standard: _standard,
-                    layout: _layout,
-                } => Self::Create {
-                    standard: _standard,
-                    layout: _layout
-                        .into_iter()
-                        .map(|(key, value)| (key, value.into()))
-                        .collect(),
-                },
-                super::Action::Transfer {} => Self::Transfer {},
-                super::Action::Destroy {} => Self::Destroy {},
-                super::Action::Update { layout: _layout } => Self::Update {
-                    layout: _layout
-                        .into_iter()
-                        .map(|(key, value)| (key, value.into()))
-                        .collect(),
-                },
-                super::Action::Extend {} => Self::Extend {},
-            }
-        }
-    }
-    impl<'raw> ::bebop::SubRecord<'raw> for Action {
-        const MIN_SERIALIZED_SIZE: usize = ::bebop::LEN_SIZE + 1;
-
-        fn serialized_size(&self) -> usize {
-            ::bebop::LEN_SIZE
-                + 1
-                + match self {
-                    Action::Unknown => 0,
-                    Self::Create {
-                        standard: ref _standard,
-                        layout: ref _layout,
-                    } => _standard.serialized_size() + _layout.serialized_size(),
-                    Self::Transfer {} => 0,
-                    Self::Destroy {} => 0,
-                    Self::Update {
-                        layout: ref _layout,
-                    } => _layout.serialized_size(),
-                    Self::Extend {} => 0,
-                }
-        }
-
-        fn _serialize_chained<W: ::std::io::Write>(
-            &self,
-            dest: &mut W,
-        ) -> ::bebop::SeResult<usize> {
-            let size = self.serialized_size();
-            ::bebop::write_len(dest, size - ::bebop::LEN_SIZE - 1)?;
-            match self {
-                Action::Unknown => {
-                    return Err(::bebop::SerializeError::CannotSerializeUnknownUnion);
-                }
-                Self::Create {
-                    standard: ref _standard,
-                    layout: ref _layout,
-                } => {
-                    1u8._serialize_chained(dest)?;
-                    _standard._serialize_chained(dest)?;
-                    _layout._serialize_chained(dest)?;
-                }
-                Self::Transfer {} => {
-                    2u8._serialize_chained(dest)?;
-                }
-                Self::Destroy {} => {
-                    3u8._serialize_chained(dest)?;
-                }
-                Self::Update {
-                    layout: ref _layout,
-                } => {
-                    4u8._serialize_chained(dest)?;
-                    _layout._serialize_chained(dest)?;
-                }
-                Self::Extend {} => {
-                    5u8._serialize_chained(dest)?;
-                }
-            }
-            Ok(size)
-        }
-
-        fn _deserialize_chained(raw: &'raw [u8]) -> ::bebop::DeResult<(usize, Self)> {
-            let len = ::bebop::read_len(&raw)? + ::bebop::LEN_SIZE + 1;
-            let mut i = ::bebop::LEN_SIZE + 1;
-            let de = match raw[::bebop::LEN_SIZE] {
-                1 => {
-                    let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                    i += read;
-                    let (read, v1) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                    i += read;
-
-                    Action::Create {
-                        standard: v0,
-                        layout: v1,
-                    }
-                }
-                2 => Action::Transfer {},
-                3 => Action::Destroy {},
-                4 => {
-                    let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                    i += read;
-
-                    Action::Update { layout: v0 }
-                }
-                5 => Action::Extend {},
-                _ => {
-                    i = len;
-                    Action::Unknown
-                }
-            };
-            if !cfg!(feature = "unchecked") && i != len {
-                debug_assert!(i > len);
-                Err(::bebop::DeserializeError::CorruptFrame)
-            } else {
-                Ok((i, de))
-            }
-        }
-    }
-
-    impl<'raw> ::bebop::Record<'raw> for Action {}
-
-    #[derive(Clone, Debug, PartialEq)]
-    pub enum Module {
-        /// An unknown type which is likely defined in a newer version of the schema.
-        Unknown,
-
-        /// Discriminator 1
-        Ownership {
+        OwnershipData {
             model: OwnershipModel,
             owner: ::std::vec::Vec<u8>,
         },
 
-        /// Discriminator 2
-        Royalty {
+        /// Discriminator 3
+        RoyaltyData {
             royalty_percent: u8,
             model: RoyaltyModel,
             target: ::std::vec::Vec<RoyaltyTarget>,
             locked: bool,
         },
-
-        /// Discriminator 3
-        Creators {
-            creator_list: ::std::vec::Vec<Creator>,
-        },
     }
 
-    impl<'raw> ::core::convert::From<super::Module<'raw>> for Module {
-        fn from(value: super::Module) -> Self {
+    impl<'raw> ::core::convert::From<super::ModuleData<'raw>> for ModuleData {
+        fn from(value: super::ModuleData) -> Self {
             match value {
-                super::Module::Unknown => Self::Unknown,
-                super::Module::Ownership {
+                super::ModuleData::Unknown => {
+                    Self::Unknown
+                }
+                super::ModuleData::CreatorsData {
+                    creators: _creators,
+                }
+                => {
+                    Self::CreatorsData {
+                        creators: _creators.into_iter().map(|value| value.into()).collect(),
+                    }
+                }
+                super::ModuleData::OwnershipData {
                     model: _model,
                     owner: _owner,
-                } => Self::Ownership {
-                    model: _model,
-                    owner: _owner.iter().map(|value| value).collect(),
-                },
-                super::Module::Royalty {
+                }
+                => {
+                    Self::OwnershipData {
+                        model: _model,
+                        owner: _owner.iter().map(|value| value).collect(),
+                    }
+                }
+                super::ModuleData::RoyaltyData {
                     royalty_percent: _royalty_percent,
                     model: _model,
                     target: _target,
                     locked: _locked,
-                } => Self::Royalty {
-                    royalty_percent: _royalty_percent,
-                    model: _model,
-                    target: _target.into_iter().map(|value| value.into()).collect(),
-                    locked: _locked,
-                },
-                super::Module::Creators {
-                    creator_list: _creator_list,
-                } => Self::Creators {
-                    creator_list: _creator_list
-                        .into_iter()
-                        .map(|value| value.into())
-                        .collect(),
-                },
+                }
+                => {
+                    Self::RoyaltyData {
+                        royalty_percent: _royalty_percent,
+                        model: _model,
+                        target: _target.into_iter().map(|value| value.into()).collect(),
+                        locked: _locked,
+                    }
+                }
             }
         }
+
     }
-    impl<'raw> ::bebop::SubRecord<'raw> for Module {
+    impl<'raw> ::bebop::SubRecord<'raw> for ModuleData {
         const MIN_SERIALIZED_SIZE: usize = ::bebop::LEN_SIZE + 1;
 
         fn serialized_size(&self) -> usize {
-            ::bebop::LEN_SIZE
-                + 1
-                + match self {
-                    Module::Unknown => 0,
-                    Self::Ownership {
-                        model: ref _model,
-                        owner: ref _owner,
-                    } => _model.serialized_size() + _owner.serialized_size(),
-                    Self::Royalty {
-                        royalty_percent: ref _royalty_percent,
-                        model: ref _model,
-                        target: ref _target,
-                        locked: ref _locked,
-                    } => {
-                        _royalty_percent.serialized_size()
-                            + _model.serialized_size()
-                            + _target.serialized_size()
-                            + _locked.serialized_size()
-                    }
-                    Self::Creators {
-                        creator_list: ref _creator_list,
-                    } => _creator_list.serialized_size(),
-                }
-        }
-
-        fn _serialize_chained<W: ::std::io::Write>(
-            &self,
-            dest: &mut W,
-        ) -> ::bebop::SeResult<usize> {
-            let size = self.serialized_size();
-            ::bebop::write_len(dest, size - ::bebop::LEN_SIZE - 1)?;
+            ::bebop::LEN_SIZE + 1 +
             match self {
-                Module::Unknown => {
-                    return Err(::bebop::SerializeError::CannotSerializeUnknownUnion);
+                ModuleData::Unknown => {
+                    0
                 }
-                Self::Ownership {
+                Self::CreatorsData {
+                    creators: ref _creators,
+                }
+                => {
+                    _creators.serialized_size()
+                }
+                Self::OwnershipData {
                     model: ref _model,
                     owner: ref _owner,
-                } => {
-                    1u8._serialize_chained(dest)?;
-                    _model._serialize_chained(dest)?;
-                    _owner._serialize_chained(dest)?;
                 }
-                Self::Royalty {
+                => {
+                    _model.serialized_size() +
+                    _owner.serialized_size()
+                }
+                Self::RoyaltyData {
                     royalty_percent: ref _royalty_percent,
                     model: ref _model,
                     target: ref _target,
                     locked: ref _locked,
-                } => {
+                }
+                => {
+                    _royalty_percent.serialized_size() +
+                    _model.serialized_size() +
+                    _target.serialized_size() +
+                    _locked.serialized_size()
+                }
+            }
+        }
+
+        fn _serialize_chained<W: ::std::io::Write>(&self, dest: &mut W) -> ::bebop::SeResult<usize> {
+            let size = self.serialized_size();
+            ::bebop::write_len(dest, size - ::bebop::LEN_SIZE - 1)?;
+            match self {
+                ModuleData::Unknown => {
+                    return Err(::bebop::SerializeError::CannotSerializeUnknownUnion);
+                }
+                Self::CreatorsData {
+                    creators: ref _creators,
+                }
+                => {
+                    1u8._serialize_chained(dest)?;
+                    _creators._serialize_chained(dest)?;
+                }
+                Self::OwnershipData {
+                    model: ref _model,
+                    owner: ref _owner,
+                }
+                => {
                     2u8._serialize_chained(dest)?;
+                    _model._serialize_chained(dest)?;
+                    _owner._serialize_chained(dest)?;
+                }
+                Self::RoyaltyData {
+                    royalty_percent: ref _royalty_percent,
+                    model: ref _model,
+                    target: ref _target,
+                    locked: ref _locked,
+                }
+                => {
+                    3u8._serialize_chained(dest)?;
                     _royalty_percent._serialize_chained(dest)?;
                     _model._serialize_chained(dest)?;
                     _target._serialize_chained(dest)?;
                     _locked._serialize_chained(dest)?;
-                }
-                Self::Creators {
-                    creator_list: ref _creator_list,
-                } => {
-                    3u8._serialize_chained(dest)?;
-                    _creator_list._serialize_chained(dest)?;
                 }
             }
             Ok(size)
@@ -958,15 +927,23 @@ pub mod owned {
                 1 => {
                     let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
                     i += read;
+
+                    ModuleData::CreatorsData {
+                        creators: v0,
+                    }
+                }
+                2 => {
+                    let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                    i += read;
                     let (read, v1) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
                     i += read;
 
-                    Module::Ownership {
+                    ModuleData::OwnershipData {
                         model: v0,
                         owner: v1,
                     }
                 }
-                2 => {
+                3 => {
                     let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
                     i += read;
                     let (read, v1) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
@@ -976,38 +953,215 @@ pub mod owned {
                     let (read, v3) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
                     i += read;
 
-                    Module::Royalty {
+                    ModuleData::RoyaltyData {
                         royalty_percent: v0,
                         model: v1,
                         target: v2,
                         locked: v3,
                     }
                 }
-                3 => {
-                    let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                    i += read;
-
-                    Module::Creators { creator_list: v0 }
-                }
                 _ => {
                     i = len;
-                    Module::Unknown
+                    ModuleData::Unknown
                 }
             };
             if !cfg!(feature = "unchecked") && i != len {
                 debug_assert!(i > len);
                 Err(::bebop::DeserializeError::CorruptFrame)
-            } else {
+            }
+            else {
                 Ok((i, de))
+            }
+        }
+
+    }
+
+    impl<'raw> ::bebop::Record<'raw> for ModuleData {}
+
+    #[derive(Clone, Debug, PartialEq)]
+    pub struct Action {
+        pub standard: Interface,
+        pub data: ActionData,
+    }
+
+    impl<'raw> ::core::convert::From<super::Action<'raw>> for Action {
+        fn from(value: super::Action) -> Self {
+            Self {
+                standard: value.standard,
+                data: value.data.into(),
             }
         }
     }
 
-    impl<'raw> ::bebop::Record<'raw> for Module {}
+    impl<'raw> ::bebop::SubRecord<'raw> for Action {
+        const MIN_SERIALIZED_SIZE: usize =
+            <Interface>::MIN_SERIALIZED_SIZE +
+            <ActionData>::MIN_SERIALIZED_SIZE;
+
+        #[inline]
+        fn serialized_size(&self) -> usize {
+            self.standard.serialized_size() +
+            self.data.serialized_size()
+        }
+
+        fn _serialize_chained<W: ::std::io::Write>(&self, dest: &mut W) -> ::bebop::SeResult<usize> {
+            Ok(
+                self.standard._serialize_chained(dest)? +
+                self.data._serialize_chained(dest)?
+            )
+        }
+
+        fn _deserialize_chained(raw: &'raw [u8]) -> ::bebop::DeResult<(usize, Self)> {
+            let mut i = 0;
+            if raw.len() - i < Self::MIN_SERIALIZED_SIZE {
+                let missing = Self::MIN_SERIALIZED_SIZE - (raw.len() - i);
+                return Err(::bebop::DeserializeError::MoreDataExpected(missing));
+            }
+
+            let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+            i += read;
+            let (read, v1) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+            i += read;
+
+            Ok((i, Self {
+                standard: v0,
+                data: v1,
+            }))
+        }
+    }
+
+    impl<'raw> ::bebop::Record<'raw> for Action {}
+
+    #[derive(Clone, Debug, PartialEq)]
+    pub enum ActionData {
+        /// An unknown type which is likely defined in a newer version of the schema.
+        Unknown,
+
+        /// Discriminator 1
+        CreateIdentity {
+            uri: String,
+        },
+
+        /// Discriminator 2
+        Thing {
+            bill: u8,
+        },
+    }
+
+    impl<'raw> ::core::convert::From<super::ActionData<'raw>> for ActionData {
+        fn from(value: super::ActionData) -> Self {
+            match value {
+                super::ActionData::Unknown => {
+                    Self::Unknown
+                }
+                super::ActionData::CreateIdentity {
+                    uri: _uri,
+                }
+                => {
+                    Self::CreateIdentity {
+                        uri: _uri.into(),
+                    }
+                }
+                super::ActionData::Thing {
+                    bill: _bill,
+                }
+                => {
+                    Self::Thing {
+                        bill: _bill,
+                    }
+                }
+            }
+        }
+
+    }
+    impl<'raw> ::bebop::SubRecord<'raw> for ActionData {
+        const MIN_SERIALIZED_SIZE: usize = ::bebop::LEN_SIZE + 1;
+
+        fn serialized_size(&self) -> usize {
+            ::bebop::LEN_SIZE + 1 +
+            match self {
+                ActionData::Unknown => {
+                    0
+                }
+                Self::CreateIdentity {
+                    uri: ref _uri,
+                }
+                => {
+                    _uri.serialized_size()
+                }
+                Self::Thing {
+                    bill: ref _bill,
+                }
+                => {
+                    _bill.serialized_size()
+                }
+            }
+        }
+
+        fn _serialize_chained<W: ::std::io::Write>(&self, dest: &mut W) -> ::bebop::SeResult<usize> {
+            let size = self.serialized_size();
+            ::bebop::write_len(dest, size - ::bebop::LEN_SIZE - 1)?;
+            match self {
+                ActionData::Unknown => {
+                    return Err(::bebop::SerializeError::CannotSerializeUnknownUnion);
+                }
+                Self::CreateIdentity {
+                    uri: ref _uri,
+                }
+                => {
+                    1u8._serialize_chained(dest)?;
+                    _uri._serialize_chained(dest)?;
+                }
+                Self::Thing {
+                    bill: ref _bill,
+                }
+                => {
+                    2u8._serialize_chained(dest)?;
+                    _bill._serialize_chained(dest)?;
+                }
+            }
+            Ok(size)
+        }
+
+        fn _deserialize_chained(raw: &'raw [u8]) -> ::bebop::DeResult<(usize, Self)> {
+            let len = ::bebop::read_len(&raw)? + ::bebop::LEN_SIZE + 1;
+            let mut i = ::bebop::LEN_SIZE + 1;
+            let de = match raw[::bebop::LEN_SIZE] {
+                1 => {
+                    let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                    i += read;
+
+                    ActionData::CreateIdentity {
+                        uri: v0,
+                    }
+                }
+                2 => {
+                    let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                    i += read;
+
+                    ActionData::Thing {
+                        bill: v0,
+                    }
+                }
+                _ => {
+                    i = len;
+                    ActionData::Unknown
+                }
+            };
+            if !cfg!(feature = "unchecked") && i != len {
+                debug_assert!(i > len);
+                Err(::bebop::DeserializeError::CorruptFrame)
+            }
+            else {
+                Ok((i, de))
+            }
+        }
+
+    }
+
+    impl<'raw> ::bebop::Record<'raw> for ActionData {}
 
     pub use super::MAX_MODULES;
-
-    pub use super::ModuleType;
 
     pub use super::OwnershipModel;
 
@@ -1030,18 +1184,20 @@ pub mod owned {
 
     impl<'raw> ::bebop::SubRecord<'raw> for RoyaltyTarget {
         const MIN_SERIALIZED_SIZE: usize =
-            <::std::vec::Vec<u8>>::MIN_SERIALIZED_SIZE + <u8>::MIN_SERIALIZED_SIZE;
+            <::std::vec::Vec<u8>>::MIN_SERIALIZED_SIZE +
+            <u8>::MIN_SERIALIZED_SIZE;
 
         #[inline]
         fn serialized_size(&self) -> usize {
-            self.address.serialized_size() + self.share.serialized_size()
+            self.address.serialized_size() +
+            self.share.serialized_size()
         }
 
-        fn _serialize_chained<W: ::std::io::Write>(
-            &self,
-            dest: &mut W,
-        ) -> ::bebop::SeResult<usize> {
-            Ok(self.address._serialize_chained(dest)? + self.share._serialize_chained(dest)?)
+        fn _serialize_chained<W: ::std::io::Write>(&self, dest: &mut W) -> ::bebop::SeResult<usize> {
+            Ok(
+                self.address._serialize_chained(dest)? +
+                self.share._serialize_chained(dest)?
+            )
         }
 
         fn _deserialize_chained(raw: &'raw [u8]) -> ::bebop::DeResult<(usize, Self)> {
@@ -1056,13 +1212,10 @@ pub mod owned {
             let (read, v1) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
             i += read;
 
-            Ok((
-                i,
-                Self {
-                    address: v0,
-                    share: v1,
-                },
-            ))
+            Ok((i, Self {
+                address: v0,
+                share: v1,
+            }))
         }
     }
 
@@ -1086,24 +1239,24 @@ pub mod owned {
     }
 
     impl<'raw> ::bebop::SubRecord<'raw> for Creator {
-        const MIN_SERIALIZED_SIZE: usize = <::std::vec::Vec<u8>>::MIN_SERIALIZED_SIZE
-            + <u8>::MIN_SERIALIZED_SIZE
-            + <bool>::MIN_SERIALIZED_SIZE;
+        const MIN_SERIALIZED_SIZE: usize =
+            <::std::vec::Vec<u8>>::MIN_SERIALIZED_SIZE +
+            <u8>::MIN_SERIALIZED_SIZE +
+            <bool>::MIN_SERIALIZED_SIZE;
 
         #[inline]
         fn serialized_size(&self) -> usize {
-            self.address.serialized_size()
-                + self.share.serialized_size()
-                + self.verified.serialized_size()
+            self.address.serialized_size() +
+            self.share.serialized_size() +
+            self.verified.serialized_size()
         }
 
-        fn _serialize_chained<W: ::std::io::Write>(
-            &self,
-            dest: &mut W,
-        ) -> ::bebop::SeResult<usize> {
-            Ok(self.address._serialize_chained(dest)?
-                + self.share._serialize_chained(dest)?
-                + self.verified._serialize_chained(dest)?)
+        fn _serialize_chained<W: ::std::io::Write>(&self, dest: &mut W) -> ::bebop::SeResult<usize> {
+            Ok(
+                self.address._serialize_chained(dest)? +
+                self.share._serialize_chained(dest)? +
+                self.verified._serialize_chained(dest)?
+            )
         }
 
         fn _deserialize_chained(raw: &'raw [u8]) -> ::bebop::DeResult<(usize, Self)> {
@@ -1120,65 +1273,14 @@ pub mod owned {
             let (read, v2) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
             i += read;
 
-            Ok((
-                i,
-                Self {
-                    address: v0,
-                    share: v1,
-                    verified: v2,
-                },
-            ))
+            Ok((i, Self {
+                address: v0,
+                share: v1,
+                verified: v2,
+            }))
         }
     }
 
     impl<'raw> ::bebop::Record<'raw> for Creator {}
 
-    #[derive(Clone, Debug, PartialEq)]
-    pub struct Asset {
-        pub layout: ::std::collections::HashMap<u32, Module>,
-    }
-
-    impl<'raw> ::core::convert::From<super::Asset<'raw>> for Asset {
-        fn from(value: super::Asset) -> Self {
-            Self {
-                layout: value
-                    .layout
-                    .into_iter()
-                    .map(|(key, value)| (key, value.into()))
-                    .collect(),
-            }
-        }
-    }
-
-    impl<'raw> ::bebop::SubRecord<'raw> for Asset {
-        const MIN_SERIALIZED_SIZE: usize =
-            <::std::collections::HashMap<u32, Module>>::MIN_SERIALIZED_SIZE;
-
-        #[inline]
-        fn serialized_size(&self) -> usize {
-            self.layout.serialized_size()
-        }
-
-        fn _serialize_chained<W: ::std::io::Write>(
-            &self,
-            dest: &mut W,
-        ) -> ::bebop::SeResult<usize> {
-            Ok(self.layout._serialize_chained(dest)?)
-        }
-
-        fn _deserialize_chained(raw: &'raw [u8]) -> ::bebop::DeResult<(usize, Self)> {
-            let mut i = 0;
-            if raw.len() - i < Self::MIN_SERIALIZED_SIZE {
-                let missing = Self::MIN_SERIALIZED_SIZE - (raw.len() - i);
-                return Err(::bebop::DeserializeError::MoreDataExpected(missing));
-            }
-
-            let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-            i += read;
-
-            Ok((i, Self { layout: v0 }))
-        }
-    }
-
-    impl<'raw> ::bebop::Record<'raw> for Asset {}
-}
+    pub use super::Lifecycle;}
