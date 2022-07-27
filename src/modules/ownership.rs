@@ -18,6 +18,7 @@ impl ModuleProcessor for OwnershipModuleProcessor {
                     module_data: Option<ModuleDataWrapper<'raw>>,
     )
                     -> Result<(), DigitalAssetProtocolError> {
+
         let ownership_data = match module_data {
             Some(ModuleDataWrapper::Structured(d)) => Ok(d),
             _ => {

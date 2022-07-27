@@ -7,7 +7,7 @@ use solana_program::{
 use solana_program::account_info::AccountInfo;
 use solana_program::pubkey::Pubkey;
 use thiserror::Error;
-use crate::interfaces::create::CreateIdentity;
+use crate::interfaces::create::Create;
 use crate::generated::schema::{
     Action as IxAction,
     Interface,
@@ -40,7 +40,7 @@ impl<'info> Action<'info> {
                 let lifecycle = action.data;
                 let (context, pointer) = match lifecycle {
                     ActionData::CreateIdentity { uri } =>{
-                        Ok(CreateIdentity::new(accounts, uri.to_string()))
+                        Ok(Create::new(accounts, uri.to_string()))
                     }
                         ,
                     _ => Err(DigitalAssetProtocolError::InterfaceNoImpl)

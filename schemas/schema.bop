@@ -17,6 +17,7 @@ enum ModuleType: uint8 {
     Royalty = 5;
     Rights = 6;
     Extension = 7;
+    Governance = 8;
 }
 
 union ModuleData {
@@ -33,6 +34,14 @@ union ModuleData {
         RoyaltyTarget[] target;
         bool locked;
     };
+    4 -> struct GovernanceData {
+        Authority[] authorities;
+    };
+}
+
+struct Authority {
+    string[] scopes;
+    byte[] address;
 }
 
 struct Action {
@@ -41,11 +50,15 @@ struct Action {
 }
 
 union ActionData {
-    1 -> struct CreateIdentity {
+    1 -> message CreateIdentityV1 {
         string uri;
     };
-    2 -> struct Thing {
-        byte bill;
+    2 -> message CreateNFTV1 {
+        string uri;
+        OwnershipModel ownership_model;
+        RoyaltyModel royalty_model;
+        RoyaltyTarget royalty_target;
+
     };
 }
 
