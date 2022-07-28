@@ -23,6 +23,8 @@ pub type SchemaId = [u8; 16];
 pub enum Encoding {
     Borsh,
     Bincode,
+    Bebop,
+    FlatBuffer,
 }
 
 pub enum DataItem {

@@ -21,22 +21,25 @@ enum ModuleType: uint8 {
 }
 
 union ModuleData {
-    1 -> struct CreatorsData {
-        Creator[] creators;
+    1 -> message CreatorsData {
+       1-> Creator[] creators;
     };
-    2 -> struct OwnershipData {
-        OwnershipModel model;
-        byte[] owner;
+    2 -> message OwnershipData {
+        1-> OwnershipModel model;
+        2-> byte[] owner;
     };
-    3 -> struct RoyaltyData {
-        uint8 royalty_percent;
-        RoyaltyModel model;
-        RoyaltyTarget[] target;
-        bool locked;
+    3 -> message RoyaltyData {
+        1-> uint8 royalty_bp;
+        2-> RoyaltyModel model;
+        3-> RoyaltyTarget[] target;
+        4-> bool locked;
     };
-    4 -> struct GovernanceData {
-        Authority[] authorities;
+    4 -> message GovernanceData {
+        1 -> Authority[] authorities;
     };
+    5 -> message GroupingData {
+        1 ->
+    }
 }
 
 struct Authority {
@@ -50,16 +53,18 @@ struct Action {
 }
 
 union ActionData {
-    1 -> message CreateIdentityV1 {
-        string uri;
+    1 -> message NFT {
+        1 -> NFTCreate create;
     };
-    2 -> message CreateNFTV1 {
-        string uri;
-        OwnershipModel ownership_model;
-        RoyaltyModel royalty_model;
-        RoyaltyTarget royalty_target;
+}
 
-    };
+message NFTCreate {
+    1 -> string uri;
+    2 -> OwnershipModel ownership_model;
+    3 -> RoyaltyConfiguration royalty;
+    4 -> Creator[] creators;
+    5 -> bool compress;
+    6 -> Authority[] authorities;
 }
 
 const int32 MAX_MODULES = 10;
@@ -75,6 +80,12 @@ enum RoyaltyModel: uint8 {
     Address = 1;
     Fanout = 2;
     Creators = 3;
+}
+
+message RoyaltyConfiguration {
+   1-> RoyaltyModel royalty_model;
+   2-> uint16 royalty_bp;
+   3-> RoyaltyTarget royalty_target;
 }
 
 struct RoyaltyTarget {

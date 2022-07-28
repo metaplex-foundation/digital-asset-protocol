@@ -173,26 +173,34 @@ pub enum ModuleData<'raw> {
 
     /// Discriminator 1
     CreatorsData {
-        creators: ::std::vec::Vec<Creator<'raw>>,
+        /// Field 1
+        creators: ::core::option::Option<::std::vec::Vec<Creator<'raw>>>,
     },
 
     /// Discriminator 2
     OwnershipData {
-        model: OwnershipModel,
-        owner: ::bebop::SliceWrapper<'raw, u8>,
+        /// Field 1
+        model: ::core::option::Option<OwnershipModel>,
+        /// Field 2
+        owner: ::core::option::Option<::bebop::SliceWrapper<'raw, u8>>,
     },
 
     /// Discriminator 3
     RoyaltyData {
-        royalty_percent: u8,
-        model: RoyaltyModel,
-        target: ::std::vec::Vec<RoyaltyTarget<'raw>>,
-        locked: bool,
+        /// Field 1
+        royalty_bp: ::core::option::Option<u8>,
+        /// Field 2
+        model: ::core::option::Option<RoyaltyModel>,
+        /// Field 3
+        target: ::core::option::Option<::std::vec::Vec<RoyaltyTarget<'raw>>>,
+        /// Field 4
+        locked: ::core::option::Option<bool>,
     },
 
     /// Discriminator 4
     GovernanceData {
-        authorities: ::std::vec::Vec<Authority<'raw>>,
+        /// Field 1
+        authorities: ::core::option::Option<::std::vec::Vec<Authority<'raw>>>,
     },
 }
 
@@ -206,25 +214,64 @@ impl<'raw> ::bebop::SubRecord<'raw> for ModuleData<'raw> {
                 ModuleData::Unknown => 0,
                 Self::CreatorsData {
                     creators: ref _creators,
-                } => _creators.serialized_size(),
+                } => {
+                    ::bebop::LEN_SIZE
+                        + 1
+                        + _creators
+                            .as_ref()
+                            .map(|v| v.serialized_size() + 1)
+                            .unwrap_or(0)
+                }
                 Self::OwnershipData {
                     model: ref _model,
                     owner: ref _owner,
-                } => _model.serialized_size() + _owner.serialized_size(),
+                } => {
+                    ::bebop::LEN_SIZE
+                        + 1
+                        + _model
+                            .as_ref()
+                            .map(|v| v.serialized_size() + 1)
+                            .unwrap_or(0)
+                        + _owner
+                            .as_ref()
+                            .map(|v| v.serialized_size() + 1)
+                            .unwrap_or(0)
+                }
                 Self::RoyaltyData {
-                    royalty_percent: ref _royalty_percent,
+                    royalty_bp: ref _royalty_bp,
                     model: ref _model,
                     target: ref _target,
                     locked: ref _locked,
                 } => {
-                    _royalty_percent.serialized_size()
-                        + _model.serialized_size()
-                        + _target.serialized_size()
-                        + _locked.serialized_size()
+                    ::bebop::LEN_SIZE
+                        + 1
+                        + _royalty_bp
+                            .as_ref()
+                            .map(|v| v.serialized_size() + 1)
+                            .unwrap_or(0)
+                        + _model
+                            .as_ref()
+                            .map(|v| v.serialized_size() + 1)
+                            .unwrap_or(0)
+                        + _target
+                            .as_ref()
+                            .map(|v| v.serialized_size() + 1)
+                            .unwrap_or(0)
+                        + _locked
+                            .as_ref()
+                            .map(|v| v.serialized_size() + 1)
+                            .unwrap_or(0)
                 }
                 Self::GovernanceData {
                     authorities: ref _authorities,
-                } => _authorities.serialized_size(),
+                } => {
+                    ::bebop::LEN_SIZE
+                        + 1
+                        + _authorities
+                            .as_ref()
+                            .map(|v| v.serialized_size() + 1)
+                            .unwrap_or(0)
+                }
             }
     }
 
@@ -239,33 +286,65 @@ impl<'raw> ::bebop::SubRecord<'raw> for ModuleData<'raw> {
                 creators: ref _creators,
             } => {
                 1u8._serialize_chained(dest)?;
-                _creators._serialize_chained(dest)?;
+                ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                if let Some(ref v) = _creators {
+                    1u8._serialize_chained(dest)?;
+                    v._serialize_chained(dest)?;
+                }
+                0u8._serialize_chained(dest)?;
             }
             Self::OwnershipData {
                 model: ref _model,
                 owner: ref _owner,
             } => {
                 2u8._serialize_chained(dest)?;
-                _model._serialize_chained(dest)?;
-                _owner._serialize_chained(dest)?;
+                ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                if let Some(ref v) = _model {
+                    1u8._serialize_chained(dest)?;
+                    v._serialize_chained(dest)?;
+                }
+                if let Some(ref v) = _owner {
+                    2u8._serialize_chained(dest)?;
+                    v._serialize_chained(dest)?;
+                }
+                0u8._serialize_chained(dest)?;
             }
             Self::RoyaltyData {
-                royalty_percent: ref _royalty_percent,
+                royalty_bp: ref _royalty_bp,
                 model: ref _model,
                 target: ref _target,
                 locked: ref _locked,
             } => {
                 3u8._serialize_chained(dest)?;
-                _royalty_percent._serialize_chained(dest)?;
-                _model._serialize_chained(dest)?;
-                _target._serialize_chained(dest)?;
-                _locked._serialize_chained(dest)?;
+                ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                if let Some(ref v) = _royalty_bp {
+                    1u8._serialize_chained(dest)?;
+                    v._serialize_chained(dest)?;
+                }
+                if let Some(ref v) = _model {
+                    2u8._serialize_chained(dest)?;
+                    v._serialize_chained(dest)?;
+                }
+                if let Some(ref v) = _target {
+                    3u8._serialize_chained(dest)?;
+                    v._serialize_chained(dest)?;
+                }
+                if let Some(ref v) = _locked {
+                    4u8._serialize_chained(dest)?;
+                    v._serialize_chained(dest)?;
+                }
+                0u8._serialize_chained(dest)?;
             }
             Self::GovernanceData {
                 authorities: ref _authorities,
             } => {
                 4u8._serialize_chained(dest)?;
-                _authorities._serialize_chained(dest)?;
+                ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                if let Some(ref v) = _authorities {
+                    1u8._serialize_chained(dest)?;
+                    v._serialize_chained(dest)?;
+                }
+                0u8._serialize_chained(dest)?;
             }
         }
         Ok(size)
@@ -276,44 +355,292 @@ impl<'raw> ::bebop::SubRecord<'raw> for ModuleData<'raw> {
         let mut i = ::bebop::LEN_SIZE + 1;
         let de = match raw[::bebop::LEN_SIZE] {
             1 => {
-                let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                i += read;
+                let len = ::bebop::read_len(&raw[i..])? + i + ::bebop::LEN_SIZE;
+                i += ::bebop::LEN_SIZE;
 
-                ModuleData::CreatorsData { creators: v0 }
+                #[cfg(not(feature = "unchecked"))]
+                if len == 0 {
+                    return Err(::bebop::DeserializeError::CorruptFrame);
+                }
+
+                if raw.len() < len {
+                    return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+                }
+
+                let mut _creators = None;
+
+                #[cfg(not(feature = "unchecked"))]
+                let mut last = 0;
+
+                while i < len {
+                    let di = raw[i];
+
+                    #[cfg(not(feature = "unchecked"))]
+                    if di != 0 {
+                        if di < last {
+                            return Err(::bebop::DeserializeError::CorruptFrame);
+                        }
+                        last = di;
+                    }
+
+                    i += 1;
+                    match di {
+                        0 => {
+                            break;
+                        }
+                        1 => {
+                            #[cfg(not(feature = "unchecked"))]
+                            if _creators.is_some() {
+                                return Err(::bebop::DeserializeError::DuplicateMessageField);
+                            }
+                            let (read, value) =
+                                ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                            i += read;
+                            _creators = Some(value)
+                        }
+                        _ => {
+                            i = len;
+                            break;
+                        }
+                    }
+                }
+
+                if i != len {
+                    debug_assert!(i > len);
+                    return Err(::bebop::DeserializeError::CorruptFrame);
+                }
+
+                ModuleData::CreatorsData {
+                    creators: _creators,
+                }
             }
             2 => {
-                let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                i += read;
-                let (read, v1) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                i += read;
+                let len = ::bebop::read_len(&raw[i..])? + i + ::bebop::LEN_SIZE;
+                i += ::bebop::LEN_SIZE;
+
+                #[cfg(not(feature = "unchecked"))]
+                if len == 0 {
+                    return Err(::bebop::DeserializeError::CorruptFrame);
+                }
+
+                if raw.len() < len {
+                    return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+                }
+
+                let mut _model = None;
+                let mut _owner = None;
+
+                #[cfg(not(feature = "unchecked"))]
+                let mut last = 0;
+
+                while i < len {
+                    let di = raw[i];
+
+                    #[cfg(not(feature = "unchecked"))]
+                    if di != 0 {
+                        if di < last {
+                            return Err(::bebop::DeserializeError::CorruptFrame);
+                        }
+                        last = di;
+                    }
+
+                    i += 1;
+                    match di {
+                        0 => {
+                            break;
+                        }
+                        1 => {
+                            #[cfg(not(feature = "unchecked"))]
+                            if _model.is_some() {
+                                return Err(::bebop::DeserializeError::DuplicateMessageField);
+                            }
+                            let (read, value) =
+                                ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                            i += read;
+                            _model = Some(value)
+                        }
+                        2 => {
+                            #[cfg(not(feature = "unchecked"))]
+                            if _owner.is_some() {
+                                return Err(::bebop::DeserializeError::DuplicateMessageField);
+                            }
+                            let (read, value) =
+                                ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                            i += read;
+                            _owner = Some(value)
+                        }
+                        _ => {
+                            i = len;
+                            break;
+                        }
+                    }
+                }
+
+                if i != len {
+                    debug_assert!(i > len);
+                    return Err(::bebop::DeserializeError::CorruptFrame);
+                }
 
                 ModuleData::OwnershipData {
-                    model: v0,
-                    owner: v1,
+                    model: _model,
+                    owner: _owner,
                 }
             }
             3 => {
-                let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                i += read;
-                let (read, v1) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                i += read;
-                let (read, v2) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                i += read;
-                let (read, v3) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                i += read;
+                let len = ::bebop::read_len(&raw[i..])? + i + ::bebop::LEN_SIZE;
+                i += ::bebop::LEN_SIZE;
+
+                #[cfg(not(feature = "unchecked"))]
+                if len == 0 {
+                    return Err(::bebop::DeserializeError::CorruptFrame);
+                }
+
+                if raw.len() < len {
+                    return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+                }
+
+                let mut _royalty_bp = None;
+                let mut _model = None;
+                let mut _target = None;
+                let mut _locked = None;
+
+                #[cfg(not(feature = "unchecked"))]
+                let mut last = 0;
+
+                while i < len {
+                    let di = raw[i];
+
+                    #[cfg(not(feature = "unchecked"))]
+                    if di != 0 {
+                        if di < last {
+                            return Err(::bebop::DeserializeError::CorruptFrame);
+                        }
+                        last = di;
+                    }
+
+                    i += 1;
+                    match di {
+                        0 => {
+                            break;
+                        }
+                        1 => {
+                            #[cfg(not(feature = "unchecked"))]
+                            if _royalty_bp.is_some() {
+                                return Err(::bebop::DeserializeError::DuplicateMessageField);
+                            }
+                            let (read, value) =
+                                ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                            i += read;
+                            _royalty_bp = Some(value)
+                        }
+                        2 => {
+                            #[cfg(not(feature = "unchecked"))]
+                            if _model.is_some() {
+                                return Err(::bebop::DeserializeError::DuplicateMessageField);
+                            }
+                            let (read, value) =
+                                ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                            i += read;
+                            _model = Some(value)
+                        }
+                        3 => {
+                            #[cfg(not(feature = "unchecked"))]
+                            if _target.is_some() {
+                                return Err(::bebop::DeserializeError::DuplicateMessageField);
+                            }
+                            let (read, value) =
+                                ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                            i += read;
+                            _target = Some(value)
+                        }
+                        4 => {
+                            #[cfg(not(feature = "unchecked"))]
+                            if _locked.is_some() {
+                                return Err(::bebop::DeserializeError::DuplicateMessageField);
+                            }
+                            let (read, value) =
+                                ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                            i += read;
+                            _locked = Some(value)
+                        }
+                        _ => {
+                            i = len;
+                            break;
+                        }
+                    }
+                }
+
+                if i != len {
+                    debug_assert!(i > len);
+                    return Err(::bebop::DeserializeError::CorruptFrame);
+                }
 
                 ModuleData::RoyaltyData {
-                    royalty_percent: v0,
-                    model: v1,
-                    target: v2,
-                    locked: v3,
+                    royalty_bp: _royalty_bp,
+                    model: _model,
+                    target: _target,
+                    locked: _locked,
                 }
             }
             4 => {
-                let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                i += read;
+                let len = ::bebop::read_len(&raw[i..])? + i + ::bebop::LEN_SIZE;
+                i += ::bebop::LEN_SIZE;
 
-                ModuleData::GovernanceData { authorities: v0 }
+                #[cfg(not(feature = "unchecked"))]
+                if len == 0 {
+                    return Err(::bebop::DeserializeError::CorruptFrame);
+                }
+
+                if raw.len() < len {
+                    return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+                }
+
+                let mut _authorities = None;
+
+                #[cfg(not(feature = "unchecked"))]
+                let mut last = 0;
+
+                while i < len {
+                    let di = raw[i];
+
+                    #[cfg(not(feature = "unchecked"))]
+                    if di != 0 {
+                        if di < last {
+                            return Err(::bebop::DeserializeError::CorruptFrame);
+                        }
+                        last = di;
+                    }
+
+                    i += 1;
+                    match di {
+                        0 => {
+                            break;
+                        }
+                        1 => {
+                            #[cfg(not(feature = "unchecked"))]
+                            if _authorities.is_some() {
+                                return Err(::bebop::DeserializeError::DuplicateMessageField);
+                            }
+                            let (read, value) =
+                                ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                            i += read;
+                            _authorities = Some(value)
+                        }
+                        _ => {
+                            i = len;
+                            break;
+                        }
+                    }
+                }
+
+                if i != len {
+                    debug_assert!(i > len);
+                    return Err(::bebop::DeserializeError::CorruptFrame);
+                }
+
+                ModuleData::GovernanceData {
+                    authorities: _authorities,
+                }
             }
             _ => {
                 i = len;
@@ -423,10 +750,10 @@ pub enum ActionData<'raw> {
     Unknown,
 
     /// Discriminator 1
-    CreateIdentity { uri: &'raw str },
-
-    /// Discriminator 2
-    Thing { bill: u8 },
+    Nft {
+        /// Field 1
+        create: ::core::option::Option<NFTCreate<'raw>>,
+    },
 }
 
 impl<'raw> ::bebop::SubRecord<'raw> for ActionData<'raw> {
@@ -437,8 +764,16 @@ impl<'raw> ::bebop::SubRecord<'raw> for ActionData<'raw> {
             + 1
             + match self {
                 ActionData::Unknown => 0,
-                Self::CreateIdentity { uri: ref _uri } => _uri.serialized_size(),
-                Self::Thing { bill: ref _bill } => _bill.serialized_size(),
+                Self::Nft {
+                    create: ref _create,
+                } => {
+                    ::bebop::LEN_SIZE
+                        + 1
+                        + _create
+                            .as_ref()
+                            .map(|v| v.serialized_size() + 1)
+                            .unwrap_or(0)
+                }
             }
     }
 
@@ -449,13 +784,16 @@ impl<'raw> ::bebop::SubRecord<'raw> for ActionData<'raw> {
             ActionData::Unknown => {
                 return Err(::bebop::SerializeError::CannotSerializeUnknownUnion);
             }
-            Self::CreateIdentity { uri: ref _uri } => {
+            Self::Nft {
+                create: ref _create,
+            } => {
                 1u8._serialize_chained(dest)?;
-                _uri._serialize_chained(dest)?;
-            }
-            Self::Thing { bill: ref _bill } => {
-                2u8._serialize_chained(dest)?;
-                _bill._serialize_chained(dest)?;
+                ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                if let Some(ref v) = _create {
+                    1u8._serialize_chained(dest)?;
+                    v._serialize_chained(dest)?;
+                }
+                0u8._serialize_chained(dest)?;
             }
         }
         Ok(size)
@@ -466,16 +804,62 @@ impl<'raw> ::bebop::SubRecord<'raw> for ActionData<'raw> {
         let mut i = ::bebop::LEN_SIZE + 1;
         let de = match raw[::bebop::LEN_SIZE] {
             1 => {
-                let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                i += read;
+                let len = ::bebop::read_len(&raw[i..])? + i + ::bebop::LEN_SIZE;
+                i += ::bebop::LEN_SIZE;
 
-                ActionData::CreateIdentity { uri: v0 }
-            }
-            2 => {
-                let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                i += read;
+                #[cfg(not(feature = "unchecked"))]
+                if len == 0 {
+                    return Err(::bebop::DeserializeError::CorruptFrame);
+                }
 
-                ActionData::Thing { bill: v0 }
+                if raw.len() < len {
+                    return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+                }
+
+                let mut _create = None;
+
+                #[cfg(not(feature = "unchecked"))]
+                let mut last = 0;
+
+                while i < len {
+                    let di = raw[i];
+
+                    #[cfg(not(feature = "unchecked"))]
+                    if di != 0 {
+                        if di < last {
+                            return Err(::bebop::DeserializeError::CorruptFrame);
+                        }
+                        last = di;
+                    }
+
+                    i += 1;
+                    match di {
+                        0 => {
+                            break;
+                        }
+                        1 => {
+                            #[cfg(not(feature = "unchecked"))]
+                            if _create.is_some() {
+                                return Err(::bebop::DeserializeError::DuplicateMessageField);
+                            }
+                            let (read, value) =
+                                ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                            i += read;
+                            _create = Some(value)
+                        }
+                        _ => {
+                            i = len;
+                            break;
+                        }
+                    }
+                }
+
+                if i != len {
+                    debug_assert!(i > len);
+                    return Err(::bebop::DeserializeError::CorruptFrame);
+                }
+
+                ActionData::Nft { create: _create }
             }
             _ => {
                 i = len;
@@ -492,6 +876,214 @@ impl<'raw> ::bebop::SubRecord<'raw> for ActionData<'raw> {
 }
 
 impl<'raw> ::bebop::Record<'raw> for ActionData<'raw> {}
+
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct NFTCreate<'raw> {
+    /// Field 1
+    pub uri: ::core::option::Option<&'raw str>,
+    /// Field 2
+    pub ownership_model: ::core::option::Option<OwnershipModel>,
+    /// Field 3
+    pub royalty: ::core::option::Option<RoyaltyConfiguration<'raw>>,
+    /// Field 4
+    pub creators: ::core::option::Option<::std::vec::Vec<Creator<'raw>>>,
+    /// Field 5
+    pub compress: ::core::option::Option<bool>,
+    /// Field 6
+    pub authorities: ::core::option::Option<::std::vec::Vec<Authority<'raw>>>,
+}
+
+impl<'raw> ::bebop::SubRecord<'raw> for NFTCreate<'raw> {
+    const MIN_SERIALIZED_SIZE: usize = ::bebop::LEN_SIZE + 1;
+
+    #[inline]
+    fn serialized_size(&self) -> usize {
+        ::bebop::LEN_SIZE
+            + 1
+            + self
+                .uri
+                .as_ref()
+                .map(|v| v.serialized_size() + 1)
+                .unwrap_or(0)
+            + self
+                .ownership_model
+                .as_ref()
+                .map(|v| v.serialized_size() + 1)
+                .unwrap_or(0)
+            + self
+                .royalty
+                .as_ref()
+                .map(|v| v.serialized_size() + 1)
+                .unwrap_or(0)
+            + self
+                .creators
+                .as_ref()
+                .map(|v| v.serialized_size() + 1)
+                .unwrap_or(0)
+            + self
+                .compress
+                .as_ref()
+                .map(|v| v.serialized_size() + 1)
+                .unwrap_or(0)
+            + self
+                .authorities
+                .as_ref()
+                .map(|v| v.serialized_size() + 1)
+                .unwrap_or(0)
+    }
+
+    fn _serialize_chained<W: ::std::io::Write>(&self, dest: &mut W) -> ::bebop::SeResult<usize> {
+        let size = self.serialized_size();
+        ::bebop::write_len(dest, size - ::bebop::LEN_SIZE)?;
+        if let Some(ref v) = self.uri {
+            1u8._serialize_chained(dest)?;
+            v._serialize_chained(dest)?;
+        }
+        if let Some(ref v) = self.ownership_model {
+            2u8._serialize_chained(dest)?;
+            v._serialize_chained(dest)?;
+        }
+        if let Some(ref v) = self.royalty {
+            3u8._serialize_chained(dest)?;
+            v._serialize_chained(dest)?;
+        }
+        if let Some(ref v) = self.creators {
+            4u8._serialize_chained(dest)?;
+            v._serialize_chained(dest)?;
+        }
+        if let Some(ref v) = self.compress {
+            5u8._serialize_chained(dest)?;
+            v._serialize_chained(dest)?;
+        }
+        if let Some(ref v) = self.authorities {
+            6u8._serialize_chained(dest)?;
+            v._serialize_chained(dest)?;
+        }
+        0u8._serialize_chained(dest)?;
+        Ok(size)
+    }
+
+    fn _deserialize_chained(raw: &'raw [u8]) -> ::bebop::DeResult<(usize, Self)> {
+        let mut i = 0;
+        let len = ::bebop::read_len(&raw[i..])? + ::bebop::LEN_SIZE;
+        i += ::bebop::LEN_SIZE;
+
+        #[cfg(not(feature = "unchecked"))]
+        if len == 0 {
+            return Err(::bebop::DeserializeError::CorruptFrame);
+        }
+
+        if raw.len() < len {
+            return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+        }
+
+        let mut _uri = None;
+        let mut _ownership_model = None;
+        let mut _royalty = None;
+        let mut _creators = None;
+        let mut _compress = None;
+        let mut _authorities = None;
+
+        #[cfg(not(feature = "unchecked"))]
+        let mut last = 0;
+
+        while i < len {
+            let di = raw[i];
+
+            #[cfg(not(feature = "unchecked"))]
+            if di != 0 {
+                if di < last {
+                    return Err(::bebop::DeserializeError::CorruptFrame);
+                }
+                last = di;
+            }
+
+            i += 1;
+            match di {
+                0 => {
+                    break;
+                }
+                1 => {
+                    #[cfg(not(feature = "unchecked"))]
+                    if _uri.is_some() {
+                        return Err(::bebop::DeserializeError::DuplicateMessageField);
+                    }
+                    let (read, value) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                    i += read;
+                    _uri = Some(value)
+                }
+                2 => {
+                    #[cfg(not(feature = "unchecked"))]
+                    if _ownership_model.is_some() {
+                        return Err(::bebop::DeserializeError::DuplicateMessageField);
+                    }
+                    let (read, value) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                    i += read;
+                    _ownership_model = Some(value)
+                }
+                3 => {
+                    #[cfg(not(feature = "unchecked"))]
+                    if _royalty.is_some() {
+                        return Err(::bebop::DeserializeError::DuplicateMessageField);
+                    }
+                    let (read, value) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                    i += read;
+                    _royalty = Some(value)
+                }
+                4 => {
+                    #[cfg(not(feature = "unchecked"))]
+                    if _creators.is_some() {
+                        return Err(::bebop::DeserializeError::DuplicateMessageField);
+                    }
+                    let (read, value) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                    i += read;
+                    _creators = Some(value)
+                }
+                5 => {
+                    #[cfg(not(feature = "unchecked"))]
+                    if _compress.is_some() {
+                        return Err(::bebop::DeserializeError::DuplicateMessageField);
+                    }
+                    let (read, value) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                    i += read;
+                    _compress = Some(value)
+                }
+                6 => {
+                    #[cfg(not(feature = "unchecked"))]
+                    if _authorities.is_some() {
+                        return Err(::bebop::DeserializeError::DuplicateMessageField);
+                    }
+                    let (read, value) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                    i += read;
+                    _authorities = Some(value)
+                }
+                _ => {
+                    i = len;
+                    break;
+                }
+            }
+        }
+
+        if i != len {
+            debug_assert!(i > len);
+            return Err(::bebop::DeserializeError::CorruptFrame);
+        }
+
+        Ok((
+            i,
+            Self {
+                uri: _uri,
+                ownership_model: _ownership_model,
+                royalty: _royalty,
+                creators: _creators,
+                compress: _compress,
+                authorities: _authorities,
+            },
+        ))
+    }
+}
+
+impl<'raw> ::bebop::Record<'raw> for NFTCreate<'raw> {}
 
 pub const MAX_MODULES: i32 = 10;
 
@@ -613,6 +1205,148 @@ impl ::bebop::SubRecord<'_> for RoyaltyModel {
 impl ::bebop::FixedSized for RoyaltyModel {
     const SERIALIZED_SIZE: usize = ::std::mem::size_of::<u8>();
 }
+
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct RoyaltyConfiguration<'raw> {
+    /// Field 1
+    pub royalty_model: ::core::option::Option<RoyaltyModel>,
+    /// Field 2
+    pub royalty_bp: ::core::option::Option<u16>,
+    /// Field 3
+    pub royalty_target: ::core::option::Option<RoyaltyTarget<'raw>>,
+}
+
+impl<'raw> ::bebop::SubRecord<'raw> for RoyaltyConfiguration<'raw> {
+    const MIN_SERIALIZED_SIZE: usize = ::bebop::LEN_SIZE + 1;
+
+    #[inline]
+    fn serialized_size(&self) -> usize {
+        ::bebop::LEN_SIZE
+            + 1
+            + self
+                .royalty_model
+                .as_ref()
+                .map(|v| v.serialized_size() + 1)
+                .unwrap_or(0)
+            + self
+                .royalty_bp
+                .as_ref()
+                .map(|v| v.serialized_size() + 1)
+                .unwrap_or(0)
+            + self
+                .royalty_target
+                .as_ref()
+                .map(|v| v.serialized_size() + 1)
+                .unwrap_or(0)
+    }
+
+    fn _serialize_chained<W: ::std::io::Write>(&self, dest: &mut W) -> ::bebop::SeResult<usize> {
+        let size = self.serialized_size();
+        ::bebop::write_len(dest, size - ::bebop::LEN_SIZE)?;
+        if let Some(ref v) = self.royalty_model {
+            1u8._serialize_chained(dest)?;
+            v._serialize_chained(dest)?;
+        }
+        if let Some(ref v) = self.royalty_bp {
+            2u8._serialize_chained(dest)?;
+            v._serialize_chained(dest)?;
+        }
+        if let Some(ref v) = self.royalty_target {
+            3u8._serialize_chained(dest)?;
+            v._serialize_chained(dest)?;
+        }
+        0u8._serialize_chained(dest)?;
+        Ok(size)
+    }
+
+    fn _deserialize_chained(raw: &'raw [u8]) -> ::bebop::DeResult<(usize, Self)> {
+        let mut i = 0;
+        let len = ::bebop::read_len(&raw[i..])? + ::bebop::LEN_SIZE;
+        i += ::bebop::LEN_SIZE;
+
+        #[cfg(not(feature = "unchecked"))]
+        if len == 0 {
+            return Err(::bebop::DeserializeError::CorruptFrame);
+        }
+
+        if raw.len() < len {
+            return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+        }
+
+        let mut _royalty_model = None;
+        let mut _royalty_bp = None;
+        let mut _royalty_target = None;
+
+        #[cfg(not(feature = "unchecked"))]
+        let mut last = 0;
+
+        while i < len {
+            let di = raw[i];
+
+            #[cfg(not(feature = "unchecked"))]
+            if di != 0 {
+                if di < last {
+                    return Err(::bebop::DeserializeError::CorruptFrame);
+                }
+                last = di;
+            }
+
+            i += 1;
+            match di {
+                0 => {
+                    break;
+                }
+                1 => {
+                    #[cfg(not(feature = "unchecked"))]
+                    if _royalty_model.is_some() {
+                        return Err(::bebop::DeserializeError::DuplicateMessageField);
+                    }
+                    let (read, value) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                    i += read;
+                    _royalty_model = Some(value)
+                }
+                2 => {
+                    #[cfg(not(feature = "unchecked"))]
+                    if _royalty_bp.is_some() {
+                        return Err(::bebop::DeserializeError::DuplicateMessageField);
+                    }
+                    let (read, value) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                    i += read;
+                    _royalty_bp = Some(value)
+                }
+                3 => {
+                    #[cfg(not(feature = "unchecked"))]
+                    if _royalty_target.is_some() {
+                        return Err(::bebop::DeserializeError::DuplicateMessageField);
+                    }
+                    let (read, value) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                    i += read;
+                    _royalty_target = Some(value)
+                }
+                _ => {
+                    i = len;
+                    break;
+                }
+            }
+        }
+
+        if i != len {
+            debug_assert!(i > len);
+            return Err(::bebop::DeserializeError::CorruptFrame);
+        }
+
+        Ok((
+            i,
+            Self {
+                royalty_model: _royalty_model,
+                royalty_bp: _royalty_bp,
+                royalty_target: _royalty_target,
+            },
+        ))
+    }
+}
+
+impl<'raw> ::bebop::Record<'raw> for RoyaltyConfiguration<'raw> {}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct RoyaltyTarget<'raw> {
@@ -815,25 +1549,35 @@ pub mod owned {
         Unknown,
 
         /// Discriminator 1
-        CreatorsData { creators: ::std::vec::Vec<Creator> },
+        CreatorsData {
+            /// Field 1
+            creators: ::core::option::Option<::std::vec::Vec<Creator>>,
+        },
 
         /// Discriminator 2
         OwnershipData {
-            model: OwnershipModel,
-            owner: ::std::vec::Vec<u8>,
+            /// Field 1
+            model: ::core::option::Option<OwnershipModel>,
+            /// Field 2
+            owner: ::core::option::Option<::std::vec::Vec<u8>>,
         },
 
         /// Discriminator 3
         RoyaltyData {
-            royalty_percent: u8,
-            model: RoyaltyModel,
-            target: ::std::vec::Vec<RoyaltyTarget>,
-            locked: bool,
+            /// Field 1
+            royalty_bp: ::core::option::Option<u8>,
+            /// Field 2
+            model: ::core::option::Option<RoyaltyModel>,
+            /// Field 3
+            target: ::core::option::Option<::std::vec::Vec<RoyaltyTarget>>,
+            /// Field 4
+            locked: ::core::option::Option<bool>,
         },
 
         /// Discriminator 4
         GovernanceData {
-            authorities: ::std::vec::Vec<Authority>,
+            /// Field 1
+            authorities: ::core::option::Option<::std::vec::Vec<Authority>>,
         },
     }
 
@@ -844,30 +1588,33 @@ pub mod owned {
                 super::ModuleData::CreatorsData {
                     creators: _creators,
                 } => Self::CreatorsData {
-                    creators: _creators.into_iter().map(|value| value.into()).collect(),
+                    creators: _creators
+                        .map(|value| value.into_iter().map(|value| value.into()).collect()),
                 },
                 super::ModuleData::OwnershipData {
                     model: _model,
                     owner: _owner,
                 } => Self::OwnershipData {
                     model: _model,
-                    owner: _owner.iter().map(|value| value).collect(),
+                    owner: _owner.map(|value| value.iter().map(|value| value).collect()),
                 },
                 super::ModuleData::RoyaltyData {
-                    royalty_percent: _royalty_percent,
+                    royalty_bp: _royalty_bp,
                     model: _model,
                     target: _target,
                     locked: _locked,
                 } => Self::RoyaltyData {
-                    royalty_percent: _royalty_percent,
+                    royalty_bp: _royalty_bp,
                     model: _model,
-                    target: _target.into_iter().map(|value| value.into()).collect(),
+                    target: _target
+                        .map(|value| value.into_iter().map(|value| value.into()).collect()),
                     locked: _locked,
                 },
                 super::ModuleData::GovernanceData {
                     authorities: _authorities,
                 } => Self::GovernanceData {
-                    authorities: _authorities.into_iter().map(|value| value.into()).collect(),
+                    authorities: _authorities
+                        .map(|value| value.into_iter().map(|value| value.into()).collect()),
                 },
             }
         }
@@ -882,25 +1629,64 @@ pub mod owned {
                     ModuleData::Unknown => 0,
                     Self::CreatorsData {
                         creators: ref _creators,
-                    } => _creators.serialized_size(),
+                    } => {
+                        ::bebop::LEN_SIZE
+                            + 1
+                            + _creators
+                                .as_ref()
+                                .map(|v| v.serialized_size() + 1)
+                                .unwrap_or(0)
+                    }
                     Self::OwnershipData {
                         model: ref _model,
                         owner: ref _owner,
-                    } => _model.serialized_size() + _owner.serialized_size(),
+                    } => {
+                        ::bebop::LEN_SIZE
+                            + 1
+                            + _model
+                                .as_ref()
+                                .map(|v| v.serialized_size() + 1)
+                                .unwrap_or(0)
+                            + _owner
+                                .as_ref()
+                                .map(|v| v.serialized_size() + 1)
+                                .unwrap_or(0)
+                    }
                     Self::RoyaltyData {
-                        royalty_percent: ref _royalty_percent,
+                        royalty_bp: ref _royalty_bp,
                         model: ref _model,
                         target: ref _target,
                         locked: ref _locked,
                     } => {
-                        _royalty_percent.serialized_size()
-                            + _model.serialized_size()
-                            + _target.serialized_size()
-                            + _locked.serialized_size()
+                        ::bebop::LEN_SIZE
+                            + 1
+                            + _royalty_bp
+                                .as_ref()
+                                .map(|v| v.serialized_size() + 1)
+                                .unwrap_or(0)
+                            + _model
+                                .as_ref()
+                                .map(|v| v.serialized_size() + 1)
+                                .unwrap_or(0)
+                            + _target
+                                .as_ref()
+                                .map(|v| v.serialized_size() + 1)
+                                .unwrap_or(0)
+                            + _locked
+                                .as_ref()
+                                .map(|v| v.serialized_size() + 1)
+                                .unwrap_or(0)
                     }
                     Self::GovernanceData {
                         authorities: ref _authorities,
-                    } => _authorities.serialized_size(),
+                    } => {
+                        ::bebop::LEN_SIZE
+                            + 1
+                            + _authorities
+                                .as_ref()
+                                .map(|v| v.serialized_size() + 1)
+                                .unwrap_or(0)
+                    }
                 }
         }
 
@@ -918,33 +1704,65 @@ pub mod owned {
                     creators: ref _creators,
                 } => {
                     1u8._serialize_chained(dest)?;
-                    _creators._serialize_chained(dest)?;
+                    ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                    if let Some(ref v) = _creators {
+                        1u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    0u8._serialize_chained(dest)?;
                 }
                 Self::OwnershipData {
                     model: ref _model,
                     owner: ref _owner,
                 } => {
                     2u8._serialize_chained(dest)?;
-                    _model._serialize_chained(dest)?;
-                    _owner._serialize_chained(dest)?;
+                    ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                    if let Some(ref v) = _model {
+                        1u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    if let Some(ref v) = _owner {
+                        2u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    0u8._serialize_chained(dest)?;
                 }
                 Self::RoyaltyData {
-                    royalty_percent: ref _royalty_percent,
+                    royalty_bp: ref _royalty_bp,
                     model: ref _model,
                     target: ref _target,
                     locked: ref _locked,
                 } => {
                     3u8._serialize_chained(dest)?;
-                    _royalty_percent._serialize_chained(dest)?;
-                    _model._serialize_chained(dest)?;
-                    _target._serialize_chained(dest)?;
-                    _locked._serialize_chained(dest)?;
+                    ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                    if let Some(ref v) = _royalty_bp {
+                        1u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    if let Some(ref v) = _model {
+                        2u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    if let Some(ref v) = _target {
+                        3u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    if let Some(ref v) = _locked {
+                        4u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    0u8._serialize_chained(dest)?;
                 }
                 Self::GovernanceData {
                     authorities: ref _authorities,
                 } => {
                     4u8._serialize_chained(dest)?;
-                    _authorities._serialize_chained(dest)?;
+                    ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                    if let Some(ref v) = _authorities {
+                        1u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    0u8._serialize_chained(dest)?;
                 }
             }
             Ok(size)
@@ -955,44 +1773,292 @@ pub mod owned {
             let mut i = ::bebop::LEN_SIZE + 1;
             let de = match raw[::bebop::LEN_SIZE] {
                 1 => {
-                    let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                    i += read;
+                    let len = ::bebop::read_len(&raw[i..])? + i + ::bebop::LEN_SIZE;
+                    i += ::bebop::LEN_SIZE;
 
-                    ModuleData::CreatorsData { creators: v0 }
+                    #[cfg(not(feature = "unchecked"))]
+                    if len == 0 {
+                        return Err(::bebop::DeserializeError::CorruptFrame);
+                    }
+
+                    if raw.len() < len {
+                        return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+                    }
+
+                    let mut _creators = None;
+
+                    #[cfg(not(feature = "unchecked"))]
+                    let mut last = 0;
+
+                    while i < len {
+                        let di = raw[i];
+
+                        #[cfg(not(feature = "unchecked"))]
+                        if di != 0 {
+                            if di < last {
+                                return Err(::bebop::DeserializeError::CorruptFrame);
+                            }
+                            last = di;
+                        }
+
+                        i += 1;
+                        match di {
+                            0 => {
+                                break;
+                            }
+                            1 => {
+                                #[cfg(not(feature = "unchecked"))]
+                                if _creators.is_some() {
+                                    return Err(::bebop::DeserializeError::DuplicateMessageField);
+                                }
+                                let (read, value) =
+                                    ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                                i += read;
+                                _creators = Some(value)
+                            }
+                            _ => {
+                                i = len;
+                                break;
+                            }
+                        }
+                    }
+
+                    if i != len {
+                        debug_assert!(i > len);
+                        return Err(::bebop::DeserializeError::CorruptFrame);
+                    }
+
+                    ModuleData::CreatorsData {
+                        creators: _creators,
+                    }
                 }
                 2 => {
-                    let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                    i += read;
-                    let (read, v1) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                    i += read;
+                    let len = ::bebop::read_len(&raw[i..])? + i + ::bebop::LEN_SIZE;
+                    i += ::bebop::LEN_SIZE;
+
+                    #[cfg(not(feature = "unchecked"))]
+                    if len == 0 {
+                        return Err(::bebop::DeserializeError::CorruptFrame);
+                    }
+
+                    if raw.len() < len {
+                        return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+                    }
+
+                    let mut _model = None;
+                    let mut _owner = None;
+
+                    #[cfg(not(feature = "unchecked"))]
+                    let mut last = 0;
+
+                    while i < len {
+                        let di = raw[i];
+
+                        #[cfg(not(feature = "unchecked"))]
+                        if di != 0 {
+                            if di < last {
+                                return Err(::bebop::DeserializeError::CorruptFrame);
+                            }
+                            last = di;
+                        }
+
+                        i += 1;
+                        match di {
+                            0 => {
+                                break;
+                            }
+                            1 => {
+                                #[cfg(not(feature = "unchecked"))]
+                                if _model.is_some() {
+                                    return Err(::bebop::DeserializeError::DuplicateMessageField);
+                                }
+                                let (read, value) =
+                                    ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                                i += read;
+                                _model = Some(value)
+                            }
+                            2 => {
+                                #[cfg(not(feature = "unchecked"))]
+                                if _owner.is_some() {
+                                    return Err(::bebop::DeserializeError::DuplicateMessageField);
+                                }
+                                let (read, value) =
+                                    ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                                i += read;
+                                _owner = Some(value)
+                            }
+                            _ => {
+                                i = len;
+                                break;
+                            }
+                        }
+                    }
+
+                    if i != len {
+                        debug_assert!(i > len);
+                        return Err(::bebop::DeserializeError::CorruptFrame);
+                    }
 
                     ModuleData::OwnershipData {
-                        model: v0,
-                        owner: v1,
+                        model: _model,
+                        owner: _owner,
                     }
                 }
                 3 => {
-                    let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                    i += read;
-                    let (read, v1) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                    i += read;
-                    let (read, v2) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                    i += read;
-                    let (read, v3) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                    i += read;
+                    let len = ::bebop::read_len(&raw[i..])? + i + ::bebop::LEN_SIZE;
+                    i += ::bebop::LEN_SIZE;
+
+                    #[cfg(not(feature = "unchecked"))]
+                    if len == 0 {
+                        return Err(::bebop::DeserializeError::CorruptFrame);
+                    }
+
+                    if raw.len() < len {
+                        return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+                    }
+
+                    let mut _royalty_bp = None;
+                    let mut _model = None;
+                    let mut _target = None;
+                    let mut _locked = None;
+
+                    #[cfg(not(feature = "unchecked"))]
+                    let mut last = 0;
+
+                    while i < len {
+                        let di = raw[i];
+
+                        #[cfg(not(feature = "unchecked"))]
+                        if di != 0 {
+                            if di < last {
+                                return Err(::bebop::DeserializeError::CorruptFrame);
+                            }
+                            last = di;
+                        }
+
+                        i += 1;
+                        match di {
+                            0 => {
+                                break;
+                            }
+                            1 => {
+                                #[cfg(not(feature = "unchecked"))]
+                                if _royalty_bp.is_some() {
+                                    return Err(::bebop::DeserializeError::DuplicateMessageField);
+                                }
+                                let (read, value) =
+                                    ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                                i += read;
+                                _royalty_bp = Some(value)
+                            }
+                            2 => {
+                                #[cfg(not(feature = "unchecked"))]
+                                if _model.is_some() {
+                                    return Err(::bebop::DeserializeError::DuplicateMessageField);
+                                }
+                                let (read, value) =
+                                    ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                                i += read;
+                                _model = Some(value)
+                            }
+                            3 => {
+                                #[cfg(not(feature = "unchecked"))]
+                                if _target.is_some() {
+                                    return Err(::bebop::DeserializeError::DuplicateMessageField);
+                                }
+                                let (read, value) =
+                                    ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                                i += read;
+                                _target = Some(value)
+                            }
+                            4 => {
+                                #[cfg(not(feature = "unchecked"))]
+                                if _locked.is_some() {
+                                    return Err(::bebop::DeserializeError::DuplicateMessageField);
+                                }
+                                let (read, value) =
+                                    ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                                i += read;
+                                _locked = Some(value)
+                            }
+                            _ => {
+                                i = len;
+                                break;
+                            }
+                        }
+                    }
+
+                    if i != len {
+                        debug_assert!(i > len);
+                        return Err(::bebop::DeserializeError::CorruptFrame);
+                    }
 
                     ModuleData::RoyaltyData {
-                        royalty_percent: v0,
-                        model: v1,
-                        target: v2,
-                        locked: v3,
+                        royalty_bp: _royalty_bp,
+                        model: _model,
+                        target: _target,
+                        locked: _locked,
                     }
                 }
                 4 => {
-                    let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                    i += read;
+                    let len = ::bebop::read_len(&raw[i..])? + i + ::bebop::LEN_SIZE;
+                    i += ::bebop::LEN_SIZE;
 
-                    ModuleData::GovernanceData { authorities: v0 }
+                    #[cfg(not(feature = "unchecked"))]
+                    if len == 0 {
+                        return Err(::bebop::DeserializeError::CorruptFrame);
+                    }
+
+                    if raw.len() < len {
+                        return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+                    }
+
+                    let mut _authorities = None;
+
+                    #[cfg(not(feature = "unchecked"))]
+                    let mut last = 0;
+
+                    while i < len {
+                        let di = raw[i];
+
+                        #[cfg(not(feature = "unchecked"))]
+                        if di != 0 {
+                            if di < last {
+                                return Err(::bebop::DeserializeError::CorruptFrame);
+                            }
+                            last = di;
+                        }
+
+                        i += 1;
+                        match di {
+                            0 => {
+                                break;
+                            }
+                            1 => {
+                                #[cfg(not(feature = "unchecked"))]
+                                if _authorities.is_some() {
+                                    return Err(::bebop::DeserializeError::DuplicateMessageField);
+                                }
+                                let (read, value) =
+                                    ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                                i += read;
+                                _authorities = Some(value)
+                            }
+                            _ => {
+                                i = len;
+                                break;
+                            }
+                        }
+                    }
+
+                    if i != len {
+                        debug_assert!(i > len);
+                        return Err(::bebop::DeserializeError::CorruptFrame);
+                    }
+
+                    ModuleData::GovernanceData {
+                        authorities: _authorities,
+                    }
                 }
                 _ => {
                     i = len;
@@ -1126,20 +2192,19 @@ pub mod owned {
         Unknown,
 
         /// Discriminator 1
-        CreateIdentity { uri: String },
-
-        /// Discriminator 2
-        Thing { bill: u8 },
+        Nft {
+            /// Field 1
+            create: ::core::option::Option<NFTCreate>,
+        },
     }
 
     impl<'raw> ::core::convert::From<super::ActionData<'raw>> for ActionData {
         fn from(value: super::ActionData) -> Self {
             match value {
                 super::ActionData::Unknown => Self::Unknown,
-                super::ActionData::CreateIdentity { uri: _uri } => {
-                    Self::CreateIdentity { uri: _uri.into() }
-                }
-                super::ActionData::Thing { bill: _bill } => Self::Thing { bill: _bill },
+                super::ActionData::Nft { create: _create } => Self::Nft {
+                    create: _create.map(|value| value.into()),
+                },
             }
         }
     }
@@ -1151,8 +2216,16 @@ pub mod owned {
                 + 1
                 + match self {
                     ActionData::Unknown => 0,
-                    Self::CreateIdentity { uri: ref _uri } => _uri.serialized_size(),
-                    Self::Thing { bill: ref _bill } => _bill.serialized_size(),
+                    Self::Nft {
+                        create: ref _create,
+                    } => {
+                        ::bebop::LEN_SIZE
+                            + 1
+                            + _create
+                                .as_ref()
+                                .map(|v| v.serialized_size() + 1)
+                                .unwrap_or(0)
+                    }
                 }
         }
 
@@ -1166,13 +2239,16 @@ pub mod owned {
                 ActionData::Unknown => {
                     return Err(::bebop::SerializeError::CannotSerializeUnknownUnion);
                 }
-                Self::CreateIdentity { uri: ref _uri } => {
+                Self::Nft {
+                    create: ref _create,
+                } => {
                     1u8._serialize_chained(dest)?;
-                    _uri._serialize_chained(dest)?;
-                }
-                Self::Thing { bill: ref _bill } => {
-                    2u8._serialize_chained(dest)?;
-                    _bill._serialize_chained(dest)?;
+                    ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                    if let Some(ref v) = _create {
+                        1u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    0u8._serialize_chained(dest)?;
                 }
             }
             Ok(size)
@@ -1183,16 +2259,62 @@ pub mod owned {
             let mut i = ::bebop::LEN_SIZE + 1;
             let de = match raw[::bebop::LEN_SIZE] {
                 1 => {
-                    let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                    i += read;
+                    let len = ::bebop::read_len(&raw[i..])? + i + ::bebop::LEN_SIZE;
+                    i += ::bebop::LEN_SIZE;
 
-                    ActionData::CreateIdentity { uri: v0 }
-                }
-                2 => {
-                    let (read, v0) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
-                    i += read;
+                    #[cfg(not(feature = "unchecked"))]
+                    if len == 0 {
+                        return Err(::bebop::DeserializeError::CorruptFrame);
+                    }
 
-                    ActionData::Thing { bill: v0 }
+                    if raw.len() < len {
+                        return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+                    }
+
+                    let mut _create = None;
+
+                    #[cfg(not(feature = "unchecked"))]
+                    let mut last = 0;
+
+                    while i < len {
+                        let di = raw[i];
+
+                        #[cfg(not(feature = "unchecked"))]
+                        if di != 0 {
+                            if di < last {
+                                return Err(::bebop::DeserializeError::CorruptFrame);
+                            }
+                            last = di;
+                        }
+
+                        i += 1;
+                        match di {
+                            0 => {
+                                break;
+                            }
+                            1 => {
+                                #[cfg(not(feature = "unchecked"))]
+                                if _create.is_some() {
+                                    return Err(::bebop::DeserializeError::DuplicateMessageField);
+                                }
+                                let (read, value) =
+                                    ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                                i += read;
+                                _create = Some(value)
+                            }
+                            _ => {
+                                i = len;
+                                break;
+                            }
+                        }
+                    }
+
+                    if i != len {
+                        debug_assert!(i > len);
+                        return Err(::bebop::DeserializeError::CorruptFrame);
+                    }
+
+                    ActionData::Nft { create: _create }
                 }
                 _ => {
                     i = len;
@@ -1210,11 +2332,394 @@ pub mod owned {
 
     impl<'raw> ::bebop::Record<'raw> for ActionData {}
 
+    #[derive(Clone, Debug, PartialEq, Default)]
+    pub struct NFTCreate {
+        /// Field 1
+        pub uri: ::core::option::Option<String>,
+        /// Field 2
+        pub ownership_model: ::core::option::Option<OwnershipModel>,
+        /// Field 3
+        pub royalty: ::core::option::Option<RoyaltyConfiguration>,
+        /// Field 4
+        pub creators: ::core::option::Option<::std::vec::Vec<Creator>>,
+        /// Field 5
+        pub compress: ::core::option::Option<bool>,
+        /// Field 6
+        pub authorities: ::core::option::Option<::std::vec::Vec<Authority>>,
+    }
+
+    impl<'raw> ::core::convert::From<super::NFTCreate<'raw>> for NFTCreate {
+        fn from(value: super::NFTCreate) -> Self {
+            Self {
+                uri: value.uri.map(|value| value.into()),
+                ownership_model: value.ownership_model,
+                royalty: value.royalty.map(|value| value.into()),
+                creators: value
+                    .creators
+                    .map(|value| value.into_iter().map(|value| value.into()).collect()),
+                compress: value.compress,
+                authorities: value
+                    .authorities
+                    .map(|value| value.into_iter().map(|value| value.into()).collect()),
+            }
+        }
+    }
+
+    impl<'raw> ::bebop::SubRecord<'raw> for NFTCreate {
+        const MIN_SERIALIZED_SIZE: usize = ::bebop::LEN_SIZE + 1;
+
+        #[inline]
+        fn serialized_size(&self) -> usize {
+            ::bebop::LEN_SIZE
+                + 1
+                + self
+                    .uri
+                    .as_ref()
+                    .map(|v| v.serialized_size() + 1)
+                    .unwrap_or(0)
+                + self
+                    .ownership_model
+                    .as_ref()
+                    .map(|v| v.serialized_size() + 1)
+                    .unwrap_or(0)
+                + self
+                    .royalty
+                    .as_ref()
+                    .map(|v| v.serialized_size() + 1)
+                    .unwrap_or(0)
+                + self
+                    .creators
+                    .as_ref()
+                    .map(|v| v.serialized_size() + 1)
+                    .unwrap_or(0)
+                + self
+                    .compress
+                    .as_ref()
+                    .map(|v| v.serialized_size() + 1)
+                    .unwrap_or(0)
+                + self
+                    .authorities
+                    .as_ref()
+                    .map(|v| v.serialized_size() + 1)
+                    .unwrap_or(0)
+        }
+
+        fn _serialize_chained<W: ::std::io::Write>(
+            &self,
+            dest: &mut W,
+        ) -> ::bebop::SeResult<usize> {
+            let size = self.serialized_size();
+            ::bebop::write_len(dest, size - ::bebop::LEN_SIZE)?;
+            if let Some(ref v) = self.uri {
+                1u8._serialize_chained(dest)?;
+                v._serialize_chained(dest)?;
+            }
+            if let Some(ref v) = self.ownership_model {
+                2u8._serialize_chained(dest)?;
+                v._serialize_chained(dest)?;
+            }
+            if let Some(ref v) = self.royalty {
+                3u8._serialize_chained(dest)?;
+                v._serialize_chained(dest)?;
+            }
+            if let Some(ref v) = self.creators {
+                4u8._serialize_chained(dest)?;
+                v._serialize_chained(dest)?;
+            }
+            if let Some(ref v) = self.compress {
+                5u8._serialize_chained(dest)?;
+                v._serialize_chained(dest)?;
+            }
+            if let Some(ref v) = self.authorities {
+                6u8._serialize_chained(dest)?;
+                v._serialize_chained(dest)?;
+            }
+            0u8._serialize_chained(dest)?;
+            Ok(size)
+        }
+
+        fn _deserialize_chained(raw: &'raw [u8]) -> ::bebop::DeResult<(usize, Self)> {
+            let mut i = 0;
+            let len = ::bebop::read_len(&raw[i..])? + ::bebop::LEN_SIZE;
+            i += ::bebop::LEN_SIZE;
+
+            #[cfg(not(feature = "unchecked"))]
+            if len == 0 {
+                return Err(::bebop::DeserializeError::CorruptFrame);
+            }
+
+            if raw.len() < len {
+                return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+            }
+
+            let mut _uri = None;
+            let mut _ownership_model = None;
+            let mut _royalty = None;
+            let mut _creators = None;
+            let mut _compress = None;
+            let mut _authorities = None;
+
+            #[cfg(not(feature = "unchecked"))]
+            let mut last = 0;
+
+            while i < len {
+                let di = raw[i];
+
+                #[cfg(not(feature = "unchecked"))]
+                if di != 0 {
+                    if di < last {
+                        return Err(::bebop::DeserializeError::CorruptFrame);
+                    }
+                    last = di;
+                }
+
+                i += 1;
+                match di {
+                    0 => {
+                        break;
+                    }
+                    1 => {
+                        #[cfg(not(feature = "unchecked"))]
+                        if _uri.is_some() {
+                            return Err(::bebop::DeserializeError::DuplicateMessageField);
+                        }
+                        let (read, value) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                        i += read;
+                        _uri = Some(value)
+                    }
+                    2 => {
+                        #[cfg(not(feature = "unchecked"))]
+                        if _ownership_model.is_some() {
+                            return Err(::bebop::DeserializeError::DuplicateMessageField);
+                        }
+                        let (read, value) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                        i += read;
+                        _ownership_model = Some(value)
+                    }
+                    3 => {
+                        #[cfg(not(feature = "unchecked"))]
+                        if _royalty.is_some() {
+                            return Err(::bebop::DeserializeError::DuplicateMessageField);
+                        }
+                        let (read, value) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                        i += read;
+                        _royalty = Some(value)
+                    }
+                    4 => {
+                        #[cfg(not(feature = "unchecked"))]
+                        if _creators.is_some() {
+                            return Err(::bebop::DeserializeError::DuplicateMessageField);
+                        }
+                        let (read, value) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                        i += read;
+                        _creators = Some(value)
+                    }
+                    5 => {
+                        #[cfg(not(feature = "unchecked"))]
+                        if _compress.is_some() {
+                            return Err(::bebop::DeserializeError::DuplicateMessageField);
+                        }
+                        let (read, value) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                        i += read;
+                        _compress = Some(value)
+                    }
+                    6 => {
+                        #[cfg(not(feature = "unchecked"))]
+                        if _authorities.is_some() {
+                            return Err(::bebop::DeserializeError::DuplicateMessageField);
+                        }
+                        let (read, value) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                        i += read;
+                        _authorities = Some(value)
+                    }
+                    _ => {
+                        i = len;
+                        break;
+                    }
+                }
+            }
+
+            if i != len {
+                debug_assert!(i > len);
+                return Err(::bebop::DeserializeError::CorruptFrame);
+            }
+
+            Ok((
+                i,
+                Self {
+                    uri: _uri,
+                    ownership_model: _ownership_model,
+                    royalty: _royalty,
+                    creators: _creators,
+                    compress: _compress,
+                    authorities: _authorities,
+                },
+            ))
+        }
+    }
+
+    impl<'raw> ::bebop::Record<'raw> for NFTCreate {}
+
     pub use super::MAX_MODULES;
 
     pub use super::OwnershipModel;
 
     pub use super::RoyaltyModel;
+
+    #[derive(Clone, Debug, PartialEq, Default)]
+    pub struct RoyaltyConfiguration {
+        /// Field 1
+        pub royalty_model: ::core::option::Option<RoyaltyModel>,
+        /// Field 2
+        pub royalty_bp: ::core::option::Option<u16>,
+        /// Field 3
+        pub royalty_target: ::core::option::Option<RoyaltyTarget>,
+    }
+
+    impl<'raw> ::core::convert::From<super::RoyaltyConfiguration<'raw>> for RoyaltyConfiguration {
+        fn from(value: super::RoyaltyConfiguration) -> Self {
+            Self {
+                royalty_model: value.royalty_model,
+                royalty_bp: value.royalty_bp,
+                royalty_target: value.royalty_target.map(|value| value.into()),
+            }
+        }
+    }
+
+    impl<'raw> ::bebop::SubRecord<'raw> for RoyaltyConfiguration {
+        const MIN_SERIALIZED_SIZE: usize = ::bebop::LEN_SIZE + 1;
+
+        #[inline]
+        fn serialized_size(&self) -> usize {
+            ::bebop::LEN_SIZE
+                + 1
+                + self
+                    .royalty_model
+                    .as_ref()
+                    .map(|v| v.serialized_size() + 1)
+                    .unwrap_or(0)
+                + self
+                    .royalty_bp
+                    .as_ref()
+                    .map(|v| v.serialized_size() + 1)
+                    .unwrap_or(0)
+                + self
+                    .royalty_target
+                    .as_ref()
+                    .map(|v| v.serialized_size() + 1)
+                    .unwrap_or(0)
+        }
+
+        fn _serialize_chained<W: ::std::io::Write>(
+            &self,
+            dest: &mut W,
+        ) -> ::bebop::SeResult<usize> {
+            let size = self.serialized_size();
+            ::bebop::write_len(dest, size - ::bebop::LEN_SIZE)?;
+            if let Some(ref v) = self.royalty_model {
+                1u8._serialize_chained(dest)?;
+                v._serialize_chained(dest)?;
+            }
+            if let Some(ref v) = self.royalty_bp {
+                2u8._serialize_chained(dest)?;
+                v._serialize_chained(dest)?;
+            }
+            if let Some(ref v) = self.royalty_target {
+                3u8._serialize_chained(dest)?;
+                v._serialize_chained(dest)?;
+            }
+            0u8._serialize_chained(dest)?;
+            Ok(size)
+        }
+
+        fn _deserialize_chained(raw: &'raw [u8]) -> ::bebop::DeResult<(usize, Self)> {
+            let mut i = 0;
+            let len = ::bebop::read_len(&raw[i..])? + ::bebop::LEN_SIZE;
+            i += ::bebop::LEN_SIZE;
+
+            #[cfg(not(feature = "unchecked"))]
+            if len == 0 {
+                return Err(::bebop::DeserializeError::CorruptFrame);
+            }
+
+            if raw.len() < len {
+                return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+            }
+
+            let mut _royalty_model = None;
+            let mut _royalty_bp = None;
+            let mut _royalty_target = None;
+
+            #[cfg(not(feature = "unchecked"))]
+            let mut last = 0;
+
+            while i < len {
+                let di = raw[i];
+
+                #[cfg(not(feature = "unchecked"))]
+                if di != 0 {
+                    if di < last {
+                        return Err(::bebop::DeserializeError::CorruptFrame);
+                    }
+                    last = di;
+                }
+
+                i += 1;
+                match di {
+                    0 => {
+                        break;
+                    }
+                    1 => {
+                        #[cfg(not(feature = "unchecked"))]
+                        if _royalty_model.is_some() {
+                            return Err(::bebop::DeserializeError::DuplicateMessageField);
+                        }
+                        let (read, value) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                        i += read;
+                        _royalty_model = Some(value)
+                    }
+                    2 => {
+                        #[cfg(not(feature = "unchecked"))]
+                        if _royalty_bp.is_some() {
+                            return Err(::bebop::DeserializeError::DuplicateMessageField);
+                        }
+                        let (read, value) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                        i += read;
+                        _royalty_bp = Some(value)
+                    }
+                    3 => {
+                        #[cfg(not(feature = "unchecked"))]
+                        if _royalty_target.is_some() {
+                            return Err(::bebop::DeserializeError::DuplicateMessageField);
+                        }
+                        let (read, value) = ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                        i += read;
+                        _royalty_target = Some(value)
+                    }
+                    _ => {
+                        i = len;
+                        break;
+                    }
+                }
+            }
+
+            if i != len {
+                debug_assert!(i > len);
+                return Err(::bebop::DeserializeError::CorruptFrame);
+            }
+
+            Ok((
+                i,
+                Self {
+                    royalty_model: _royalty_model,
+                    royalty_bp: _royalty_bp,
+                    royalty_target: _royalty_target,
+                },
+            ))
+        }
+    }
+
+    impl<'raw> ::bebop::Record<'raw> for RoyaltyConfiguration {}
 
     #[derive(Clone, Debug, PartialEq)]
     pub struct RoyaltyTarget {
