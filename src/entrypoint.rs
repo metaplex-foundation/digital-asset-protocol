@@ -13,10 +13,10 @@ use solana_program::{
 use thiserror::Error;
 
 entrypoint!(process_instruction);
-fn process_instruction(
+fn process_instruction<'info>(
     program_id: &Pubkey,
-    accounts: &[AccountInfo],
-    instruction_data: &[u8],
+    accounts: &'info [AccountInfo<'info>],
+    instruction_data: &'info [u8],
 ) -> ProgramResult {
     let mut action = Action::from_instruction(
         program_id,

@@ -47,3 +47,22 @@ pub fn assert_empty(
         Err(err.into())
     }
 }
+
+#[macro_export]
+macro_rules! required_field {
+    ($e:expr) => { $e.ok_or(DigitalAssetProtocolError::ActionError(format!("{} Must be present", stringify!($e)))) }
+}
+
+pub fn validate_creator_shares(creators_list: &[AccountInfo], share_list: &[u8]) -> Result<(), DigitalAssetProtocolError> {
+    if creators_list.len() != share_list.len() {
+       return Err(DigitalAssetProtocolError::ActionError("Shares and Creators dont match".to_string()));
+    }
+    let mut total: u8 = 0;
+    for (share) in share_list.iter() {
+        total += share;
+    }
+    if total != 100 {
+        return Err(DigitalAssetProtocolError::ActionError("Shares must equal 100".to_string()));
+    }
+    Ok(())
+}

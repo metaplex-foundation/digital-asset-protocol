@@ -19,10 +19,10 @@ crate-type = ["cdylib", "lib"]
 
 [dependencies]
 lazy_static = "1.4.0"
-solana-program = "1.10.9"
+solana-program = "1.10.33"
 borsh = "0.9.3"
 spl-token = { version ="3.3.0", features = ["no-entrypoint"] }
-shank="0.0.2"
+shank= "0.0.4"
 thiserror = "~1.0"
 flatbuffers = "2.1.2"
 num-traits = "~0.2"
@@ -31,8 +31,8 @@ bebop = "2.4.2"
 
 
 [dev-dependencies]
-solana-sdk = "1.10.9"
-solana-program-test = "1.10.9"
+solana-sdk = "1.10.33"
+solana-program-test = "1.10.33"
 
 
 [build-dependencies]

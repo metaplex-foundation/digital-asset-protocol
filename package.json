@@ -48,12 +48,14 @@
     "@metaplex-foundation/mpl-core": "^0.6.1",
     "@solana/spl-token": "0.2.0",
     "@solana/web3.js": "1.37.2",
+    "@types/uuid": "^8.3.4",
     "bebop": "^2.4.2",
     "buffer": "^6.0.3",
     "debug": "^4.3.3",
     "flatbuffers": "^2.0.6",
     "js-sha3": "^0.8.0",
-    "utility-types": "^3.10.0"
+    "utility-types": "^3.10.0",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@metaplex-foundation/amman": "0.6.1",

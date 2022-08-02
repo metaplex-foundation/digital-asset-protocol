@@ -6,6 +6,7 @@ use crate::api::DigitalAssetProtocolError;
 use crate::blob::Asset;
 use crate::generated::schema::{ModuleType};
 use crate::generated::schema::ModuleData;
+use crate::generated::schema::DataItemValue;
 use crate::lifecycle::Lifecycle;
 use crate::modules::OWNERSHIP_MODULE_PROCESSOR;
 
@@ -15,24 +16,10 @@ pub trait Module {
 
 pub enum ModuleDataWrapper<'raw> {
     Structured(ModuleData<'raw>),
-    Unstructured(BTreeMap<String,DataItem>)
+    Unstructured(BTreeMap<String, DataItemValue<'raw>>),
 }
 
 pub type SchemaId = [u8; 16];
-
-pub enum Encoding {
-    Borsh,
-    Bincode,
-    Bebop,
-    FlatBuffer,
-}
-
-pub enum DataItem {
-    String(String),
-    Int(u32),
-    BigInt(u64),
-    Bytes(Encoding, Vec<u8>),
-}
 
 pub trait ModuleProcessor {
     fn create<'raw>(&self, asset: &mut Asset<'raw>, module_data: Option<ModuleDataWrapper<'raw>>)

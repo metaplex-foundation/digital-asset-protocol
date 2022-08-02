@@ -36,6 +36,7 @@ export namespace DigitalAssetTypes {
     Royalty = 5,
     Rights = 6,
     Extension = 7,
+    Governance = 8,
   }
 
   export interface ICreatorsData {
@@ -194,10 +195,61 @@ export namespace DigitalAssetTypes {
     },
   };
 
+  export interface IGovernanceData {
+    authorities: Array<IAuthority>;
+  }
+
+  export const GovernanceData = {
+    discriminator: 4 as 4,
+    encode(message: IGovernanceData): Uint8Array {
+      const view = BebopView.getInstance();
+      view.startWriting();
+      this.encodeInto(message, view);
+      return view.toArray();
+    },
+
+    encodeInto(message: IGovernanceData, view: BebopView): number {
+      const before = view.length;
+        {
+          const length0 = message.authorities.length;
+          view.writeUint32(length0);
+          for (let i0 = 0; i0 < length0; i0++) {
+            Authority.encodeInto(message.authorities[i0], view)
+          }
+        }
+      const after = view.length;
+      return after - before;
+    },
+
+    decode(buffer: Uint8Array): IGovernanceData {
+      const view = BebopView.getInstance();
+      view.startReading(buffer);
+      return this.readFrom(view);
+    },
+
+    readFrom(view: BebopView): IGovernanceData {
+      let field0: Array<IAuthority>;
+      {
+        let length0 = view.readUint32();
+        field0 = new Array<IAuthority>(length0);
+        for (let i0 = 0; i0 < length0; i0++) {
+          let x0: IAuthority;
+          x0 = Authority.readFrom(view);
+          field0[i0] = x0;
+        }
+      }
+      let message: IGovernanceData = {
+        authorities: field0,
+      };
+      return message;
+    },
+  };
+
   export type IModuleData
     = { discriminator: 1, value: ICreatorsData }
     | { discriminator: 2, value: IOwnershipData }
-    | { discriminator: 3, value: IRoyaltyData };
+    | { discriminator: 3, value: IRoyaltyData }
+    | { discriminator: 4, value: IGovernanceData };
 
   export const ModuleData = {
     encode(message: IModuleData): Uint8Array {
@@ -222,6 +274,9 @@ export namespace DigitalAssetTypes {
           case 3:
             RoyaltyData.encodeInto(message.value, view);
             break;
+          case 4:
+            GovernanceData.encodeInto(message.value, view);
+            break;
         }
         const end = view.length;
         view.fillMessageLength(pos, end - start);
@@ -245,10 +300,66 @@ export namespace DigitalAssetTypes {
           return { discriminator: 2, value: OwnershipData.readFrom(view) };
         case 3:
           return { discriminator: 3, value: RoyaltyData.readFrom(view) };
+        case 4:
+          return { discriminator: 4, value: GovernanceData.readFrom(view) };
         default:
           view.index = end;
           throw new BebopRuntimeError("Unrecognized discriminator while decoding ModuleData");
       }
+    },
+  };
+
+  export interface IAuthority {
+    scopes: Array<string>;
+    address: Uint8Array;
+  }
+
+  export const Authority = {
+    encode(message: IAuthority): Uint8Array {
+      const view = BebopView.getInstance();
+      view.startWriting();
+      this.encodeInto(message, view);
+      return view.toArray();
+    },
+
+    encodeInto(message: IAuthority, view: BebopView): number {
+      const before = view.length;
+        {
+          const length0 = message.scopes.length;
+          view.writeUint32(length0);
+          for (let i0 = 0; i0 < length0; i0++) {
+            view.writeString(message.scopes[i0]);
+          }
+        }
+        view.writeBytes(message.address);
+      const after = view.length;
+      return after - before;
+    },
+
+    decode(buffer: Uint8Array): IAuthority {
+      const view = BebopView.getInstance();
+      view.startReading(buffer);
+      return this.readFrom(view);
+    },
+
+    readFrom(view: BebopView): IAuthority {
+      let field0: Array<string>;
+      {
+        let length0 = view.readUint32();
+        field0 = new Array<string>(length0);
+        for (let i0 = 0; i0 < length0; i0++) {
+          let x0: string;
+          x0 = view.readString();
+          field0[i0] = x0;
+        }
+      }
+      let field1: Uint8Array;
+      field1 = view.readBytes();
+      let message: IAuthority = {
+        scopes: field0,
+        address: field1,
+      };
+      return message;
     },
   };
 
@@ -292,81 +403,257 @@ export namespace DigitalAssetTypes {
     },
   };
 
-  export interface ICreateIdentity {
-    uri: string;
+  export interface ICreateIdentityV1 {
+    uri?: string;
   }
 
-  export const CreateIdentity = {
+  export const CreateIdentityV1 = {
     discriminator: 1 as 1,
-    encode(message: ICreateIdentity): Uint8Array {
+    encode(message: ICreateIdentityV1): Uint8Array {
       const view = BebopView.getInstance();
       view.startWriting();
       this.encodeInto(message, view);
       return view.toArray();
     },
 
-    encodeInto(message: ICreateIdentity, view: BebopView): number {
+    encodeInto(message: ICreateIdentityV1, view: BebopView): number {
       const before = view.length;
-        view.writeString(message.uri);
+        const pos = view.reserveMessageLength();
+        const start = view.length;
+        if (message.uri != null) {
+          view.writeByte(1);
+          view.writeString(message.uri);
+        }
+        view.writeByte(0);
+        const end = view.length;
+        view.fillMessageLength(pos, end - start);
       const after = view.length;
       return after - before;
     },
 
-    decode(buffer: Uint8Array): ICreateIdentity {
+    decode(buffer: Uint8Array): ICreateIdentityV1 {
       const view = BebopView.getInstance();
       view.startReading(buffer);
       return this.readFrom(view);
     },
 
-    readFrom(view: BebopView): ICreateIdentity {
-      let field0: string;
-      field0 = view.readString();
-      let message: ICreateIdentity = {
-        uri: field0,
-      };
-      return message;
+    readFrom(view: BebopView): ICreateIdentityV1 {
+      let message: ICreateIdentityV1 = {};
+      const length = view.readMessageLength();
+      const end = view.index + length;
+      while (true) {
+        switch (view.readByte()) {
+          case 0:
+            return message;
+
+          case 1:
+            message.uri = view.readString();
+            break;
+
+          default:
+            view.index = end;
+            return message;
+        }
+      }
     },
   };
 
-  export interface IThing {
-    bill: number;
+  export interface ICreateAssetV1 {
+    uri?: string;
+    ownershipModel?: OwnershipModel;
+    royaltyModel?: RoyaltyModel;
+    royaltyTarget?: IRoyaltyTarget;
+    dataSchema?: JsonDataSchema;
+    creatorShares?: Uint8Array;
+    authorities?: Array<IAuthority>;
   }
 
-  export const Thing = {
+  export const CreateAssetV1 = {
     discriminator: 2 as 2,
-    encode(message: IThing): Uint8Array {
+    encode(message: ICreateAssetV1): Uint8Array {
       const view = BebopView.getInstance();
       view.startWriting();
       this.encodeInto(message, view);
       return view.toArray();
     },
 
-    encodeInto(message: IThing, view: BebopView): number {
+    encodeInto(message: ICreateAssetV1, view: BebopView): number {
       const before = view.length;
-        view.writeByte(message.bill);
+        const pos = view.reserveMessageLength();
+        const start = view.length;
+        if (message.uri != null) {
+          view.writeByte(1);
+          view.writeString(message.uri);
+        }
+        if (message.ownershipModel != null) {
+          view.writeByte(2);
+          view.writeByte(message.ownershipModel);
+        }
+        if (message.royaltyModel != null) {
+          view.writeByte(3);
+          view.writeByte(message.royaltyModel);
+        }
+        if (message.royaltyTarget != null) {
+          view.writeByte(4);
+          RoyaltyTarget.encodeInto(message.royaltyTarget, view)
+        }
+        if (message.dataSchema != null) {
+          view.writeByte(5);
+          view.writeByte(message.dataSchema);
+        }
+        if (message.creatorShares != null) {
+          view.writeByte(6);
+          view.writeBytes(message.creatorShares);
+        }
+        if (message.authorities != null) {
+          view.writeByte(7);
+          {
+          const length0 = message.authorities.length;
+          view.writeUint32(length0);
+          for (let i0 = 0; i0 < length0; i0++) {
+            Authority.encodeInto(message.authorities[i0], view)
+          }
+        }
+        }
+        view.writeByte(0);
+        const end = view.length;
+        view.fillMessageLength(pos, end - start);
       const after = view.length;
       return after - before;
     },
 
-    decode(buffer: Uint8Array): IThing {
+    decode(buffer: Uint8Array): ICreateAssetV1 {
       const view = BebopView.getInstance();
       view.startReading(buffer);
       return this.readFrom(view);
     },
 
-    readFrom(view: BebopView): IThing {
-      let field0: number;
-      field0 = view.readByte();
-      let message: IThing = {
-        bill: field0,
-      };
-      return message;
+    readFrom(view: BebopView): ICreateAssetV1 {
+      let message: ICreateAssetV1 = {};
+      const length = view.readMessageLength();
+      const end = view.index + length;
+      while (true) {
+        switch (view.readByte()) {
+          case 0:
+            return message;
+
+          case 1:
+            message.uri = view.readString();
+            break;
+
+          case 2:
+            message.ownershipModel = view.readByte() as OwnershipModel;
+            break;
+
+          case 3:
+            message.royaltyModel = view.readByte() as RoyaltyModel;
+            break;
+
+          case 4:
+            message.royaltyTarget = RoyaltyTarget.readFrom(view);
+            break;
+
+          case 5:
+            message.dataSchema = view.readByte() as JsonDataSchema;
+            break;
+
+          case 6:
+            message.creatorShares = view.readBytes();
+            break;
+
+          case 7:
+            {
+          let length0 = view.readUint32();
+          message.authorities = new Array<IAuthority>(length0);
+          for (let i0 = 0; i0 < length0; i0++) {
+            let x0: IAuthority;
+            x0 = Authority.readFrom(view);
+            message.authorities[i0] = x0;
+          }
+        }
+            break;
+
+          default:
+            view.index = end;
+            return message;
+        }
+      }
+    },
+  };
+
+  export interface IUpdateAssetV1 {
+    payload?: Array<IModuleData>;
+  }
+
+  export const UpdateAssetV1 = {
+    discriminator: 3 as 3,
+    encode(message: IUpdateAssetV1): Uint8Array {
+      const view = BebopView.getInstance();
+      view.startWriting();
+      this.encodeInto(message, view);
+      return view.toArray();
+    },
+
+    encodeInto(message: IUpdateAssetV1, view: BebopView): number {
+      const before = view.length;
+        const pos = view.reserveMessageLength();
+        const start = view.length;
+        if (message.payload != null) {
+          view.writeByte(1);
+          {
+          const length0 = message.payload.length;
+          view.writeUint32(length0);
+          for (let i0 = 0; i0 < length0; i0++) {
+            ModuleData.encodeInto(message.payload[i0], view)
+          }
+        }
+        }
+        view.writeByte(0);
+        const end = view.length;
+        view.fillMessageLength(pos, end - start);
+      const after = view.length;
+      return after - before;
+    },
+
+    decode(buffer: Uint8Array): IUpdateAssetV1 {
+      const view = BebopView.getInstance();
+      view.startReading(buffer);
+      return this.readFrom(view);
+    },
+
+    readFrom(view: BebopView): IUpdateAssetV1 {
+      let message: IUpdateAssetV1 = {};
+      const length = view.readMessageLength();
+      const end = view.index + length;
+      while (true) {
+        switch (view.readByte()) {
+          case 0:
+            return message;
+
+          case 1:
+            {
+          let length0 = view.readUint32();
+          message.payload = new Array<IModuleData>(length0);
+          for (let i0 = 0; i0 < length0; i0++) {
+            let x0: IModuleData;
+            x0 = ModuleData.readFrom(view);
+            message.payload[i0] = x0;
+          }
+        }
+            break;
+
+          default:
+            view.index = end;
+            return message;
+        }
+      }
     },
   };
 
   export type IActionData
-    = { discriminator: 1, value: ICreateIdentity }
-    | { discriminator: 2, value: IThing };
+    = { discriminator: 1, value: ICreateIdentityV1 }
+    | { discriminator: 2, value: ICreateAssetV1 }
+    | { discriminator: 3, value: IUpdateAssetV1 };
 
   export const ActionData = {
     encode(message: IActionData): Uint8Array {
@@ -383,10 +670,13 @@ export namespace DigitalAssetTypes {
         view.writeByte(message.discriminator);
         switch (message.discriminator) {
           case 1:
-            CreateIdentity.encodeInto(message.value, view);
+            CreateIdentityV1.encodeInto(message.value, view);
             break;
           case 2:
-            Thing.encodeInto(message.value, view);
+            CreateAssetV1.encodeInto(message.value, view);
+            break;
+          case 3:
+            UpdateAssetV1.encodeInto(message.value, view);
             break;
         }
         const end = view.length;
@@ -406,9 +696,11 @@ export namespace DigitalAssetTypes {
       const end = view.index + 1 + length;
       switch (view.readByte()) {
         case 1:
-          return { discriminator: 1, value: CreateIdentity.readFrom(view) };
+          return { discriminator: 1, value: CreateIdentityV1.readFrom(view) };
         case 2:
-          return { discriminator: 2, value: Thing.readFrom(view) };
+          return { discriminator: 2, value: CreateAssetV1.readFrom(view) };
+        case 3:
+          return { discriminator: 3, value: UpdateAssetV1.readFrom(view) };
         default:
           view.index = end;
           throw new BebopRuntimeError("Unrecognized discriminator while decoding ActionData");
@@ -530,6 +822,17 @@ export namespace DigitalAssetTypes {
     SupplyDecrease = 10,
     ActivateExtension = 11,
     DeactivateExtension = 12,
+  }
+
+  export enum JsonDataSchema {
+    Invalid = 0,
+    Core = 1,
+    MultiMedia = 2,
+    SimpleImage = 3,
+    SimpleAudio = 4,
+    Simple3d = 5,
+    SimpleText = 6,
+    MusicRecording = 7,
   }
 
 }

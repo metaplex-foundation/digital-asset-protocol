@@ -6,6 +6,8 @@ mod generated;
 mod modules;
 pub mod blob;
 pub mod module;
+pub mod validation;
+
 pub use solana_program;
 pub mod validation;
 

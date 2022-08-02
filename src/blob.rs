@@ -1,60 +1,102 @@
+use std::cell::{Ref, RefMut};
 use std::collections::BTreeMap;
 use crate::api::DigitalAssetProtocolError;
-use bebop::Record;
-use crate::generated::schema::ModuleType;
+use bebop::{Record, SliceWrapper, SubRecord};
+use solana_program::program_memory::sol_memset;
+use solana_program::pubkey::Pubkey;
+use crate::generated::schema::{Blob, BlobContainer, DataItem, ModuleType};
 use crate::generated::schema::ModuleData;
 
-use crate::module::{ModuleId, SchemaId};
+use crate::module::{ModuleDataWrapper, SchemaId};
+use crate::required_field;
 
 pub struct Asset<'raw> {
-    pub layout: BTreeMap<ModuleId, Blob<'raw>>,
+    pub dirty: bool,
+    pub layout: BTreeMap<ModuleType, ModuleDataWrapper<'raw>>,
 }
 
-pub struct Blob<'raw> {
-    pub schema: ModuleId,
-    pub data: Vec<u8>,
-    pub _runtime_data: Option<ModuleData<'raw>>,
-}
-
-impl<'raw> Blob<'raw> {
-    pub fn new<T: 'static>(schema: ModuleId, data: Option<ModuleData<'raw>>) -> Self {
-        Blob {
-            schema,
-            data: Vec::new(),
-            _runtime_data: data,
+impl<'raw> Asset<'raw> {
+    pub fn new() -> Asset<'raw> {
+        Asset {
+            layout: BTreeMap::new(),
+            dirty: true
         }
     }
 
-    pub fn from_bytes(buf: &'raw [u8]) -> Result<Self, DigitalAssetProtocolError> {
-        let m_type = ModuleType::try_from(buf[0])
-            .map_err(|e| e.into())?;
-        let schema =
-            match m_type {
-                ModuleType::Extension => {
-                    let schema_id: SchemaId = buf[1..17].try_into()
-                        .map_err(|_| {
-                            DigitalAssetProtocolError::DeError("Invalid Schema ID".to_string())
-                        })?;
-                    Ok(ModuleId::Extension(schema_id))
+    pub fn save(mut self, destination: RefMut<&mut [u8]>) -> Result<(), DigitalAssetProtocolError> {
+        // Clear the data, this is the naive approach, we can optimize this with specific/tracked module offsets
+        let mut dest = *destination;
+        let mut offset = 0;
+        sol_memset(*destination, 0, destination.len());
+        let mut blobs = Vec::with_capacity(self.layout.len());
+        for (id, data) in self.layout {
+            let blob = match data {
+                ModuleDataWrapper::Structured(md) => {
+                    Blob {
+                        module_id: Some(id as u8),
+                        structured_module: Some(md),
+                        data_module: None,
+                    }
                 }
-                m => Ok(ModuleId::Module(m))
-            }?;
-        let data = ModuleType::to_data(m_type, &buf[17..])?;
-        Ok(Blob {
-            schema,
-            data: buf[17..].to_vec(),
-            _runtime_data: data,
-        })
+                ModuleDataWrapper::Unstructured(unstructred_data) => {
+                    let mut data_module = Vec::with_capacity(unstructred_data.len());
+                    for (key, val) in unstructred_data {
+                        data_module.push(DataItem {
+                            key: &*key,
+                            value: val,
+                        })
+                    }
+
+                    Blob {
+                        module_id: Some(id as u8),
+                        structured_module: None,
+                        data_module: Some(data_module),
+                    }
+                }
+            };
+            blobs.push(blob);
+        }
+        let container = BlobContainer {
+            blobs
+        };
+        container.serialize(&mut dest)
+            .map_err(|e| {
+                DigitalAssetProtocolError::DeError(e.to_string())
+            })?;
+        Ok(())
     }
 
-    // pub fn to_module(&self) -> Result<T, DigitalAssetProtocolError> {
-    //     self._runtime_data.and_then(|a| {
-    //         a.downcast_ref::<T>()
-    //     })
-    //         .ok_or(DigitalAssetProtocolError::ModuleError("No module Found".to_string()))
-    // }
-    //
-    // pub fn to_data(&self) -> Result<T, DigitalAssetProtocolError> {
-    //     Ok(())
-    // }
+
+    pub fn load_mut(source: RefMut<&mut [u8]>) -> Result<Asset<'raw>, DigitalAssetProtocolError> {
+        load(source)
+    }
+
+    pub fn load(source: Ref<&[u8]>) -> Result<Asset<'raw>, DigitalAssetProtocolError> {
+        let mut layout = BTreeMap::new();
+        for blob  in container.blobs {
+            let module_id = blob.module_id;
+            required_field!(module_id)?;
+            let module_id = ModuleType::try_from(module_id.unwrap())?;
+            match (blob.data_module, blob.structured_module) {
+                (Some(data_items), None) => {
+                    let mut bespoke_data = BTreeMap::new();
+                    for di in data_items {
+                        bespoke_data.insert(di.key.to_string(), di.value);
+                    }
+                    layout.insert (module_id, ModuleDataWrapper::Unstructured(bespoke_data));
+                }
+                (None, Some(module_data)) => {
+                    layout.insert(module_id, ModuleDataWrapper::Structured(module_data));
+                }
+                _ => {
+                    return Err(DigitalAssetProtocolError::DeError("Invalid Blob".to_string()));
+                }
+            }
+        }
+
+        Ok(Asset {
+            dirty: false,
+            layout
+        })
+    }
 }

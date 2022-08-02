@@ -21,25 +21,59 @@ enum ModuleType: uint8 {
 }
 
 union ModuleData {
-    1 -> message CreatorsData {
-       1-> Creator[] creators;
+    1 -> struct CreatorsData {
+        Creator[] creators;
     };
-    2 -> message OwnershipData {
-        1-> OwnershipModel model;
-        2-> byte[] owner;
+    2 -> struct OwnershipData {
+        OwnershipModel model;
+        byte[] owner;
     };
-    3 -> message RoyaltyData {
-        1-> uint8 royalty_bp;
-        2-> RoyaltyModel model;
-        3-> RoyaltyTarget[] target;
-        4-> bool locked;
+    3 -> struct RoyaltyData {
+        uint8 royalty_percent;
+        RoyaltyModel model;
+        RoyaltyTarget[] target;
+        bool locked;
     };
-    4 -> message GovernanceData {
-        1 -> Authority[] authorities;
+    4 -> struct GovernanceData {
+        Authority[] authorities;
     };
-    5 -> message GroupingData {
-        1 ->
+}
+
+enum Encoding: uint8 {
+    Invalid = 0;
+    Borsh = 1;
+    Bincode = 2;
+}
+
+union DataItemValue {
+    1 -> message String {
+        1 -> string value;
+    };
+    2 -> message Int {
+        1 -> int32 value;
+    };
+    3 -> message BigInt {
+        1 -> int64 value;
+    };
+    4 -> struct Bytes {
+        Encoding encoding;
+        byte[] raw;
     }
+}
+
+struct DataItem {
+    string key;
+    DataItemValue value;
+}
+
+message Blob {
+    1 -> uint8 module_id;
+    2 -> ModuleData structured_module;
+    3 -> DataItem[] data_module;
+}
+
+struct BlobContainer {
+    Blob[] blobs;
 }
 
 struct Authority {
@@ -53,18 +87,21 @@ struct Action {
 }
 
 union ActionData {
-    1 -> message NFT {
-        1 -> NFTCreate create;
+    1 -> message CreateIdentityV1 {
+        1 -> string uri;
     };
-}
-
-message NFTCreate {
-    1 -> string uri;
-    2 -> OwnershipModel ownership_model;
-    3 -> RoyaltyConfiguration royalty;
-    4 -> Creator[] creators;
-    5 -> bool compress;
-    6 -> Authority[] authorities;
+    2 -> message CreateAssetV1 {
+        1 -> string uri;
+        2 -> OwnershipModel ownership_model;
+        3 -> RoyaltyModel royalty_model;
+        4 -> RoyaltyTarget royalty_target;
+        5 -> JsonDataSchema data_schema;
+        6 -> uint8[] creator_shares;
+        7 -> Authority[] authorities;
+    };
+    3 -> message UpdateAssetV1 {
+       1 -> string msg;
+    };
 }
 
 const int32 MAX_MODULES = 10;
@@ -80,12 +117,6 @@ enum RoyaltyModel: uint8 {
     Address = 1;
     Fanout = 2;
     Creators = 3;
-}
-
-message RoyaltyConfiguration {
-   1-> RoyaltyModel royalty_model;
-   2-> uint16 royalty_bp;
-   3-> RoyaltyTarget royalty_target;
 }
 
 struct RoyaltyTarget {
@@ -113,4 +144,20 @@ enum Lifecycle: uint8 {
     SupplyDecrease = 10;
     ActivateExtension = 11;
     DeactivateExtension = 12;
+}
+
+
+enum JsonDataSchema: uint8 {
+    Invalid = 0;
+    Core = 1;
+
+    MultiMedia = 2;
+
+    SimpleImage = 3;
+    SimpleAudio = 4;
+    Simple3d = 5;
+    SimpleText = 6;
+
+    MusicRecording = 7;
+
 }

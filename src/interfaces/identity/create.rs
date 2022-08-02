@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap};
 use bebop::SliceWrapper;
 use solana_program::account_info::AccountInfo;
 use crate::api::{DigitalAssetProtocolError};
@@ -6,7 +6,8 @@ use crate::interfaces::ContextAction;
 use crate::lifecycle::Lifecycle;
 use crate::module::{DataItem, ModuleDataWrapper};
 use crate::blob::Asset;
-use crate::generated::schema::{ModuleData, ModuleType, OwnershipModel};
+use crate::generated::schema::{ActionData, ModuleData, ModuleType, OwnershipModel};
+
 
 pub struct Create<'info> {
     pub id: AccountInfo<'info>,
@@ -16,7 +17,7 @@ pub struct Create<'info> {
 }
 
 impl<'info> Create<'info> {
-    pub fn new(accounts: &[AccountInfo<'info>], uri: String) -> (Self, usize) {
+    pub fn new(accounts: &[AccountInfo<'info>], action: ActionData) -> (Self, usize) {
         (
             Create {
                 id: accounts[0].clone(),

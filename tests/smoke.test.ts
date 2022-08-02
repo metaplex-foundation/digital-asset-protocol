@@ -6,6 +6,7 @@ import debug from 'debug';
 import * as beetSolana from '@metaplex-foundation/beet-solana';
 import * as beet from '@metaplex-foundation/beet';
 import {DigitalAssetTypes} from "../ts/generated/models";
+import uuid from "uuid";
 import nacl from 'tweetnacl';
 import {sha3_512} from "js-sha3";
 
@@ -31,9 +32,8 @@ export async function init() {
 
 import IAction = DigitalAssetTypes.IAction;
 import Interface = DigitalAssetTypes.Interface;
-import CreateIdentity = DigitalAssetTypes.CreateIdentity;
-import ICreateIdentity = DigitalAssetTypes.ICreateIdentity;
 import Action = DigitalAssetTypes.Action;
+import ICreateAssetV1 = DigitalAssetTypes.ICreateAssetV1;
 
 export type Creator = {
     address: web3.PublicKey;
@@ -59,21 +59,19 @@ test("Create An Identity", async () => {
     const {a, transactionHandler, connection, payer, payerPair} = await init();
 
     let [owner, ownerPair] = await a.addr.genLabeledKeypair("🔨 Owner 1");
-    let sig = nacl.sign.detached(Uint8Array.from(Buffer.from("this is an identity")), ownerPair.secretKey)
-    const hash = sha3_512.arrayBuffer(sig);
-    const digest = Buffer.from(hash.slice(0, 32));
-    let idKeypair = Keypair.fromSeed(digest);
-    let [identity, bump] = await PublicKey.findProgramAddress([
-        Buffer.from("identity"),
-        owner.toBuffer(),
+    let idbuf = new Buffer(16);
+    uuid.v4(null, idbuf)
+    let [id, bump] = await PublicKey.findProgramAddress([
+        Buffer.from("asset"),
+        idbuf
     ], PROGRAM);
-    await a.addr.addLabel("Identity", identity);
+    await a.addr.addLabel("Asset", id);
     let g = new Transaction();
-    let createIdentity: ICreateIdentity = {
-        name: 'first Identity ever'
+    let createIdentity: ICreateAssetV1 = {
+
     };
     let action: IAction = {
-        standard: Interface.IdentityAsset,
+        standard: Interface.NFT,
         data: {discriminator: 1, value: createIdentity}
     };
 
@@ -81,17 +79,13 @@ test("Create An Identity", async () => {
         data: Buffer.from(Action.encode(action)),
         programId: PROGRAM,
         keys: [
-            {isSigner: true, isWritable: false, pubkey: idKeypair.publicKey},
-            {isSigner: true, isWritable: false, pubkey: owner},
-            {isSigner: false, isWritable: true, pubkey: identity},
-            {isSigner: true, isWritable: true, pubkey: owner}
+
         ]
     }));
 
     let tx = await transactionHandler.sendAndConfirmTransaction(g, [
-        idKeypair,
-        ownerPair
-    ], {skipPreflight: true}, "🤓 Testing Identity Creation");
+        payerPair
+    ], {skipPreflight: true}, "🤓 Testing DAS Asset Creation");
 
 
 });
