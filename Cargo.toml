@@ -9,8 +9,10 @@ edition = "2021"
 readme = "README.md"
 
 [features]
+default = ["bebop-owned-all"]
 no-entrypoint = []
 test-bpf = []
+bebop-owned-all = []
 
 [lib]
 crate-type = ["cdylib", "lib"]

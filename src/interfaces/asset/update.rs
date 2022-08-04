@@ -1,15 +1,12 @@
+use std::cell::RefMut;
 use std::collections::{BTreeMap};
-use std::fmt::format;
-use bebop::SliceWrapper;
 use solana_program::account_info::AccountInfo;
 use crate::api::{DigitalAssetProtocolError};
 use crate::interfaces::ContextAction;
 use crate::lifecycle::Lifecycle;
-use crate::module::{DataItem, ModuleDataWrapper};
 use crate::blob::Asset;
-use crate::generated::schema::{Authority, ModuleData, ModuleType, OwnershipModel, RoyaltyModel, RoyaltyTarget, JsonDataSchema, Creator, ActionData};
-use crate::required_field;
-use crate::validation::validate_creator_shares;
+use crate::generated::schema::owned::{ActionData};
+
 
 pub struct UpdateV1<'info> {
     pub id: AccountInfo<'info>,
@@ -18,9 +15,8 @@ pub struct UpdateV1<'info> {
     pub payload: String,
 }
 
-
 impl<'info> UpdateV1<'info> {
-    pub fn new(accounts: &[AccountInfo<'info>], action: ActionData<'info>) -> Result<(Self, usize), DigitalAssetProtocolError> {
+    pub fn new(accounts: &[AccountInfo<'info>], action: ActionData) -> Result<(Self, usize), DigitalAssetProtocolError> {
         if let ActionData::UpdateAssetV1 {
             msg
         } = action {
@@ -34,7 +30,7 @@ impl<'info> UpdateV1<'info> {
                 id,
                 owner,
                 payer,
-                payload: msg.unwrap_or("").to_string(),
+                payload: msg.unwrap_or("".to_string()),
             }, 6)
             );
         }
@@ -47,12 +43,13 @@ impl ContextAction for UpdateV1<'_> {
         &Lifecycle::Update
     }
 
-    fn run(&mut self) -> Result<(), DigitalAssetProtocolError> {
+    fn run(&self) -> Result<(), DigitalAssetProtocolError> {
         let data = self.id.try_borrow_mut_data().map_err(|_| {
             DigitalAssetProtocolError::ActionError("Issue with Borrowing Data".to_string())
         })?;
-        let mut asset = Asset::load_mut(data)?;
 
 
+
+        Ok(())
     }
 }

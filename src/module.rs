@@ -4,9 +4,7 @@ use bebop::Record;
 use solana_program::account_info::AccountInfo;
 use crate::api::DigitalAssetProtocolError;
 use crate::blob::Asset;
-use crate::generated::schema::{ModuleType};
-use crate::generated::schema::ModuleData;
-use crate::generated::schema::DataItemValue;
+use crate::generated::schema::owned::{ModuleType, ModuleData, DataItemValue};
 use crate::lifecycle::Lifecycle;
 use crate::modules::OWNERSHIP_MODULE_PROCESSOR;
 
@@ -14,15 +12,15 @@ pub trait Module {
     fn act<A, D>(&self, context: Lifecycle, asset: &mut Asset) -> Asset;
 }
 
-pub enum ModuleDataWrapper<'raw> {
-    Structured(ModuleData<'raw>),
-    Unstructured(BTreeMap<String, DataItemValue<'raw>>),
+pub enum ModuleDataWrapper {
+    Structured(ModuleData),
+    Unstructured(BTreeMap<String, DataItemValue>),
 }
 
 pub type SchemaId = [u8; 16];
 
 pub trait ModuleProcessor {
-    fn create<'raw>(&self, asset: &mut Asset<'raw>, module_data: Option<ModuleDataWrapper<'raw>>)
+    fn create<'raw>(&self, asset: &mut Asset)
                     -> Result<(), DigitalAssetProtocolError>;
 }
 
@@ -45,7 +43,7 @@ impl<'raw> AccountMap<'raw> {
 }
 
 impl ModuleProcessor for NullModuleProcessor {
-    fn create<'raw>(&self, asset: &mut Asset<'raw>, module_data: Option<ModuleDataWrapper<'raw>>)
+    fn create<'raw>(&self, asset: &mut Asset)
                     -> Result<(), DigitalAssetProtocolError> {
         Ok(())
     }

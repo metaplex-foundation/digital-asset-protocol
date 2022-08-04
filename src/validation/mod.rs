@@ -34,6 +34,13 @@ pub fn cmp_pubkeys(a: &Pubkey, b: &Pubkey) -> bool {
     sol_memcmp(a.as_ref(), b.as_ref(), PUBKEY_BYTES) == 0
 }
 
+pub fn assert_key_equal(a: &Pubkey, b: &Pubkey) -> Result<(), DigitalAssetProtocolError> {
+    if !cmp_pubkeys(a, b) {
+        return Err(DigitalAssetProtocolError::ActionError(format!("Key {} does not equal Key {}", a, b)));
+    }
+    Ok(())
+}
+
 pub fn assert_empty(
     account: &AccountInfo,
     err: DigitalAssetProtocolError,
@@ -55,7 +62,7 @@ macro_rules! required_field {
 
 pub fn validate_creator_shares(creators_list: &[AccountInfo], share_list: &[u8]) -> Result<(), DigitalAssetProtocolError> {
     if creators_list.len() != share_list.len() {
-       return Err(DigitalAssetProtocolError::ActionError("Shares and Creators dont match".to_string()));
+        return Err(DigitalAssetProtocolError::ActionError("Shares and Creators dont match".to_string()));
     }
     let mut total: u8 = 0;
     for (share) in share_list.iter() {

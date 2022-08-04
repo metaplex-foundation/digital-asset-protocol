@@ -1,13 +1,23 @@
 use std::collections::{BTreeMap};
-use std::fmt::format;
 use bebop::SliceWrapper;
 use solana_program::account_info::AccountInfo;
 use crate::api::{DigitalAssetProtocolError};
 use crate::interfaces::ContextAction;
 use crate::lifecycle::Lifecycle;
-use crate::module::{DataItem, ModuleDataWrapper};
+use crate::module::{ModuleDataWrapper};
 use crate::blob::Asset;
-use crate::generated::schema::{Authority, ModuleData, ModuleType, OwnershipModel, RoyaltyModel, RoyaltyTarget, JsonDataSchema, Creator, ActionData, BlobContainer, DataItem};
+use crate::generated::schema::owned::{
+    Authority,
+    ModuleData,
+    ModuleType,
+    OwnershipModel,
+    RoyaltyModel,
+    RoyaltyTarget,
+    JsonDataSchema,
+    Creator,
+    ActionData,
+    DataItemValue,
+};
 use crate::required_field;
 use crate::validation::validate_creator_shares;
 
@@ -15,17 +25,17 @@ pub struct CreateV1<'info> {
     pub id: AccountInfo<'info>,
     pub owner: AccountInfo<'info>,
     pub payer: AccountInfo<'info>,
-    pub creators: Vec<Creator<'info>>,
+    pub creators: Vec<Creator>,
     pub ownership_model: OwnershipModel,
-    pub authorities: Vec<Authority<'info>>,
+    pub authorities: Vec<Authority>,
     pub royalty_model: RoyaltyModel,
-    pub royalty_target: Option<RoyaltyTarget<'info>>,
+    pub royalty_target: Option<RoyaltyTarget>,
     pub off_chain_schema: JsonDataSchema,
     pub uri: String,
 }
 
 impl<'info> CreateV1<'info> {
-    pub fn new(accounts: &[AccountInfo<'info>], action: ActionData<'info>) -> Result<(Self, usize), DigitalAssetProtocolError> {
+    pub fn new(accounts: &[AccountInfo<'info>], action: ActionData) -> Result<(Self, usize), DigitalAssetProtocolError> {
         if let ActionData::CreateAssetV1 {
             uri,
             data_schema,
@@ -44,16 +54,16 @@ impl<'info> CreateV1<'info> {
             let owner = accounts[4].clone();
             let payer = accounts[5].clone();
             let payer_authority = payer.clone();
-            let shares = required_field!(creator_shares)?;
+            let shares: Vec<u8> = required_field!(creator_shares)?;
             let creators = &accounts[6..accounts.len()];
             let remaining_accounts_index = 6 + creators.len();
             validate_creator_shares(creators, &shares)?;
-            let creator_list = creators.iter().enumerate().map(|(i, ai)|{
+            let creator_list = creators.iter().enumerate().map(|(i, ai)| {
                 let verified = ai.is_signer;
-                Creator{
-                    address: SliceWrapper::Raw(ai.key.as_ref()),
+                Creator {
+                    address: ai.key.to_bytes().to_vec(),
                     share: shares[i],
-                    verified
+                    verified,
                 }
             }).collect();
             let uri = required_field!(uri)?.to_string();
@@ -68,11 +78,11 @@ impl<'info> CreateV1<'info> {
                     payer,
                     creators: creator_list,
                     ownership_model,
-                    authorities: authorities.unwrap_or(vec![Authority{
+                    authorities: authorities.unwrap_or(vec![Authority {
                         scopes: vec![
-                            "*"
+                            "*".to_string()
                         ],
-                        address: SliceWrapper::Raw(payer_authority.key.as_ref())
+                        address: payer_authority.key.to_bytes().to_vec(),
                     }]),
                     royalty_model,
                     royalty_target,
@@ -86,12 +96,12 @@ impl<'info> CreateV1<'info> {
     }
 }
 
-impl ContextAction for CreateV1<'_> {
+impl<'info> ContextAction for CreateV1<'info> {
     fn lifecycle(&self) -> &Lifecycle {
         &Lifecycle::Create
     }
 
-    fn run(&mut self) -> Result<(), DigitalAssetProtocolError> {
+    fn run(&self) -> Result<(), DigitalAssetProtocolError> {
         let mut data = self.id.try_borrow_mut_data().map_err(|_| {
             DigitalAssetProtocolError::ActionError("Issue with Borrowing Data".to_string())
         })?;
@@ -112,13 +122,13 @@ impl ContextAction for CreateV1<'_> {
                 ModuleType::Ownership => {
                     Some(ModuleDataWrapper::Structured(ModuleData::OwnershipData {
                         model: OwnershipModel::Single,
-                        owner: SliceWrapper::from_raw(&owner_key),
+                        owner: owner_key.to_vec(),
                     }))
                 }
                 ModuleType::Data => {
-                    let mut data = BTreeMap::new();
-                    data.insert("schema".to_string(), DataItem::Int(self.off_chain_schema as u32));
-                    data.insert("uri".to_string(), DataItem::String(self.uri.clone()));
+                    let mut data: BTreeMap<String, DataItemValue> = BTreeMap::new();
+                    data.insert("uri".to_string(), DataItemValue::String { value: Some(self.uri.clone()) });
+                    data.insert("schema".to_string(), DataItemValue::Int { value: Some(self.off_chain_schema as i32) });
                     Some(
                         ModuleDataWrapper::Unstructured(data)
                     )
@@ -127,7 +137,9 @@ impl ContextAction for CreateV1<'_> {
                     None
                 }
             };
-            processor.create(&mut new_asset, data)?;
+            let data = data.ok_or(DigitalAssetProtocolError::ActionError("Unknown Error".to_string()))?;
+            new_asset.set_module(m, data);
+            processor.create(&mut new_asset)?;
         }
         //Save asset
         new_asset.save(data)?;

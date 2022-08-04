@@ -4,7 +4,7 @@
 //
 //
 //       bebopc version:
-//           2.4.2
+//           2.4.5
 //
 //
 //       bebopc source:
@@ -309,6 +309,457 @@ export namespace DigitalAssetTypes {
     },
   };
 
+  export enum Encoding {
+    Invalid = 0,
+    Borsh = 1,
+    Bincode = 2,
+  }
+
+  export interface IString {
+    value?: string;
+  }
+
+  export const String = {
+    discriminator: 1 as 1,
+    encode(message: IString): Uint8Array {
+      const view = BebopView.getInstance();
+      view.startWriting();
+      this.encodeInto(message, view);
+      return view.toArray();
+    },
+
+    encodeInto(message: IString, view: BebopView): number {
+      const before = view.length;
+        const pos = view.reserveMessageLength();
+        const start = view.length;
+        if (message.value != null) {
+          view.writeByte(1);
+          view.writeString(message.value);
+        }
+        view.writeByte(0);
+        const end = view.length;
+        view.fillMessageLength(pos, end - start);
+      const after = view.length;
+      return after - before;
+    },
+
+    decode(buffer: Uint8Array): IString {
+      const view = BebopView.getInstance();
+      view.startReading(buffer);
+      return this.readFrom(view);
+    },
+
+    readFrom(view: BebopView): IString {
+      let message: IString = {};
+      const length = view.readMessageLength();
+      const end = view.index + length;
+      while (true) {
+        switch (view.readByte()) {
+          case 0:
+            return message;
+
+          case 1:
+            message.value = view.readString();
+            break;
+
+          default:
+            view.index = end;
+            return message;
+        }
+      }
+    },
+  };
+
+  export interface IInt {
+    value?: number;
+  }
+
+  export const Int = {
+    discriminator: 2 as 2,
+    encode(message: IInt): Uint8Array {
+      const view = BebopView.getInstance();
+      view.startWriting();
+      this.encodeInto(message, view);
+      return view.toArray();
+    },
+
+    encodeInto(message: IInt, view: BebopView): number {
+      const before = view.length;
+        const pos = view.reserveMessageLength();
+        const start = view.length;
+        if (message.value != null) {
+          view.writeByte(1);
+          view.writeInt32(message.value);
+        }
+        view.writeByte(0);
+        const end = view.length;
+        view.fillMessageLength(pos, end - start);
+      const after = view.length;
+      return after - before;
+    },
+
+    decode(buffer: Uint8Array): IInt {
+      const view = BebopView.getInstance();
+      view.startReading(buffer);
+      return this.readFrom(view);
+    },
+
+    readFrom(view: BebopView): IInt {
+      let message: IInt = {};
+      const length = view.readMessageLength();
+      const end = view.index + length;
+      while (true) {
+        switch (view.readByte()) {
+          case 0:
+            return message;
+
+          case 1:
+            message.value = view.readInt32();
+            break;
+
+          default:
+            view.index = end;
+            return message;
+        }
+      }
+    },
+  };
+
+  export interface IBigInt {
+    value?: bigint;
+  }
+
+  export const BigInt = {
+    discriminator: 3 as 3,
+    encode(message: IBigInt): Uint8Array {
+      const view = BebopView.getInstance();
+      view.startWriting();
+      this.encodeInto(message, view);
+      return view.toArray();
+    },
+
+    encodeInto(message: IBigInt, view: BebopView): number {
+      const before = view.length;
+        const pos = view.reserveMessageLength();
+        const start = view.length;
+        if (message.value != null) {
+          view.writeByte(1);
+          view.writeInt64(message.value);
+        }
+        view.writeByte(0);
+        const end = view.length;
+        view.fillMessageLength(pos, end - start);
+      const after = view.length;
+      return after - before;
+    },
+
+    decode(buffer: Uint8Array): IBigInt {
+      const view = BebopView.getInstance();
+      view.startReading(buffer);
+      return this.readFrom(view);
+    },
+
+    readFrom(view: BebopView): IBigInt {
+      let message: IBigInt = {};
+      const length = view.readMessageLength();
+      const end = view.index + length;
+      while (true) {
+        switch (view.readByte()) {
+          case 0:
+            return message;
+
+          case 1:
+            message.value = view.readInt64();
+            break;
+
+          default:
+            view.index = end;
+            return message;
+        }
+      }
+    },
+  };
+
+  export interface IBytes {
+    encoding: Encoding;
+    raw: Uint8Array;
+  }
+
+  export const Bytes = {
+    discriminator: 4 as 4,
+    encode(message: IBytes): Uint8Array {
+      const view = BebopView.getInstance();
+      view.startWriting();
+      this.encodeInto(message, view);
+      return view.toArray();
+    },
+
+    encodeInto(message: IBytes, view: BebopView): number {
+      const before = view.length;
+        view.writeByte(message.encoding);
+        view.writeBytes(message.raw);
+      const after = view.length;
+      return after - before;
+    },
+
+    decode(buffer: Uint8Array): IBytes {
+      const view = BebopView.getInstance();
+      view.startReading(buffer);
+      return this.readFrom(view);
+    },
+
+    readFrom(view: BebopView): IBytes {
+      let field0: Encoding;
+      field0 = view.readByte() as Encoding;
+      let field1: Uint8Array;
+      field1 = view.readBytes();
+      let message: IBytes = {
+        encoding: field0,
+        raw: field1,
+      };
+      return message;
+    },
+  };
+
+  export type IDataItemValue
+    = { discriminator: 1, value: IString }
+    | { discriminator: 2, value: IInt }
+    | { discriminator: 3, value: IBigInt }
+    | { discriminator: 4, value: IBytes };
+
+  export const DataItemValue = {
+    encode(message: IDataItemValue): Uint8Array {
+      const view = BebopView.getInstance();
+      view.startWriting();
+      this.encodeInto(message, view);
+      return view.toArray();
+    },
+
+    encodeInto(message: IDataItemValue, view: BebopView): number {
+      const before = view.length;
+        const pos = view.reserveMessageLength();
+        const start = view.length + 1;
+        view.writeByte(message.discriminator);
+        switch (message.discriminator) {
+          case 1:
+            String.encodeInto(message.value, view);
+            break;
+          case 2:
+            Int.encodeInto(message.value, view);
+            break;
+          case 3:
+            BigInt.encodeInto(message.value, view);
+            break;
+          case 4:
+            Bytes.encodeInto(message.value, view);
+            break;
+        }
+        const end = view.length;
+        view.fillMessageLength(pos, end - start);
+      const after = view.length;
+      return after - before;
+    },
+
+    decode(buffer: Uint8Array): IDataItemValue {
+      const view = BebopView.getInstance();
+      view.startReading(buffer);
+      return this.readFrom(view);
+    },
+
+    readFrom(view: BebopView): IDataItemValue {
+      const length = view.readMessageLength();
+      const end = view.index + 1 + length;
+      switch (view.readByte()) {
+        case 1:
+          return { discriminator: 1, value: String.readFrom(view) };
+        case 2:
+          return { discriminator: 2, value: Int.readFrom(view) };
+        case 3:
+          return { discriminator: 3, value: BigInt.readFrom(view) };
+        case 4:
+          return { discriminator: 4, value: Bytes.readFrom(view) };
+        default:
+          view.index = end;
+          throw new BebopRuntimeError("Unrecognized discriminator while decoding DataItemValue");
+      }
+    },
+  };
+
+  export interface IDataItem {
+    key: string;
+    value: IDataItemValue;
+  }
+
+  export const DataItem = {
+    encode(message: IDataItem): Uint8Array {
+      const view = BebopView.getInstance();
+      view.startWriting();
+      this.encodeInto(message, view);
+      return view.toArray();
+    },
+
+    encodeInto(message: IDataItem, view: BebopView): number {
+      const before = view.length;
+        view.writeString(message.key);
+        DataItemValue.encodeInto(message.value, view)
+      const after = view.length;
+      return after - before;
+    },
+
+    decode(buffer: Uint8Array): IDataItem {
+      const view = BebopView.getInstance();
+      view.startReading(buffer);
+      return this.readFrom(view);
+    },
+
+    readFrom(view: BebopView): IDataItem {
+      let field0: string;
+      field0 = view.readString();
+      let field1: IDataItemValue;
+      field1 = DataItemValue.readFrom(view);
+      let message: IDataItem = {
+        key: field0,
+        value: field1,
+      };
+      return message;
+    },
+  };
+
+  export interface IBlob {
+    moduleId?: number;
+    structuredModule?: IModuleData;
+    dataModule?: Array<IDataItem>;
+  }
+
+  export const Blob = {
+    encode(message: IBlob): Uint8Array {
+      const view = BebopView.getInstance();
+      view.startWriting();
+      this.encodeInto(message, view);
+      return view.toArray();
+    },
+
+    encodeInto(message: IBlob, view: BebopView): number {
+      const before = view.length;
+        const pos = view.reserveMessageLength();
+        const start = view.length;
+        if (message.moduleId != null) {
+          view.writeByte(1);
+          view.writeByte(message.moduleId);
+        }
+        if (message.structuredModule != null) {
+          view.writeByte(2);
+          ModuleData.encodeInto(message.structuredModule, view)
+        }
+        if (message.dataModule != null) {
+          view.writeByte(3);
+          {
+          const length0 = message.dataModule.length;
+          view.writeUint32(length0);
+          for (let i0 = 0; i0 < length0; i0++) {
+            DataItem.encodeInto(message.dataModule[i0], view)
+          }
+        }
+        }
+        view.writeByte(0);
+        const end = view.length;
+        view.fillMessageLength(pos, end - start);
+      const after = view.length;
+      return after - before;
+    },
+
+    decode(buffer: Uint8Array): IBlob {
+      const view = BebopView.getInstance();
+      view.startReading(buffer);
+      return this.readFrom(view);
+    },
+
+    readFrom(view: BebopView): IBlob {
+      let message: IBlob = {};
+      const length = view.readMessageLength();
+      const end = view.index + length;
+      while (true) {
+        switch (view.readByte()) {
+          case 0:
+            return message;
+
+          case 1:
+            message.moduleId = view.readByte();
+            break;
+
+          case 2:
+            message.structuredModule = ModuleData.readFrom(view);
+            break;
+
+          case 3:
+            {
+          let length0 = view.readUint32();
+          message.dataModule = new Array<IDataItem>(length0);
+          for (let i0 = 0; i0 < length0; i0++) {
+            let x0: IDataItem;
+            x0 = DataItem.readFrom(view);
+            message.dataModule[i0] = x0;
+          }
+        }
+            break;
+
+          default:
+            view.index = end;
+            return message;
+        }
+      }
+    },
+  };
+
+  export interface IBlobContainer {
+    blobs: Array<IBlob>;
+  }
+
+  export const BlobContainer = {
+    encode(message: IBlobContainer): Uint8Array {
+      const view = BebopView.getInstance();
+      view.startWriting();
+      this.encodeInto(message, view);
+      return view.toArray();
+    },
+
+    encodeInto(message: IBlobContainer, view: BebopView): number {
+      const before = view.length;
+        {
+          const length0 = message.blobs.length;
+          view.writeUint32(length0);
+          for (let i0 = 0; i0 < length0; i0++) {
+            Blob.encodeInto(message.blobs[i0], view)
+          }
+        }
+      const after = view.length;
+      return after - before;
+    },
+
+    decode(buffer: Uint8Array): IBlobContainer {
+      const view = BebopView.getInstance();
+      view.startReading(buffer);
+      return this.readFrom(view);
+    },
+
+    readFrom(view: BebopView): IBlobContainer {
+      let field0: Array<IBlob>;
+      {
+        let length0 = view.readUint32();
+        field0 = new Array<IBlob>(length0);
+        for (let i0 = 0; i0 < length0; i0++) {
+          let x0: IBlob;
+          x0 = Blob.readFrom(view);
+          field0[i0] = x0;
+        }
+      }
+      let message: IBlobContainer = {
+        blobs: field0,
+      };
+      return message;
+    },
+  };
+
   export interface IAuthority {
     scopes: Array<string>;
     address: Uint8Array;
@@ -582,7 +1033,7 @@ export namespace DigitalAssetTypes {
   };
 
   export interface IUpdateAssetV1 {
-    payload?: Array<IModuleData>;
+    msg?: string;
   }
 
   export const UpdateAssetV1 = {
@@ -598,15 +1049,9 @@ export namespace DigitalAssetTypes {
       const before = view.length;
         const pos = view.reserveMessageLength();
         const start = view.length;
-        if (message.payload != null) {
+        if (message.msg != null) {
           view.writeByte(1);
-          {
-          const length0 = message.payload.length;
-          view.writeUint32(length0);
-          for (let i0 = 0; i0 < length0; i0++) {
-            ModuleData.encodeInto(message.payload[i0], view)
-          }
-        }
+          view.writeString(message.msg);
         }
         view.writeByte(0);
         const end = view.length;
@@ -631,15 +1076,7 @@ export namespace DigitalAssetTypes {
             return message;
 
           case 1:
-            {
-          let length0 = view.readUint32();
-          message.payload = new Array<IModuleData>(length0);
-          for (let i0 = 0; i0 < length0; i0++) {
-            let x0: IModuleData;
-            x0 = ModuleData.readFrom(view);
-            message.payload[i0] = x0;
-          }
-        }
+            message.msg = view.readString();
             break;
 
           default:

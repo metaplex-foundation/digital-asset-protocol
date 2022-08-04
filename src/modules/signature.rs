@@ -8,9 +8,8 @@ pub struct SignatureModuleProcessor {}
 pub static SIGNATURE_MODULE_PROCESSOR: SignatureModuleProcessor = SignatureModuleProcessor {};
 
 impl ModuleProcessor for SignatureModuleProcessor {
-    fn create<'raw>(&self,
-                    asset: &mut Asset<'raw>,
-                    module_data: Option<ModuleDataWrapper<'raw>>,
+    fn create(&self,
+                    asset: &mut Asset
     )
                     -> Result<(), DigitalAssetProtocolError> {
         Ok(())

@@ -3,8 +3,8 @@ use bebop::{Record, SliceWrapper, SubRecord};
 use lazy_static::lazy_static;
 use solana_program::account_info::AccountInfo;
 use crate::api::DigitalAssetProtocolError;
-use crate::blob::{Asset, Blob};
-use crate::generated::schema::{ModuleType};
+use crate::blob::{Asset};
+use crate::generated::schema::owned::{ModuleData, ModuleType};
 use crate::module::{ModuleDataWrapper, ModuleId, ModuleProcessor};
 
 
@@ -14,29 +14,15 @@ pub static OWNERSHIP_MODULE_PROCESSOR: OwnershipModuleProcessor = OwnershipModul
 
 impl ModuleProcessor for OwnershipModuleProcessor {
     fn create<'raw>(&self,
-                    asset: &mut Asset<'raw>,
-                    module_data: Option<ModuleDataWrapper<'raw>>,
+                    asset: &mut Asset
     )
                     -> Result<(), DigitalAssetProtocolError> {
-
-        let ownership_data = match module_data {
-            Some(ModuleDataWrapper::Structured(d)) => Ok(d),
+        match asset.get_module(ModuleType::Ownership) {
+            Some(ModuleDataWrapper::Structured(ModuleData::OwnershipData { .. })) => Ok(()),
             _ => {
                 Err(DigitalAssetProtocolError::ModuleError("Incorrect Data Type for Module".to_string()))
             }
         }?;
-
-        let mut raw_data = Vec::with_capacity(ownership_data.serialized_size());
-        ownership_data.serialize(&mut raw_data)
-            .map_err(|e| {
-                DigitalAssetProtocolError::ModuleError(e.to_string())
-            })?;
-        let blob = Blob {
-            schema: ModuleId::Module(ModuleType::Ownership),
-            data: raw_data,
-            _runtime_data: Some(ownership_data.to_owned()),
-        };
-        asset.layout.insert(ModuleId::Module(ModuleType::Ownership), blob);
         Ok(())
     }
 }
