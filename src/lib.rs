@@ -1,11 +1,11 @@
-mod api;
+pub mod api;
+pub mod blob;
 mod entrypoint;
+mod generated;
 mod interfaces;
 mod lifecycle;
-mod generated;
-mod modules;
-pub mod blob;
 pub mod module;
+mod modules;
 
 #[macro_use]
 pub mod validation;

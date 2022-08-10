@@ -1,22 +1,18 @@
-use std::cell::{Ref, RefMut};
+use crate::api::DigitalAssetProtocolError::ActionError;
+use crate::generated::schema::owned::{Action as IxAction, ActionData, Interface};
+use crate::interfaces::asset;
+use crate::interfaces::ContextAction;
+use crate::validation::{assert_key_equal, cmp_pubkeys};
 use bebop::{DeserializeError, Record};
+use solana_program::account_info::AccountInfo;
+use solana_program::pubkey::Pubkey;
 use solana_program::{
     decode_error::DecodeError,
     msg,
     program_error::{PrintProgramError, ProgramError},
 };
-use solana_program::account_info::AccountInfo;
-use solana_program::pubkey::Pubkey;
+use std::cell::{Ref, RefMut};
 use thiserror::Error;
-use crate::api::DigitalAssetProtocolError::ActionError;
-use crate::interfaces::{asset};
-use crate::validation::{assert_key_equal, cmp_pubkeys};
-use crate::generated::schema::owned::{
-    Action as IxAction,
-    Interface,
-    ActionData,
-};
-use crate::interfaces::ContextAction;
 
 pub struct Action<'info> {
     pub standard: Interface,
@@ -30,27 +26,54 @@ impl<'info> Action<'info> {
         self.context.run()
     }
 
-    fn match_context(accounts: &[AccountInfo<'info>], action_data: ActionData) -> Result<(Box<dyn ContextAction + 'info>, usize), DigitalAssetProtocolError> {
+    fn match_context(
+        accounts: &[AccountInfo<'info>],
+        action_data: ActionData,
+    ) -> Result<(Box<dyn ContextAction + 'info>, usize), DigitalAssetProtocolError> {
         match action_data {
+            ActionData::CancelSaleAssetV1 { .. } => {
+                let d = asset::CancelSaleV1::new(accounts, action_data)?;
+                Ok((Box::new(d.0), d.1))
+            }
             ActionData::CreateAssetV1 { .. } => {
                 let d = asset::CreateV1::new(accounts, action_data)?;
+                Ok((Box::new(d.0), d.1))
+            }
+            ActionData::DelegateAssetV1 { .. } => {
+                let d = asset::DelegateV1::new(accounts, action_data)?;
+                Ok((Box::new(d.0), d.1))
+            }
+            ActionData::DeleteAssetV1 { .. } => {
+                let d = asset::DeleteV1::new(accounts, action_data)?;
+                Ok((Box::new(d.0), d.1))
+            }
+            ActionData::FreezeAssetV1 { .. } => {
+                let d = asset::FreezeV1::new(accounts, action_data)?;
+                Ok((Box::new(d.0), d.1))
+            }
+            ActionData::ListForSaleAssetV1 { .. } => {
+                let d = asset::ListForSaleV1::new(accounts, action_data)?;
+                Ok((Box::new(d.0), d.1))
+            }
+            ActionData::TransferAssetV1 { .. } => {
+                let d = asset::TransferV1::new(accounts, action_data)?;
                 Ok((Box::new(d.0), d.1))
             }
             ActionData::UpdateAssetV1 { .. } => {
                 let d = asset::UpdateV1::new(accounts, action_data)?;
                 Ok((Box::new(d.0), d.1))
             }
-            _ => Err(DigitalAssetProtocolError::InterfaceNoImpl)
+            _ => Err(DigitalAssetProtocolError::InterfaceNoImpl),
         }
     }
 
-    pub fn from_instruction(program_id: &Pubkey,
-                            accounts: &'info [AccountInfo<'info>],
-                            instruction_data: &'info [u8]) -> Result<Action<'info>, DigitalAssetProtocolError> {
+    pub fn from_instruction(
+        program_id: &Pubkey,
+        accounts: &'info [AccountInfo<'info>],
+        instruction_data: &'info [u8],
+    ) -> Result<Action<'info>, DigitalAssetProtocolError> {
         let action = IxAction::deserialize(instruction_data)
-            .map_err(|res| {
-                DigitalAssetProtocolError::DeError(res.to_string())
-            })?;
+            .map_err(|res| DigitalAssetProtocolError::DeError(res.to_string()))?;
 
         return match action.standard {
             Interface::Nft => {
@@ -62,11 +85,10 @@ impl<'info> Action<'info> {
                     remaining_accounts: accounts[action_context.1..].to_vec(),
                 })
             }
-            _ => Err(DigitalAssetProtocolError::InterfaceNoImpl)
+            _ => Err(DigitalAssetProtocolError::InterfaceNoImpl),
         };
     }
 }
-
 
 #[derive(Error, Debug)]
 pub enum DigitalAssetProtocolError {
@@ -87,7 +109,6 @@ pub enum DigitalAssetProtocolError {
 
     #[error("Interface has no implementation")]
     InterfaceNoImpl,
-
 }
 
 impl PrintProgramError for DigitalAssetProtocolError {
@@ -114,7 +135,6 @@ impl<T> DecodeError<T> for DigitalAssetProtocolError {
         "Dasset Error"
     }
 }
-
 
 pub fn derive(seeds: &[&[u8]], program_id: &Pubkey) -> (Pubkey, u8) {
     Pubkey::find_program_address(seeds, program_id)
@@ -146,13 +166,22 @@ pub trait AccountConstraints {
 impl<'info> AccountConstraints for AccountInfoContext<'info> {
     fn validate_constraint(&mut self) -> Result<(), DigitalAssetProtocolError> {
         if self.constraints.program && !self.info.executable {
-            return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} needs to be a program", self.info.key)));
+            return Err(DigitalAssetProtocolError::InterfaceError(format!(
+                "Account with key {} needs to be a program",
+                self.info.key
+            )));
         }
         if self.constraints.writable && !self.info.is_writable {
-            return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} needs to be writable", self.info.key)));
+            return Err(DigitalAssetProtocolError::InterfaceError(format!(
+                "Account with key {} needs to be writable",
+                self.info.key
+            )));
         }
         if self.constraints.signer && !self.info.is_signer {
-            return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} needs to be a signer", self.info.key)));
+            return Err(DigitalAssetProtocolError::InterfaceError(format!(
+                "Account with key {} needs to be a signer",
+                self.info.key
+            )));
         }
         if let Some(kef) = self.constraints.key_equals {
             assert_key_equal(&kef, self.info.key)?;
@@ -164,7 +193,10 @@ impl<'info> AccountConstraints for AccountInfoContext<'info> {
                 self.bump = Some(bump);
                 Ok(())
             }
-            _ => Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} has incorrect seeds", self.info.key)))
+            _ => Err(DigitalAssetProtocolError::InterfaceError(format!(
+                "Account with key {} has incorrect seeds",
+                self.info.key
+            ))),
         }?;
         Ok(())
     }

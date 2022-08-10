@@ -2767,6 +2767,42 @@ pub mod owned {
             /// Field 1
             msg: ::core::option::Option<String>,
         },
+
+        /// Discriminator 4
+        TransferAssetV1 {
+            /// Field 1
+            msg: ::core::option::Option<String>,
+        },
+
+        /// Discriminator 5
+        ListForSaleAssetV1 {
+            /// Field 1
+            msg: ::core::option::Option<String>,
+        },
+
+        /// Discriminator 6
+        CancelSaleAssetV1 {
+            /// Field 1
+            msg: ::core::option::Option<String>,
+        },
+
+        /// Discriminator 7
+        DelegateAssetV1 {
+            /// Field 1
+            msg: ::core::option::Option<String>,
+        },
+
+        /// Discriminator 8
+        DeleteAssetV1 {
+            /// Field 1
+            msg: ::core::option::Option<String>,
+        },
+
+        /// Discriminator 9
+        FreezeAssetV1 {
+            /// Field 1
+            msg: ::core::option::Option<String>,
+        },
     }
 
     impl<'raw> ::core::convert::From<super::ActionData<'raw>> for ActionData {
@@ -2814,6 +2850,11 @@ pub mod owned {
                             + 1
                             + _uri.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
                     }
+                    Self::CancelSaleAssetV1 { msg: ref _msg } => {
+                        ::bebop::LEN_SIZE
+                            + 1
+                            + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
+                    }
                     Self::CreateAssetV1 {
                         uri: ref _uri,
                         ownership_model: ref _ownership_model,
@@ -2851,6 +2892,31 @@ pub mod owned {
                                 .map(|v| v.serialized_size() + 1)
                                 .unwrap_or(0)
                     }
+                    Self::DelegateAssetV1 { msg: ref _msg } => {
+                        ::bebop::LEN_SIZE
+                            + 1
+                            + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
+                    }
+                    Self::DeleteAssetV1 { msg: ref _msg } => {
+                        ::bebop::LEN_SIZE
+                            + 1
+                            + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
+                    }
+                    Self::FreezeAssetV1 { msg: ref _msg } => {
+                        ::bebop::LEN_SIZE
+                            + 1
+                            + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
+                    }
+                    Self::ListForSaleAssetV1 { msg: ref _msg } => {
+                        ::bebop::LEN_SIZE
+                            + 1
+                            + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
+                    }
+                    Self::TransferAssetV1 { msg: ref _msg } => {
+                        ::bebop::LEN_SIZE
+                            + 1
+                            + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
+                    }
                     Self::UpdateAssetV1 { msg: ref _msg } => {
                         ::bebop::LEN_SIZE
                             + 1
@@ -2873,6 +2939,15 @@ pub mod owned {
                     1u8._serialize_chained(dest)?;
                     ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
                     if let Some(ref v) = _uri {
+                        1u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    0u8._serialize_chained(dest)?;
+                }
+                Self::CancelSaleAssetV1 { msg: ref _msg } => {
+                    3u8._serialize_chained(dest)?;
+                    ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                    if let Some(ref v) = _msg {
                         1u8._serialize_chained(dest)?;
                         v._serialize_chained(dest)?;
                     }
@@ -2915,6 +2990,51 @@ pub mod owned {
                     }
                     if let Some(ref v) = _authorities {
                         7u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    0u8._serialize_chained(dest)?;
+                }
+                Self::DelegateAssetV1 { msg: ref _msg } => {
+                    3u8._serialize_chained(dest)?;
+                    ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                    if let Some(ref v) = _msg {
+                        1u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    0u8._serialize_chained(dest)?;
+                }
+                Self::DeleteAssetV1 { msg: ref _msg } => {
+                    3u8._serialize_chained(dest)?;
+                    ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                    if let Some(ref v) = _msg {
+                        1u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    0u8._serialize_chained(dest)?;
+                }
+                Self::FreezeAssetV1 { msg: ref _msg } => {
+                    3u8._serialize_chained(dest)?;
+                    ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                    if let Some(ref v) = _msg {
+                        1u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    0u8._serialize_chained(dest)?;
+                }
+                Self::ListForSaleAssetV1 { msg: ref _msg } => {
+                    3u8._serialize_chained(dest)?;
+                    ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                    if let Some(ref v) = _msg {
+                        1u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    0u8._serialize_chained(dest)?;
+                }
+                Self::TransferAssetV1 { msg: ref _msg } => {
+                    3u8._serialize_chained(dest)?;
+                    ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                    if let Some(ref v) = _msg {
+                        1u8._serialize_chained(dest)?;
                         v._serialize_chained(dest)?;
                     }
                     0u8._serialize_chained(dest)?;
