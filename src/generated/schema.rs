@@ -1041,6 +1041,42 @@ pub enum ActionData<'raw> {
         /// Field 1
         msg: ::core::option::Option<&'raw str>,
     },
+
+    /// Discriminator 4
+    TransferAssetV1 {
+        /// Field 1
+        msg: ::core::option::Option<&'raw str>,
+    },
+
+    /// Discriminator 5
+    ListForSaleAssetV1 {
+        /// Field 1
+        msg: ::core::option::Option<&'raw str>,
+    },
+
+    /// Discriminator 6
+    CancelSaleAssetV1 {
+        /// Field 1
+        msg: ::core::option::Option<&'raw str>,
+    },
+
+    /// Discriminator 7
+    DelegateAssetV1 {
+        /// Field 1
+        msg: ::core::option::Option<&'raw str>,
+    },
+
+    /// Discriminator 8
+    DeleteAssetV1 {
+        /// Field 1
+        msg: ::core::option::Option<&'raw str>,
+    },
+
+    /// Discriminator 9
+    FreezeAssetV1 {
+        /// Field 1
+        msg: ::core::option::Option<&'raw str>,
+    },
 }
 
 impl<'raw> ::bebop::SubRecord<'raw> for ActionData<'raw> {
@@ -1094,6 +1130,36 @@ impl<'raw> ::bebop::SubRecord<'raw> for ActionData<'raw> {
                             .unwrap_or(0)
                 }
                 Self::UpdateAssetV1 { msg: ref _msg } => {
+                    ::bebop::LEN_SIZE
+                        + 1
+                        + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
+                }
+                Self::TransferAssetV1 { msg: ref _msg } => {
+                    ::bebop::LEN_SIZE
+                        + 1
+                        + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
+                }
+                Self::ListForSaleAssetV1 { msg: ref _msg } => {
+                    ::bebop::LEN_SIZE
+                        + 1
+                        + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
+                }
+                Self::CancelSaleAssetV1 { msg: ref _msg } => {
+                    ::bebop::LEN_SIZE
+                        + 1
+                        + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
+                }
+                Self::DelegateAssetV1 { msg: ref _msg } => {
+                    ::bebop::LEN_SIZE
+                        + 1
+                        + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
+                }
+                Self::DeleteAssetV1 { msg: ref _msg } => {
+                    ::bebop::LEN_SIZE
+                        + 1
+                        + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
+                }
+                Self::FreezeAssetV1 { msg: ref _msg } => {
                     ::bebop::LEN_SIZE
                         + 1
                         + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
@@ -1160,6 +1226,60 @@ impl<'raw> ::bebop::SubRecord<'raw> for ActionData<'raw> {
             }
             Self::UpdateAssetV1 { msg: ref _msg } => {
                 3u8._serialize_chained(dest)?;
+                ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                if let Some(ref v) = _msg {
+                    1u8._serialize_chained(dest)?;
+                    v._serialize_chained(dest)?;
+                }
+                0u8._serialize_chained(dest)?;
+            }
+            Self::TransferAssetV1 { msg: ref _msg } => {
+                4u8._serialize_chained(dest)?;
+                ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                if let Some(ref v) = _msg {
+                    1u8._serialize_chained(dest)?;
+                    v._serialize_chained(dest)?;
+                }
+                0u8._serialize_chained(dest)?;
+            }
+            Self::ListForSaleAssetV1 { msg: ref _msg } => {
+                5u8._serialize_chained(dest)?;
+                ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                if let Some(ref v) = _msg {
+                    1u8._serialize_chained(dest)?;
+                    v._serialize_chained(dest)?;
+                }
+                0u8._serialize_chained(dest)?;
+            }
+            Self::CancelSaleAssetV1 { msg: ref _msg } => {
+                6u8._serialize_chained(dest)?;
+                ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                if let Some(ref v) = _msg {
+                    1u8._serialize_chained(dest)?;
+                    v._serialize_chained(dest)?;
+                }
+                0u8._serialize_chained(dest)?;
+            }
+            Self::DelegateAssetV1 { msg: ref _msg } => {
+                7u8._serialize_chained(dest)?;
+                ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                if let Some(ref v) = _msg {
+                    1u8._serialize_chained(dest)?;
+                    v._serialize_chained(dest)?;
+                }
+                0u8._serialize_chained(dest)?;
+            }
+            Self::DeleteAssetV1 { msg: ref _msg } => {
+                8u8._serialize_chained(dest)?;
+                ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                if let Some(ref v) = _msg {
+                    1u8._serialize_chained(dest)?;
+                    v._serialize_chained(dest)?;
+                }
+                0u8._serialize_chained(dest)?;
+            }
+            Self::FreezeAssetV1 { msg: ref _msg } => {
+                9u8._serialize_chained(dest)?;
                 ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
                 if let Some(ref v) = _msg {
                     1u8._serialize_chained(dest)?;
@@ -1422,6 +1542,354 @@ impl<'raw> ::bebop::SubRecord<'raw> for ActionData<'raw> {
                 }
 
                 ActionData::UpdateAssetV1 { msg: _msg }
+            }
+            4 => {
+                let len = ::bebop::read_len(&raw[i..])? + i + ::bebop::LEN_SIZE;
+                i += ::bebop::LEN_SIZE;
+
+                #[cfg(not(feature = "unchecked"))]
+                if len == 0 {
+                    return Err(::bebop::DeserializeError::CorruptFrame);
+                }
+
+                if raw.len() < len {
+                    return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+                }
+
+                let mut _msg = None;
+
+                #[cfg(not(feature = "unchecked"))]
+                let mut last = 0;
+
+                while i < len {
+                    let di = raw[i];
+
+                    #[cfg(not(feature = "unchecked"))]
+                    if di != 0 {
+                        if di < last {
+                            return Err(::bebop::DeserializeError::CorruptFrame);
+                        }
+                        last = di;
+                    }
+
+                    i += 1;
+                    match di {
+                        0 => {
+                            break;
+                        }
+                        1 => {
+                            #[cfg(not(feature = "unchecked"))]
+                            if _msg.is_some() {
+                                return Err(::bebop::DeserializeError::DuplicateMessageField);
+                            }
+                            let (read, value) =
+                                ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                            i += read;
+                            _msg = Some(value)
+                        }
+                        _ => {
+                            i = len;
+                            break;
+                        }
+                    }
+                }
+
+                if i != len {
+                    debug_assert!(i > len);
+                    return Err(::bebop::DeserializeError::CorruptFrame);
+                }
+
+                ActionData::TransferAssetV1 { msg: _msg }
+            }
+            5 => {
+                let len = ::bebop::read_len(&raw[i..])? + i + ::bebop::LEN_SIZE;
+                i += ::bebop::LEN_SIZE;
+
+                #[cfg(not(feature = "unchecked"))]
+                if len == 0 {
+                    return Err(::bebop::DeserializeError::CorruptFrame);
+                }
+
+                if raw.len() < len {
+                    return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+                }
+
+                let mut _msg = None;
+
+                #[cfg(not(feature = "unchecked"))]
+                let mut last = 0;
+
+                while i < len {
+                    let di = raw[i];
+
+                    #[cfg(not(feature = "unchecked"))]
+                    if di != 0 {
+                        if di < last {
+                            return Err(::bebop::DeserializeError::CorruptFrame);
+                        }
+                        last = di;
+                    }
+
+                    i += 1;
+                    match di {
+                        0 => {
+                            break;
+                        }
+                        1 => {
+                            #[cfg(not(feature = "unchecked"))]
+                            if _msg.is_some() {
+                                return Err(::bebop::DeserializeError::DuplicateMessageField);
+                            }
+                            let (read, value) =
+                                ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                            i += read;
+                            _msg = Some(value)
+                        }
+                        _ => {
+                            i = len;
+                            break;
+                        }
+                    }
+                }
+
+                if i != len {
+                    debug_assert!(i > len);
+                    return Err(::bebop::DeserializeError::CorruptFrame);
+                }
+
+                ActionData::ListForSaleAssetV1 { msg: _msg }
+            }
+            6 => {
+                let len = ::bebop::read_len(&raw[i..])? + i + ::bebop::LEN_SIZE;
+                i += ::bebop::LEN_SIZE;
+
+                #[cfg(not(feature = "unchecked"))]
+                if len == 0 {
+                    return Err(::bebop::DeserializeError::CorruptFrame);
+                }
+
+                if raw.len() < len {
+                    return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+                }
+
+                let mut _msg = None;
+
+                #[cfg(not(feature = "unchecked"))]
+                let mut last = 0;
+
+                while i < len {
+                    let di = raw[i];
+
+                    #[cfg(not(feature = "unchecked"))]
+                    if di != 0 {
+                        if di < last {
+                            return Err(::bebop::DeserializeError::CorruptFrame);
+                        }
+                        last = di;
+                    }
+
+                    i += 1;
+                    match di {
+                        0 => {
+                            break;
+                        }
+                        1 => {
+                            #[cfg(not(feature = "unchecked"))]
+                            if _msg.is_some() {
+                                return Err(::bebop::DeserializeError::DuplicateMessageField);
+                            }
+                            let (read, value) =
+                                ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                            i += read;
+                            _msg = Some(value)
+                        }
+                        _ => {
+                            i = len;
+                            break;
+                        }
+                    }
+                }
+
+                if i != len {
+                    debug_assert!(i > len);
+                    return Err(::bebop::DeserializeError::CorruptFrame);
+                }
+
+                ActionData::CancelSaleAssetV1 { msg: _msg }
+            }
+            7 => {
+                let len = ::bebop::read_len(&raw[i..])? + i + ::bebop::LEN_SIZE;
+                i += ::bebop::LEN_SIZE;
+
+                #[cfg(not(feature = "unchecked"))]
+                if len == 0 {
+                    return Err(::bebop::DeserializeError::CorruptFrame);
+                }
+
+                if raw.len() < len {
+                    return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+                }
+
+                let mut _msg = None;
+
+                #[cfg(not(feature = "unchecked"))]
+                let mut last = 0;
+
+                while i < len {
+                    let di = raw[i];
+
+                    #[cfg(not(feature = "unchecked"))]
+                    if di != 0 {
+                        if di < last {
+                            return Err(::bebop::DeserializeError::CorruptFrame);
+                        }
+                        last = di;
+                    }
+
+                    i += 1;
+                    match di {
+                        0 => {
+                            break;
+                        }
+                        1 => {
+                            #[cfg(not(feature = "unchecked"))]
+                            if _msg.is_some() {
+                                return Err(::bebop::DeserializeError::DuplicateMessageField);
+                            }
+                            let (read, value) =
+                                ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                            i += read;
+                            _msg = Some(value)
+                        }
+                        _ => {
+                            i = len;
+                            break;
+                        }
+                    }
+                }
+
+                if i != len {
+                    debug_assert!(i > len);
+                    return Err(::bebop::DeserializeError::CorruptFrame);
+                }
+
+                ActionData::DelegateAssetV1 { msg: _msg }
+            }
+            8 => {
+                let len = ::bebop::read_len(&raw[i..])? + i + ::bebop::LEN_SIZE;
+                i += ::bebop::LEN_SIZE;
+
+                #[cfg(not(feature = "unchecked"))]
+                if len == 0 {
+                    return Err(::bebop::DeserializeError::CorruptFrame);
+                }
+
+                if raw.len() < len {
+                    return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+                }
+
+                let mut _msg = None;
+
+                #[cfg(not(feature = "unchecked"))]
+                let mut last = 0;
+
+                while i < len {
+                    let di = raw[i];
+
+                    #[cfg(not(feature = "unchecked"))]
+                    if di != 0 {
+                        if di < last {
+                            return Err(::bebop::DeserializeError::CorruptFrame);
+                        }
+                        last = di;
+                    }
+
+                    i += 1;
+                    match di {
+                        0 => {
+                            break;
+                        }
+                        1 => {
+                            #[cfg(not(feature = "unchecked"))]
+                            if _msg.is_some() {
+                                return Err(::bebop::DeserializeError::DuplicateMessageField);
+                            }
+                            let (read, value) =
+                                ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                            i += read;
+                            _msg = Some(value)
+                        }
+                        _ => {
+                            i = len;
+                            break;
+                        }
+                    }
+                }
+
+                if i != len {
+                    debug_assert!(i > len);
+                    return Err(::bebop::DeserializeError::CorruptFrame);
+                }
+
+                ActionData::DeleteAssetV1 { msg: _msg }
+            }
+            9 => {
+                let len = ::bebop::read_len(&raw[i..])? + i + ::bebop::LEN_SIZE;
+                i += ::bebop::LEN_SIZE;
+
+                #[cfg(not(feature = "unchecked"))]
+                if len == 0 {
+                    return Err(::bebop::DeserializeError::CorruptFrame);
+                }
+
+                if raw.len() < len {
+                    return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+                }
+
+                let mut _msg = None;
+
+                #[cfg(not(feature = "unchecked"))]
+                let mut last = 0;
+
+                while i < len {
+                    let di = raw[i];
+
+                    #[cfg(not(feature = "unchecked"))]
+                    if di != 0 {
+                        if di < last {
+                            return Err(::bebop::DeserializeError::CorruptFrame);
+                        }
+                        last = di;
+                    }
+
+                    i += 1;
+                    match di {
+                        0 => {
+                            break;
+                        }
+                        1 => {
+                            #[cfg(not(feature = "unchecked"))]
+                            if _msg.is_some() {
+                                return Err(::bebop::DeserializeError::DuplicateMessageField);
+                            }
+                            let (read, value) =
+                                ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                            i += read;
+                            _msg = Some(value)
+                        }
+                        _ => {
+                            i = len;
+                            break;
+                        }
+                    }
+                }
+
+                if i != len {
+                    debug_assert!(i > len);
+                    return Err(::bebop::DeserializeError::CorruptFrame);
+                }
+
+                ActionData::FreezeAssetV1 { msg: _msg }
             }
             _ => {
                 i = len;
@@ -2834,6 +3302,24 @@ pub mod owned {
                 super::ActionData::UpdateAssetV1 { msg: _msg } => Self::UpdateAssetV1 {
                     msg: _msg.map(|value| value.into()),
                 },
+                super::ActionData::TransferAssetV1 { msg: _msg } => Self::TransferAssetV1 {
+                    msg: _msg.map(|value| value.into()),
+                },
+                super::ActionData::ListForSaleAssetV1 { msg: _msg } => Self::ListForSaleAssetV1 {
+                    msg: _msg.map(|value| value.into()),
+                },
+                super::ActionData::CancelSaleAssetV1 { msg: _msg } => Self::CancelSaleAssetV1 {
+                    msg: _msg.map(|value| value.into()),
+                },
+                super::ActionData::DelegateAssetV1 { msg: _msg } => Self::DelegateAssetV1 {
+                    msg: _msg.map(|value| value.into()),
+                },
+                super::ActionData::DeleteAssetV1 { msg: _msg } => Self::DeleteAssetV1 {
+                    msg: _msg.map(|value| value.into()),
+                },
+                super::ActionData::FreezeAssetV1 { msg: _msg } => Self::FreezeAssetV1 {
+                    msg: _msg.map(|value| value.into()),
+                },
             }
         }
     }
@@ -2849,11 +3335,6 @@ pub mod owned {
                         ::bebop::LEN_SIZE
                             + 1
                             + _uri.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
-                    }
-                    Self::CancelSaleAssetV1 { msg: ref _msg } => {
-                        ::bebop::LEN_SIZE
-                            + 1
-                            + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
                     }
                     Self::CreateAssetV1 {
                         uri: ref _uri,
@@ -2892,6 +3373,26 @@ pub mod owned {
                                 .map(|v| v.serialized_size() + 1)
                                 .unwrap_or(0)
                     }
+                    Self::UpdateAssetV1 { msg: ref _msg } => {
+                        ::bebop::LEN_SIZE
+                            + 1
+                            + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
+                    }
+                    Self::TransferAssetV1 { msg: ref _msg } => {
+                        ::bebop::LEN_SIZE
+                            + 1
+                            + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
+                    }
+                    Self::ListForSaleAssetV1 { msg: ref _msg } => {
+                        ::bebop::LEN_SIZE
+                            + 1
+                            + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
+                    }
+                    Self::CancelSaleAssetV1 { msg: ref _msg } => {
+                        ::bebop::LEN_SIZE
+                            + 1
+                            + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
+                    }
                     Self::DelegateAssetV1 { msg: ref _msg } => {
                         ::bebop::LEN_SIZE
                             + 1
@@ -2903,21 +3404,6 @@ pub mod owned {
                             + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
                     }
                     Self::FreezeAssetV1 { msg: ref _msg } => {
-                        ::bebop::LEN_SIZE
-                            + 1
-                            + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
-                    }
-                    Self::ListForSaleAssetV1 { msg: ref _msg } => {
-                        ::bebop::LEN_SIZE
-                            + 1
-                            + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
-                    }
-                    Self::TransferAssetV1 { msg: ref _msg } => {
-                        ::bebop::LEN_SIZE
-                            + 1
-                            + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
-                    }
-                    Self::UpdateAssetV1 { msg: ref _msg } => {
                         ::bebop::LEN_SIZE
                             + 1
                             + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
@@ -2939,15 +3425,6 @@ pub mod owned {
                     1u8._serialize_chained(dest)?;
                     ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
                     if let Some(ref v) = _uri {
-                        1u8._serialize_chained(dest)?;
-                        v._serialize_chained(dest)?;
-                    }
-                    0u8._serialize_chained(dest)?;
-                }
-                Self::CancelSaleAssetV1 { msg: ref _msg } => {
-                    3u8._serialize_chained(dest)?;
-                    ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
-                    if let Some(ref v) = _msg {
                         1u8._serialize_chained(dest)?;
                         v._serialize_chained(dest)?;
                     }
@@ -2994,34 +3471,7 @@ pub mod owned {
                     }
                     0u8._serialize_chained(dest)?;
                 }
-                Self::DelegateAssetV1 { msg: ref _msg } => {
-                    3u8._serialize_chained(dest)?;
-                    ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
-                    if let Some(ref v) = _msg {
-                        1u8._serialize_chained(dest)?;
-                        v._serialize_chained(dest)?;
-                    }
-                    0u8._serialize_chained(dest)?;
-                }
-                Self::DeleteAssetV1 { msg: ref _msg } => {
-                    3u8._serialize_chained(dest)?;
-                    ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
-                    if let Some(ref v) = _msg {
-                        1u8._serialize_chained(dest)?;
-                        v._serialize_chained(dest)?;
-                    }
-                    0u8._serialize_chained(dest)?;
-                }
-                Self::FreezeAssetV1 { msg: ref _msg } => {
-                    3u8._serialize_chained(dest)?;
-                    ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
-                    if let Some(ref v) = _msg {
-                        1u8._serialize_chained(dest)?;
-                        v._serialize_chained(dest)?;
-                    }
-                    0u8._serialize_chained(dest)?;
-                }
-                Self::ListForSaleAssetV1 { msg: ref _msg } => {
+                Self::UpdateAssetV1 { msg: ref _msg } => {
                     3u8._serialize_chained(dest)?;
                     ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
                     if let Some(ref v) = _msg {
@@ -3031,7 +3481,7 @@ pub mod owned {
                     0u8._serialize_chained(dest)?;
                 }
                 Self::TransferAssetV1 { msg: ref _msg } => {
-                    3u8._serialize_chained(dest)?;
+                    4u8._serialize_chained(dest)?;
                     ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
                     if let Some(ref v) = _msg {
                         1u8._serialize_chained(dest)?;
@@ -3039,8 +3489,44 @@ pub mod owned {
                     }
                     0u8._serialize_chained(dest)?;
                 }
-                Self::UpdateAssetV1 { msg: ref _msg } => {
-                    3u8._serialize_chained(dest)?;
+                Self::ListForSaleAssetV1 { msg: ref _msg } => {
+                    5u8._serialize_chained(dest)?;
+                    ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                    if let Some(ref v) = _msg {
+                        1u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    0u8._serialize_chained(dest)?;
+                }
+                Self::CancelSaleAssetV1 { msg: ref _msg } => {
+                    6u8._serialize_chained(dest)?;
+                    ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                    if let Some(ref v) = _msg {
+                        1u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    0u8._serialize_chained(dest)?;
+                }
+                Self::DelegateAssetV1 { msg: ref _msg } => {
+                    7u8._serialize_chained(dest)?;
+                    ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                    if let Some(ref v) = _msg {
+                        1u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    0u8._serialize_chained(dest)?;
+                }
+                Self::DeleteAssetV1 { msg: ref _msg } => {
+                    8u8._serialize_chained(dest)?;
+                    ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                    if let Some(ref v) = _msg {
+                        1u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    0u8._serialize_chained(dest)?;
+                }
+                Self::FreezeAssetV1 { msg: ref _msg } => {
+                    9u8._serialize_chained(dest)?;
                     ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
                     if let Some(ref v) = _msg {
                         1u8._serialize_chained(dest)?;
@@ -3303,6 +3789,354 @@ pub mod owned {
                     }
 
                     ActionData::UpdateAssetV1 { msg: _msg }
+                }
+                4 => {
+                    let len = ::bebop::read_len(&raw[i..])? + i + ::bebop::LEN_SIZE;
+                    i += ::bebop::LEN_SIZE;
+
+                    #[cfg(not(feature = "unchecked"))]
+                    if len == 0 {
+                        return Err(::bebop::DeserializeError::CorruptFrame);
+                    }
+
+                    if raw.len() < len {
+                        return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+                    }
+
+                    let mut _msg = None;
+
+                    #[cfg(not(feature = "unchecked"))]
+                    let mut last = 0;
+
+                    while i < len {
+                        let di = raw[i];
+
+                        #[cfg(not(feature = "unchecked"))]
+                        if di != 0 {
+                            if di < last {
+                                return Err(::bebop::DeserializeError::CorruptFrame);
+                            }
+                            last = di;
+                        }
+
+                        i += 1;
+                        match di {
+                            0 => {
+                                break;
+                            }
+                            1 => {
+                                #[cfg(not(feature = "unchecked"))]
+                                if _msg.is_some() {
+                                    return Err(::bebop::DeserializeError::DuplicateMessageField);
+                                }
+                                let (read, value) =
+                                    ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                                i += read;
+                                _msg = Some(value)
+                            }
+                            _ => {
+                                i = len;
+                                break;
+                            }
+                        }
+                    }
+
+                    if i != len {
+                        debug_assert!(i > len);
+                        return Err(::bebop::DeserializeError::CorruptFrame);
+                    }
+
+                    ActionData::TransferAssetV1 { msg: _msg }
+                }
+                5 => {
+                    let len = ::bebop::read_len(&raw[i..])? + i + ::bebop::LEN_SIZE;
+                    i += ::bebop::LEN_SIZE;
+
+                    #[cfg(not(feature = "unchecked"))]
+                    if len == 0 {
+                        return Err(::bebop::DeserializeError::CorruptFrame);
+                    }
+
+                    if raw.len() < len {
+                        return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+                    }
+
+                    let mut _msg = None;
+
+                    #[cfg(not(feature = "unchecked"))]
+                    let mut last = 0;
+
+                    while i < len {
+                        let di = raw[i];
+
+                        #[cfg(not(feature = "unchecked"))]
+                        if di != 0 {
+                            if di < last {
+                                return Err(::bebop::DeserializeError::CorruptFrame);
+                            }
+                            last = di;
+                        }
+
+                        i += 1;
+                        match di {
+                            0 => {
+                                break;
+                            }
+                            1 => {
+                                #[cfg(not(feature = "unchecked"))]
+                                if _msg.is_some() {
+                                    return Err(::bebop::DeserializeError::DuplicateMessageField);
+                                }
+                                let (read, value) =
+                                    ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                                i += read;
+                                _msg = Some(value)
+                            }
+                            _ => {
+                                i = len;
+                                break;
+                            }
+                        }
+                    }
+
+                    if i != len {
+                        debug_assert!(i > len);
+                        return Err(::bebop::DeserializeError::CorruptFrame);
+                    }
+
+                    ActionData::ListForSaleAssetV1 { msg: _msg }
+                }
+                6 => {
+                    let len = ::bebop::read_len(&raw[i..])? + i + ::bebop::LEN_SIZE;
+                    i += ::bebop::LEN_SIZE;
+
+                    #[cfg(not(feature = "unchecked"))]
+                    if len == 0 {
+                        return Err(::bebop::DeserializeError::CorruptFrame);
+                    }
+
+                    if raw.len() < len {
+                        return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+                    }
+
+                    let mut _msg = None;
+
+                    #[cfg(not(feature = "unchecked"))]
+                    let mut last = 0;
+
+                    while i < len {
+                        let di = raw[i];
+
+                        #[cfg(not(feature = "unchecked"))]
+                        if di != 0 {
+                            if di < last {
+                                return Err(::bebop::DeserializeError::CorruptFrame);
+                            }
+                            last = di;
+                        }
+
+                        i += 1;
+                        match di {
+                            0 => {
+                                break;
+                            }
+                            1 => {
+                                #[cfg(not(feature = "unchecked"))]
+                                if _msg.is_some() {
+                                    return Err(::bebop::DeserializeError::DuplicateMessageField);
+                                }
+                                let (read, value) =
+                                    ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                                i += read;
+                                _msg = Some(value)
+                            }
+                            _ => {
+                                i = len;
+                                break;
+                            }
+                        }
+                    }
+
+                    if i != len {
+                        debug_assert!(i > len);
+                        return Err(::bebop::DeserializeError::CorruptFrame);
+                    }
+
+                    ActionData::CancelSaleAssetV1 { msg: _msg }
+                }
+                7 => {
+                    let len = ::bebop::read_len(&raw[i..])? + i + ::bebop::LEN_SIZE;
+                    i += ::bebop::LEN_SIZE;
+
+                    #[cfg(not(feature = "unchecked"))]
+                    if len == 0 {
+                        return Err(::bebop::DeserializeError::CorruptFrame);
+                    }
+
+                    if raw.len() < len {
+                        return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+                    }
+
+                    let mut _msg = None;
+
+                    #[cfg(not(feature = "unchecked"))]
+                    let mut last = 0;
+
+                    while i < len {
+                        let di = raw[i];
+
+                        #[cfg(not(feature = "unchecked"))]
+                        if di != 0 {
+                            if di < last {
+                                return Err(::bebop::DeserializeError::CorruptFrame);
+                            }
+                            last = di;
+                        }
+
+                        i += 1;
+                        match di {
+                            0 => {
+                                break;
+                            }
+                            1 => {
+                                #[cfg(not(feature = "unchecked"))]
+                                if _msg.is_some() {
+                                    return Err(::bebop::DeserializeError::DuplicateMessageField);
+                                }
+                                let (read, value) =
+                                    ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                                i += read;
+                                _msg = Some(value)
+                            }
+                            _ => {
+                                i = len;
+                                break;
+                            }
+                        }
+                    }
+
+                    if i != len {
+                        debug_assert!(i > len);
+                        return Err(::bebop::DeserializeError::CorruptFrame);
+                    }
+
+                    ActionData::DelegateAssetV1 { msg: _msg }
+                }
+                8 => {
+                    let len = ::bebop::read_len(&raw[i..])? + i + ::bebop::LEN_SIZE;
+                    i += ::bebop::LEN_SIZE;
+
+                    #[cfg(not(feature = "unchecked"))]
+                    if len == 0 {
+                        return Err(::bebop::DeserializeError::CorruptFrame);
+                    }
+
+                    if raw.len() < len {
+                        return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+                    }
+
+                    let mut _msg = None;
+
+                    #[cfg(not(feature = "unchecked"))]
+                    let mut last = 0;
+
+                    while i < len {
+                        let di = raw[i];
+
+                        #[cfg(not(feature = "unchecked"))]
+                        if di != 0 {
+                            if di < last {
+                                return Err(::bebop::DeserializeError::CorruptFrame);
+                            }
+                            last = di;
+                        }
+
+                        i += 1;
+                        match di {
+                            0 => {
+                                break;
+                            }
+                            1 => {
+                                #[cfg(not(feature = "unchecked"))]
+                                if _msg.is_some() {
+                                    return Err(::bebop::DeserializeError::DuplicateMessageField);
+                                }
+                                let (read, value) =
+                                    ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                                i += read;
+                                _msg = Some(value)
+                            }
+                            _ => {
+                                i = len;
+                                break;
+                            }
+                        }
+                    }
+
+                    if i != len {
+                        debug_assert!(i > len);
+                        return Err(::bebop::DeserializeError::CorruptFrame);
+                    }
+
+                    ActionData::DeleteAssetV1 { msg: _msg }
+                }
+                9 => {
+                    let len = ::bebop::read_len(&raw[i..])? + i + ::bebop::LEN_SIZE;
+                    i += ::bebop::LEN_SIZE;
+
+                    #[cfg(not(feature = "unchecked"))]
+                    if len == 0 {
+                        return Err(::bebop::DeserializeError::CorruptFrame);
+                    }
+
+                    if raw.len() < len {
+                        return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+                    }
+
+                    let mut _msg = None;
+
+                    #[cfg(not(feature = "unchecked"))]
+                    let mut last = 0;
+
+                    while i < len {
+                        let di = raw[i];
+
+                        #[cfg(not(feature = "unchecked"))]
+                        if di != 0 {
+                            if di < last {
+                                return Err(::bebop::DeserializeError::CorruptFrame);
+                            }
+                            last = di;
+                        }
+
+                        i += 1;
+                        match di {
+                            0 => {
+                                break;
+                            }
+                            1 => {
+                                #[cfg(not(feature = "unchecked"))]
+                                if _msg.is_some() {
+                                    return Err(::bebop::DeserializeError::DuplicateMessageField);
+                                }
+                                let (read, value) =
+                                    ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                                i += read;
+                                _msg = Some(value)
+                            }
+                            _ => {
+                                i = len;
+                                break;
+                            }
+                        }
+                    }
+
+                    if i != len {
+                        debug_assert!(i > len);
+                        return Err(::bebop::DeserializeError::CorruptFrame);
+                    }
+
+                    ActionData::FreezeAssetV1 { msg: _msg }
                 }
                 _ => {
                     i = len;
