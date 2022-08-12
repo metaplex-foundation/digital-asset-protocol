@@ -12,6 +12,9 @@ pub struct RoyaltyModuleProcessor {}
 pub static ROYALTY_MODULE_PROCESSOR: RoyaltyModuleProcessor = RoyaltyModuleProcessor {};
 
 impl ModuleProcessor for RoyaltyModuleProcessor {
+    fn cancel_sale<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError> {
+        Ok(())
+    }
     fn create<'raw>(
         &self,
         asset: &mut Asset<'raw>,
@@ -36,6 +39,24 @@ impl ModuleProcessor for RoyaltyModuleProcessor {
         asset
             .layout
             .insert(ModuleId::Module(ModuleType::Royalty), blob);
+        Ok(())
+    }
+    fn delegate<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError> {
+        Ok(())
+    }
+    fn delete<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError> {
+        Ok(())
+    }
+    fn freeze<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError> {
+        Ok(())
+    }
+    fn list_for_sale<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError> {
+        Ok(())
+    }
+    fn transfer<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError> {
+        Ok(())
+    }
+    fn update<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError> {
         Ok(())
     }
 }

@@ -1,25 +1,17 @@
-use std::collections::{BTreeMap};
-use bebop::SliceWrapper;
-use solana_program::account_info::AccountInfo;
-use crate::api::{DigitalAssetProtocolError};
-use crate::interfaces::ContextAction;
-use crate::lifecycle::Lifecycle;
-use crate::module::{ModuleDataWrapper};
+use crate::api::DigitalAssetProtocolError;
 use crate::blob::Asset;
 use crate::generated::schema::owned::{
-    Authority,
-    ModuleData,
-    ModuleType,
-    OwnershipModel,
-    RoyaltyModel,
-    RoyaltyTarget,
-    JsonDataSchema,
-    Creator,
-    ActionData,
-    DataItemValue,
+    ActionData, Authority, Creator, DataItemValue, JsonDataSchema, ModuleData, ModuleType,
+    OwnershipModel, RoyaltyModel, RoyaltyTarget,
 };
+use crate::interfaces::ContextAction;
+use crate::lifecycle::Lifecycle;
+use crate::module::ModuleDataWrapper;
 use crate::required_field;
 use crate::validation::validate_creator_shares;
+use bebop::SliceWrapper;
+use solana_program::account_info::AccountInfo;
+use std::collections::BTreeMap;
 
 pub struct CreateV1<'info> {
     pub id: AccountInfo<'info>,
@@ -35,7 +27,10 @@ pub struct CreateV1<'info> {
 }
 
 impl<'info> CreateV1<'info> {
-    pub fn new(accounts: &[AccountInfo<'info>], action: ActionData) -> Result<(Self, usize), DigitalAssetProtocolError> {
+    pub fn new(
+        accounts: &[AccountInfo<'info>],
+        action: ActionData,
+    ) -> Result<(Self, usize), DigitalAssetProtocolError> {
         if let ActionData::CreateAssetV1 {
             uri,
             data_schema,
@@ -45,7 +40,8 @@ impl<'info> CreateV1<'info> {
             creator_shares, // in percentage,
             authorities,
             ..
-        } = action {
+        } = action
+        {
             // Need program id System program,
             let program = accounts[0].clone();
             let system = accounts[1].clone();
@@ -58,14 +54,18 @@ impl<'info> CreateV1<'info> {
             let creators = &accounts[6..accounts.len()];
             let remaining_accounts_index = 6 + creators.len();
             validate_creator_shares(creators, &shares)?;
-            let creator_list = creators.iter().enumerate().map(|(i, ai)| {
-                let verified = ai.is_signer;
-                Creator {
-                    address: ai.key.to_bytes().to_vec(),
-                    share: shares[i],
-                    verified,
-                }
-            }).collect();
+            let creator_list = creators
+                .iter()
+                .enumerate()
+                .map(|(i, ai)| {
+                    let verified = ai.is_signer;
+                    Creator {
+                        address: ai.key.to_bytes().to_vec(),
+                        share: shares[i],
+                        verified,
+                    }
+                })
+                .collect();
             let uri = required_field!(uri)?.to_string();
             let ownership_model = required_field!(ownership_model)?;
             let royalty_model = required_field!(royalty_model)?;
@@ -79,9 +79,7 @@ impl<'info> CreateV1<'info> {
                     creators: creator_list,
                     ownership_model,
                     authorities: authorities.unwrap_or(vec![Authority {
-                        scopes: vec![
-                            "*".to_string()
-                        ],
+                        scopes: vec!["*".to_string()],
                         address: payer_authority.key.to_bytes().to_vec(),
                     }]),
                     royalty_model,
@@ -89,10 +87,12 @@ impl<'info> CreateV1<'info> {
                     off_chain_schema: data_schema.unwrap_or(JsonDataSchema::Core),
                     uri: uri.to_string(),
                 },
-                remaining_accounts_index
+                remaining_accounts_index,
             ));
         }
-        Err(DigitalAssetProtocolError::ActionError("Invalid Action format, action must be CreateAssetV1".to_string()))
+        Err(DigitalAssetProtocolError::ActionError(
+            "Invalid Action format, action must be CreateAssetV1".to_string(),
+        ))
     }
 }
 
@@ -102,7 +102,7 @@ impl<'info> ContextAction for CreateV1<'info> {
     }
 
     fn run(&self) -> Result<(), DigitalAssetProtocolError> {
-        let mut data = self.id.try_borrow_mut_data().map_err(|_| {
+        let mut raw_data = self.id.try_borrow_mut_data().map_err(|_| {
             DigitalAssetProtocolError::ActionError("Issue with Borrowing Data".to_string())
         })?;
         let modules = vec![
@@ -118,33 +118,38 @@ impl<'info> ContextAction for CreateV1<'info> {
         let owner_key = self.owner.key.to_bytes();
         for m in modules {
             let processor = ModuleType::to_processor(m);
-            let data: Option<ModuleDataWrapper> = match m {
-                ModuleType::Ownership => {
-                    Some(ModuleDataWrapper::Structured(ModuleData::OwnershipData {
-                        model: OwnershipModel::Single,
-                        owner: owner_key.to_vec(),
-                    }))
-                }
+            let module_data: ModuleDataWrapper = match m {
+                ModuleType::Ownership => ModuleDataWrapper::Structured(ModuleData::OwnershipData {
+                    model: OwnershipModel::Single,
+                    owner: owner_key.to_vec(),
+                }),
                 ModuleType::Data => {
                     let mut data: BTreeMap<String, DataItemValue> = BTreeMap::new();
-                    data.insert("uri".to_string(), DataItemValue::String { value: Some(self.uri.clone()) });
-                    data.insert("schema".to_string(), DataItemValue::Int { value: Some(self.off_chain_schema as i32) });
-                    Some(
-                        ModuleDataWrapper::Unstructured(data)
-                    )
+                    data.insert(
+                        "uri".to_string(),
+                        DataItemValue::String {
+                            value: Some(self.uri.clone()),
+                        },
+                    );
+                    data.insert(
+                        "schema".to_string(),
+                        DataItemValue::Int {
+                            value: Some(self.off_chain_schema as i32),
+                        },
+                    );
+                    ModuleDataWrapper::Unstructured(data)
                 }
                 _ => {
-                    None
+                    return Err(DigitalAssetProtocolError::ActionError(
+                        "Unknown Error".to_string(),
+                    ))
                 }
             };
-            let data = data.ok_or(DigitalAssetProtocolError::ActionError("Unknown Error".to_string()))?;
-            new_asset.set_module(m, data);
+            new_asset.set_module(m, module_data);
             processor.create(&mut new_asset)?;
         }
         //Save asset
-        new_asset.save(data)?;
+        new_asset.save(raw_data)?;
         Ok(())
     }
 }
-
-

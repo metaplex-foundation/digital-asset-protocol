@@ -2771,7 +2771,15 @@ pub mod owned {
         /// Discriminator 4
         TransferAssetV1 {
             /// Field 1
-            msg: ::core::option::Option<String>,
+            ownership_model: ::core::option::Option<OwnershipModel>,
+            /// Field 2
+            royalty_model: ::core::option::Option<RoyaltyModel>,
+            /// Field 3
+            royalty_target: ::core::option::Option<RoyaltyTarget>,
+            /// Field 4
+            creator_shares: ::core::option::Option<::std::vec::Vec<u8>>,
+            /// Field 5
+            authorities: ::core::option::Option<::std::vec::Vec<Authority>>,
         },
 
         /// Discriminator 5
@@ -2912,10 +2920,35 @@ pub mod owned {
                             + 1
                             + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
                     }
-                    Self::TransferAssetV1 { msg: ref _msg } => {
+                    Self::TransferAssetV1 {
+                        ownership_model: ref _ownership_model,
+                        royalty_model: ref _royalty_model,
+                        royalty_target: ref _royalty_target,
+                        creator_shares: ref _creator_shares,
+                        authorities: ref _authorities,
+                    } => {
                         ::bebop::LEN_SIZE
                             + 1
-                            + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
+                            + _ownership_model
+                                .as_ref()
+                                .map(|v| v.serialized_size() + 1)
+                                .unwrap_or(0)
+                            + _royalty_model
+                                .as_ref()
+                                .map(|v| v.serialized_size() + 1)
+                                .unwrap_or(0)
+                            + _royalty_target
+                                .as_ref()
+                                .map(|v| v.serialized_size() + 1)
+                                .unwrap_or(0)
+                            + _creator_shares
+                                .as_ref()
+                                .map(|v| v.serialized_size() + 1)
+                                .unwrap_or(0)
+                            + _authorities
+                                .as_ref()
+                                .map(|v| v.serialized_size() + 1)
+                                .unwrap_or(0)
                     }
                     Self::UpdateAssetV1 { msg: ref _msg } => {
                         ::bebop::LEN_SIZE
