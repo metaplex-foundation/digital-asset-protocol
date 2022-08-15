@@ -29,7 +29,7 @@ thiserror = "~1.0"
 flatbuffers = "2.1.2"
 num-traits = "~0.2"
 num-derive = "~0.3"
-bebop = "2.4.2"
+bebop = "2.4.5"
 
 
 [dev-dependencies]

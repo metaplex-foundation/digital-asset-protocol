@@ -11,7 +11,7 @@ use thiserror::Error;
 use crate::api::DigitalAssetProtocolError::ActionError;
 use crate::interfaces::{asset};
 use crate::validation::{assert_key_equal, cmp_pubkeys};
-use crate::generated::schema::owned::{
+use crate::generated::schema::{
     Action as IxAction,
     Interface,
     ActionData,
@@ -30,7 +30,7 @@ impl<'info> Action<'info> {
         self.context.run()
     }
 
-    fn match_context(accounts: &[AccountInfo<'info>], action_data: ActionData) -> Result<(Box<dyn ContextAction + 'info>, usize), DigitalAssetProtocolError> {
+    fn match_context(accounts: &[AccountInfo<'info>], action_data: ActionData) -> Result<(Box<&'info dyn ContextAction + 'info>, usize), DigitalAssetProtocolError> {
         match action_data {
             ActionData::CreateAssetV1 { .. } => {
                 let d = asset::CreateV1::new(accounts, action_data)?;
@@ -103,9 +103,10 @@ impl From<DigitalAssetProtocolError> for ProgramError {
     }
 }
 
-impl Into<DigitalAssetProtocolError> for DeserializeError {
-    fn into(self) -> DigitalAssetProtocolError {
-        DigitalAssetProtocolError::DeError(self.to_string())
+impl From<ProgramError> for DigitalAssetProtocolError {
+    fn from(e: ProgramError) -> Self {
+        msg!(&e.to_string());
+        DigitalAssetProtocolError::InterfaceError(e.to_string())
     }
 }
 
@@ -115,11 +116,18 @@ impl<T> DecodeError<T> for DigitalAssetProtocolError {
     }
 }
 
+impl From<DeserializeError> for DigitalAssetProtocolError {
+    fn from(e: DeserializeError) -> Self {
+        DigitalAssetProtocolError::DeError(e.to_string())
+    }
+}
+
 
 pub fn derive(seeds: &[&[u8]], program_id: &Pubkey) -> (Pubkey, u8) {
     Pubkey::find_program_address(seeds, program_id)
 }
 
+#[derive()]
 pub struct Constraints<'info> {
     seeds: Option<&'info [&'info [u8]]>,
     program_id: Option<Pubkey>,

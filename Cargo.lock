@@ -244,9 +244,9 @@ checksum = "dea908e7347a8c64e378c17e30ef880ad73e3b4498346b055c2c00ea342f3179"
 
 [[package]]
 name = "bebop"
-version = "2.4.2"
+version = "2.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71df0c55bcc372223d514d88f6159d4bc68428f240b96a1c093ef8c7e8bd20b3"
+checksum = "e5a9ba59683cfd12dd0fb15db12b1804b0fe605a4d4abade6fdb73ef7ca4ac4a"
 dependencies = [
  "bitflags",
 ]

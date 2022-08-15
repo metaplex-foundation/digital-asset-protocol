@@ -1,7 +1,8 @@
 use std::cell::{Ref, RefMut};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use crate::api::DigitalAssetProtocolError;
 use bebop::{Record, SliceWrapper, SubRecord};
+use solana_program::account_info::AccountInfo;
 use solana_program::program_memory::sol_memset;
 use solana_program::pubkey::Pubkey;
 use crate::generated::schema::owned::{Blob, BlobContainer, DataItem, ModuleType, DataItemValue, ModuleData};
@@ -11,13 +12,15 @@ use crate::required_field;
 
 pub struct Asset {
     pub dirty: bool,
-    layout: BTreeMap<ModuleType, ModuleDataWrapper>,
+    layout: HashMap<ModuleType, ModuleDataWrapper>,
+    raw: Option<BlobContainer>
 }
 
 
 impl Asset {
     pub fn new() -> Asset {
         Asset {
+            raw: None,
             layout: BTreeMap::new(),
             dirty: true,
         }
@@ -34,6 +37,46 @@ impl Asset {
         self.layout.get_mut(&id)
     }
 
+    pub fn serialized_size(&mut self) -> usize {
+        self.serialize();
+        self.raw.unwrap().serialized_size()
+    }
+
+    pub fn serialize(&mut self) {
+        if self.raw.is_none() || self.dirty {
+            let mut blobs = Vec::with_capacity(self.layout.len());
+            for (id, data) in self.layout {
+                let mut blob = Blob {
+                    module_id: Some(id as u8),
+                    structured_module: None,
+                    data_module: None,
+                };
+                match data {
+                    ModuleDataWrapper::Structured(md) => {
+                        blob.structured_module = Some(md);
+                    }
+                    ModuleDataWrapper::Unstructured(data_module_data) => {
+                        let mut uvec = Vec::with_capacity(data_module_data.len());
+                        for (key, value) in data_module_data.into_iter() {
+                            let di = DataItem {
+                                key: key,
+                                value: value,
+                            };
+                            uvec.push(di);
+                        }
+                        blob.data_module = Some(uvec);
+                    }
+                };
+                blobs.push(blob);
+            }
+            let container = BlobContainer {
+                blobs
+            };
+            self.raw = Some(container);
+            self.dirty = false;
+        }
+    }
+
     pub fn save(mut self, destination: RefMut<&mut [u8]>) -> Result<(), DigitalAssetProtocolError> {
         let len = destination.len();
         let mut dest = destination;
@@ -41,38 +84,12 @@ impl Asset {
         // todo pr to bebop to support @ offset serialization or intermediate buffer.
         // TODO -> at a higher level ensure account has enough space if not realloc.
         sol_memset(*dest, 0, len);
-        let mut blobs = Vec::with_capacity(self.layout.len());
-        for (id, data) in self.layout {
-            let mut blob = Blob {
-                module_id: Some(id as u8),
-                structured_module: None,
-                data_module: None,
-            };
-            match data {
-                ModuleDataWrapper::Structured(md) => {
-                    blob.structured_module = Some(md);
-                }
-                ModuleDataWrapper::Unstructured(data_module_data) => {
-                    let mut uvec = Vec::with_capacity(data_module_data.len());
-                    for (key, value) in data_module_data.into_iter() {
-                        let di = DataItem {
-                            key: key,
-                            value: value
-                        };
-                        uvec.push(di);
-                    }
-                    blob.data_module = Some(uvec);
-                }
-            };
-            blobs.push(blob);
-        }
-        let container = BlobContainer {
-            blobs
-        };
-        container.serialize(&mut *dest)
+        self.serialize();
+        self.raw.unwrap().serialize(&mut *dest)
             .map_err(|e| {
                 DigitalAssetProtocolError::DeError(e.to_string())
             })?;
+        self.raw = None;
         Ok(())
     }
 
@@ -81,7 +98,7 @@ impl Asset {
         for blob in bc.blobs {
             let module_id = blob.module_id;
             required_field!(module_id)?; //This macro might not be the best here
-            let module_id = ModuleType::try_from(module_id.unwrap()).map_err(Into::into)?;
+            let module_id = ModuleType::try_from(module_id.unwrap())?;
             match (blob.data_module, blob.structured_module) {
                 (Some(data_items), None) => {
                     let mut bespoke_data = BTreeMap::new();
@@ -103,18 +120,20 @@ impl Asset {
     }
 
     pub fn load_mut(source: &mut [u8]) -> Result<Asset, DigitalAssetProtocolError> {
-        let container = BlobContainer::deserialize(source).map_err(Into::into)?;
+        let container = BlobContainer::deserialize(source)?;
 
         Ok(Asset {
+            raw: None,
             dirty: false,
             layout: Asset::load_layout(container)?,
         })
     }
 
-    pub fn load(source: &[u8]) -> Result<Asset, DigitalAssetProtocolError> {
-        let container = BlobContainer::deserialize(source).map_err(Into::into)?;
+        pub fn load(source: &[u8]) -> Result<Asset, DigitalAssetProtocolError> {
+        let container = BlobContainer::deserialize(source)?;
 
         Ok(Asset {
+            raw: None,
             dirty: false,
             layout: Asset::load_layout(container)?,
         })

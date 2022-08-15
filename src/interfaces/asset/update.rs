@@ -43,11 +43,14 @@ impl ContextAction for UpdateV1<'_> {
         &Lifecycle::Update
     }
 
-    fn run(&self) -> Result<(), DigitalAssetProtocolError> {
-        let data = self.id.try_borrow_mut_data().map_err(|_| {
+    fn run(self) -> Result<(), DigitalAssetProtocolError> {
+        let mut data = self.id.try_borrow_mut_data().map_err(|_| {
             DigitalAssetProtocolError::ActionError("Issue with Borrowing Data".to_string())
         })?;
 
+        let mut asset = Asset::load_mut(&mut *data)?;
+
+        asset.save(data)?;
 
 
         Ok(())

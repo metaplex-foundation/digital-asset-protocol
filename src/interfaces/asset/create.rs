@@ -1,12 +1,19 @@
 use std::collections::{BTreeMap};
+use std::rc::Rc;
+use std::sync::Arc;
 use bebop::SliceWrapper;
 use solana_program::account_info::AccountInfo;
+use solana_program::program::invoke_signed;
+use solana_program::rent::Rent;
+use solana_program::system_instruction;
+use solana_program::sysvar::Sysvar;
 use crate::api::{DigitalAssetProtocolError};
 use crate::interfaces::ContextAction;
 use crate::lifecycle::Lifecycle;
 use crate::module::{ModuleDataWrapper};
 use crate::blob::Asset;
-use crate::generated::schema::owned::{
+use crate::generated::schema::Interface;
+use crate::generated::schema::{
     Authority,
     ModuleData,
     ModuleType,
@@ -22,16 +29,19 @@ use crate::required_field;
 use crate::validation::validate_creator_shares;
 
 pub struct CreateV1<'info> {
-    pub id: AccountInfo<'info>,
-    pub owner: AccountInfo<'info>,
-    pub payer: AccountInfo<'info>,
-    pub creators: Vec<Creator>,
+    pub system: &'info AccountInfo<'info>,
+    pub id: &'info AccountInfo<'info>,
+    pub owner: &'info AccountInfo<'info>,
+    pub payer: &'info AccountInfo<'info>,
+    pub uuid: &'info [u8],
+    pub creators: &'info [Creator<'info>],
     pub ownership_model: OwnershipModel,
-    pub authorities: Vec<Authority>,
+    pub authorities: Vec<Authority<'info>>,
     pub royalty_model: RoyaltyModel,
-    pub royalty_target: Option<RoyaltyTarget>,
+    pub royalty: u16,
+    pub royalty_target: Vec<RoyaltyTarget<'info>>,
     pub off_chain_schema: JsonDataSchema,
-    pub uri: String,
+    pub uri: &'info str,
 }
 
 impl<'info> CreateV1<'info> {
@@ -44,50 +54,54 @@ impl<'info> CreateV1<'info> {
             ownership_model,
             creator_shares, // in percentage,
             authorities,
+            royalty,
+            uuid,
             ..
         } = action {
             // Need program id System program,
-            let program = accounts[0].clone();
-            let system = accounts[1].clone();
-            let rent = accounts[2].clone();
-            let id = accounts[3].clone();
-            let owner = accounts[4].clone();
-            let payer = accounts[5].clone();
-            let payer_authority = payer.clone();
-            let shares: Vec<u8> = required_field!(creator_shares)?;
-            let creators = &accounts[6..accounts.len()];
-            let remaining_accounts_index = 6 + creators.len();
+            let system = &accounts[0];
+            let id = &accounts[1];
+            let owner = &accounts[2];
+            let payer = &accounts[3];
+            let payer_authority = &payer;
+            let shares: SliceWrapper<u8> = required_field!(creator_shares)?;
+            let creators = &accounts[4..accounts.len()];
+            let remaining_accounts_index = 4 + creators.len();
             validate_creator_shares(creators, &shares)?;
             let creator_list = creators.iter().enumerate().map(|(i, ai)| {
                 let verified = ai.is_signer;
                 Creator {
-                    address: ai.key.to_bytes().to_vec(),
+                    address: SliceWrapper::Raw(ai.key.as_ref()),
                     share: shares[i],
                     verified,
                 }
             }).collect();
-            let uri = required_field!(uri)?.to_string();
+            let uri = required_field!(uri)?;
             let ownership_model = required_field!(ownership_model)?;
             let royalty_model = required_field!(royalty_model)?;
-            let royalty_target = royalty_target;
+            let royalty_target = required_field!(royalty_target)?;
+            let uuid = &*required_field!(uuid)?;
 
             return Ok((
                 CreateV1 {
+                    system,
                     id,
                     owner,
                     payer,
                     creators: creator_list,
                     ownership_model,
+                    royalty: royalty.unwrap_or(0),
                     authorities: authorities.unwrap_or(vec![Authority {
                         scopes: vec![
-                            "*".to_string()
+                            "*"
                         ],
-                        address: payer_authority.key.to_bytes().to_vec(),
+                        address: SliceWrapper::Raw(payer_authority.key.as_ref()),
                     }]),
                     royalty_model,
-                    royalty_target,
+                    royalty_target: royalty_target,
                     off_chain_schema: data_schema.unwrap_or(JsonDataSchema::Core),
-                    uri: uri.to_string(),
+                    uri,
+                    uuid: uuid.as_slice()
                 },
                 remaining_accounts_index
             ));
@@ -101,10 +115,7 @@ impl<'info> ContextAction for CreateV1<'info> {
         &Lifecycle::Create
     }
 
-    fn run(&self) -> Result<(), DigitalAssetProtocolError> {
-        let mut data = self.id.try_borrow_mut_data().map_err(|_| {
-            DigitalAssetProtocolError::ActionError("Issue with Borrowing Data".to_string())
-        })?;
+    fn run(self) -> Result<(), DigitalAssetProtocolError> {
         let modules = vec![
             ModuleType::Data,
             ModuleType::Ownership,
@@ -121,8 +132,16 @@ impl<'info> ContextAction for CreateV1<'info> {
             let data: Option<ModuleDataWrapper> = match m {
                 ModuleType::Ownership => {
                     Some(ModuleDataWrapper::Structured(ModuleData::OwnershipData {
-                        model: OwnershipModel::Single,
-                        owner: owner_key.to_vec(),
+                        model: self.ownership_model,
+                        owner: SliceWrapper::Raw(owner_key.as_ref()),
+                    }))
+                }
+                ModuleType::Royalty => {
+                    Some(ModuleDataWrapper::Structured(ModuleData::RoyaltyData {
+                        model: self.royalty_model,
+                        target: self.royalty_target.to_owned(),
+                        royalty: self.royalty,
+                        locked: false
                     }))
                 }
                 ModuleType::Data => {
@@ -142,6 +161,23 @@ impl<'info> ContextAction for CreateV1<'info> {
             processor.create(&mut new_asset)?;
         }
         //Save asset
+        let rent = Rent::get()?;
+        let size = new_asset.serialized_size();
+        let lamports = rent.minimum_balance(size);
+        //validate address get bump
+        let seeds = [
+            "DAS-ASSET".as_bytes(),
+            &[Interface::Nft as u8],
+            self.uuid
+        ];
+        invoke_signed(
+            &system_instruction::create_account(self.payer.key, self.id.key, lamports, size as u64, &crate::id()),
+            &[self.id, self.system, self.payer],
+            &[seeds.as_slice()],
+        )?;
+        let mut data = self.id.try_borrow_mut_data().map_err(|_| {
+            DigitalAssetProtocolError::ActionError("Issue with Borrowing Data".to_string())
+        })?;
         new_asset.save(data)?;
         Ok(())
     }

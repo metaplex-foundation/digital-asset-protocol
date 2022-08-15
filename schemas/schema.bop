@@ -29,7 +29,7 @@ union ModuleData {
         byte[] owner;
     };
     3 -> struct RoyaltyData {
-        uint8 royalty_percent;
+        uint16 royalty;
         RoyaltyModel model;
         RoyaltyTarget[] target;
         bool locked;
@@ -37,7 +37,11 @@ union ModuleData {
     4 -> struct GovernanceData {
         Authority[] authorities;
     };
+    5 -> struct Data {
+        map[uint8, DataItem] layout;
+    }
 }
+
 
 enum Encoding: uint8 {
     Invalid = 0;
@@ -66,14 +70,9 @@ struct DataItem {
     DataItemValue value;
 }
 
-message Blob {
-    1 -> uint8 module_id;
-    2 -> ModuleData structured_module;
-    3 -> DataItem[] data_module;
-}
 
 struct BlobContainer {
-    Blob[] blobs;
+    map[uint8, ModuleData] blobs;
 }
 
 struct Authority {
@@ -94,10 +93,12 @@ union ActionData {
         1 -> string uri;
         2 -> OwnershipModel ownership_model;
         3 -> RoyaltyModel royalty_model;
-        4 -> RoyaltyTarget royalty_target;
+        4 -> uint16 royalty;
         5 -> JsonDataSchema data_schema;
         6 -> uint8[] creator_shares;
-        7 -> Authority[] authorities;
+        7 -> RoyaltyTarget[] royalty_target;
+        8 -> Authority[] authorities;
+        9 -> guid uuid;
     };
     3 -> message UpdateAssetV1 {
        1 -> string msg;

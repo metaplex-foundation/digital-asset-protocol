@@ -1,10 +1,10 @@
 use std::cmp::Ordering;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use bebop::Record;
 use solana_program::account_info::AccountInfo;
 use crate::api::DigitalAssetProtocolError;
 use crate::blob::Asset;
-use crate::generated::schema::owned::{ModuleType, ModuleData, DataItemValue};
+use crate::generated::schema::{ModuleType, ModuleData, DataItemValue};
 use crate::lifecycle::Lifecycle;
 use crate::modules::OWNERSHIP_MODULE_PROCESSOR;
 
@@ -12,9 +12,9 @@ pub trait Module {
     fn act<A, D>(&self, context: Lifecycle, asset: &mut Asset) -> Asset;
 }
 
-pub enum ModuleDataWrapper {
-    Structured(ModuleData),
-    Unstructured(BTreeMap<String, DataItemValue>),
+pub enum ModuleDataWrapper<'info> {
+    Structured(ModuleData<'info>),
+    Unstructured(HashMap<String, DataItemValue<'info>>),
 }
 
 pub type SchemaId = [u8; 16];

@@ -131,7 +131,7 @@ export namespace DigitalAssetTypes {
   };
 
   export interface IRoyaltyData {
-    royaltyPercent: number;
+    royalty: number;
     model: RoyaltyModel;
     target: Array<IRoyaltyTarget>;
     locked: boolean;
@@ -148,7 +148,7 @@ export namespace DigitalAssetTypes {
 
     encodeInto(message: IRoyaltyData, view: BebopView): number {
       const before = view.length;
-        view.writeByte(message.royaltyPercent);
+        view.writeUint16(message.royalty);
         view.writeByte(message.model);
         {
           const length0 = message.target.length;
@@ -170,7 +170,7 @@ export namespace DigitalAssetTypes {
 
     readFrom(view: BebopView): IRoyaltyData {
       let field0: number;
-      field0 = view.readByte();
+      field0 = view.readUint16();
       let field1: RoyaltyModel;
       field1 = view.readByte() as RoyaltyModel;
       let field2: Array<IRoyaltyTarget>;
@@ -186,7 +186,7 @@ export namespace DigitalAssetTypes {
       let field3: boolean;
       field3 = !!view.readByte();
       let message: IRoyaltyData = {
-        royaltyPercent: field0,
+        royalty: field0,
         model: field1,
         target: field2,
         locked: field3,
@@ -913,9 +913,10 @@ export namespace DigitalAssetTypes {
     uri?: string;
     ownershipModel?: OwnershipModel;
     royaltyModel?: RoyaltyModel;
-    royaltyTarget?: IRoyaltyTarget;
+    royalty?: number;
     dataSchema?: JsonDataSchema;
     creatorShares?: Uint8Array;
+    royaltyTarget?: Array<IRoyaltyTarget>;
     authorities?: Array<IAuthority>;
   }
 
@@ -944,9 +945,9 @@ export namespace DigitalAssetTypes {
           view.writeByte(3);
           view.writeByte(message.royaltyModel);
         }
-        if (message.royaltyTarget != null) {
+        if (message.royalty != null) {
           view.writeByte(4);
-          RoyaltyTarget.encodeInto(message.royaltyTarget, view)
+          view.writeUint16(message.royalty);
         }
         if (message.dataSchema != null) {
           view.writeByte(5);
@@ -956,8 +957,18 @@ export namespace DigitalAssetTypes {
           view.writeByte(6);
           view.writeBytes(message.creatorShares);
         }
-        if (message.authorities != null) {
+        if (message.royaltyTarget != null) {
           view.writeByte(7);
+          {
+          const length0 = message.royaltyTarget.length;
+          view.writeUint32(length0);
+          for (let i0 = 0; i0 < length0; i0++) {
+            RoyaltyTarget.encodeInto(message.royaltyTarget[i0], view)
+          }
+        }
+        }
+        if (message.authorities != null) {
+          view.writeByte(8);
           {
           const length0 = message.authorities.length;
           view.writeUint32(length0);
@@ -1001,7 +1012,7 @@ export namespace DigitalAssetTypes {
             break;
 
           case 4:
-            message.royaltyTarget = RoyaltyTarget.readFrom(view);
+            message.royalty = view.readUint16();
             break;
 
           case 5:
@@ -1013,6 +1024,18 @@ export namespace DigitalAssetTypes {
             break;
 
           case 7:
+            {
+          let length0 = view.readUint32();
+          message.royaltyTarget = new Array<IRoyaltyTarget>(length0);
+          for (let i0 = 0; i0 < length0; i0++) {
+            let x0: IRoyaltyTarget;
+            x0 = RoyaltyTarget.readFrom(view);
+            message.royaltyTarget[i0] = x0;
+          }
+        }
+            break;
+
+          case 8:
             {
           let length0 = view.readUint32();
           message.authorities = new Array<IAuthority>(length0);
