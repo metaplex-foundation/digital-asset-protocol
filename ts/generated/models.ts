@@ -245,11 +245,62 @@ export namespace DigitalAssetTypes {
     },
   };
 
+  export interface IData {
+    layout: Map<number, IDataItem>;
+  }
+
+  export const Data = {
+    discriminator: 5 as 5,
+    encode(message: IData): Uint8Array {
+      const view = BebopView.getInstance();
+      view.startWriting();
+      this.encodeInto(message, view);
+      return view.toArray();
+    },
+
+    encodeInto(message: IData, view: BebopView): number {
+      const before = view.length;
+        view.writeUint32(message.layout.size);
+        for (const [k0, v0] of message.layout) {
+          view.writeByte(k0);
+          DataItem.encodeInto(v0, view)
+        }
+      const after = view.length;
+      return after - before;
+    },
+
+    decode(buffer: Uint8Array): IData {
+      const view = BebopView.getInstance();
+      view.startReading(buffer);
+      return this.readFrom(view);
+    },
+
+    readFrom(view: BebopView): IData {
+      let field0: Map<number, IDataItem>;
+      {
+        let length0 = view.readUint32();
+        field0 = new Map<number, IDataItem>();
+        for (let i0 = 0; i0 < length0; i0++) {
+          let k0: number;
+          let v0: IDataItem;
+          k0 = view.readByte();
+          v0 = DataItem.readFrom(view);
+          field0.set(k0, v0);
+        }
+      }
+      let message: IData = {
+        layout: field0,
+      };
+      return message;
+    },
+  };
+
   export type IModuleData
     = { discriminator: 1, value: ICreatorsData }
     | { discriminator: 2, value: IOwnershipData }
     | { discriminator: 3, value: IRoyaltyData }
-    | { discriminator: 4, value: IGovernanceData };
+    | { discriminator: 4, value: IGovernanceData }
+    | { discriminator: 5, value: IData };
 
   export const ModuleData = {
     encode(message: IModuleData): Uint8Array {
@@ -277,6 +328,9 @@ export namespace DigitalAssetTypes {
           case 4:
             GovernanceData.encodeInto(message.value, view);
             break;
+          case 5:
+            Data.encodeInto(message.value, view);
+            break;
         }
         const end = view.length;
         view.fillMessageLength(pos, end - start);
@@ -302,6 +356,8 @@ export namespace DigitalAssetTypes {
           return { discriminator: 3, value: RoyaltyData.readFrom(view) };
         case 4:
           return { discriminator: 4, value: GovernanceData.readFrom(view) };
+        case 5:
+          return { discriminator: 5, value: Data.readFrom(view) };
         default:
           view.index = end;
           throw new BebopRuntimeError("Unrecognized discriminator while decoding ModuleData");
@@ -625,94 +681,8 @@ export namespace DigitalAssetTypes {
     },
   };
 
-  export interface IBlob {
-    moduleId?: number;
-    structuredModule?: IModuleData;
-    dataModule?: Array<IDataItem>;
-  }
-
-  export const Blob = {
-    encode(message: IBlob): Uint8Array {
-      const view = BebopView.getInstance();
-      view.startWriting();
-      this.encodeInto(message, view);
-      return view.toArray();
-    },
-
-    encodeInto(message: IBlob, view: BebopView): number {
-      const before = view.length;
-        const pos = view.reserveMessageLength();
-        const start = view.length;
-        if (message.moduleId != null) {
-          view.writeByte(1);
-          view.writeByte(message.moduleId);
-        }
-        if (message.structuredModule != null) {
-          view.writeByte(2);
-          ModuleData.encodeInto(message.structuredModule, view)
-        }
-        if (message.dataModule != null) {
-          view.writeByte(3);
-          {
-          const length0 = message.dataModule.length;
-          view.writeUint32(length0);
-          for (let i0 = 0; i0 < length0; i0++) {
-            DataItem.encodeInto(message.dataModule[i0], view)
-          }
-        }
-        }
-        view.writeByte(0);
-        const end = view.length;
-        view.fillMessageLength(pos, end - start);
-      const after = view.length;
-      return after - before;
-    },
-
-    decode(buffer: Uint8Array): IBlob {
-      const view = BebopView.getInstance();
-      view.startReading(buffer);
-      return this.readFrom(view);
-    },
-
-    readFrom(view: BebopView): IBlob {
-      let message: IBlob = {};
-      const length = view.readMessageLength();
-      const end = view.index + length;
-      while (true) {
-        switch (view.readByte()) {
-          case 0:
-            return message;
-
-          case 1:
-            message.moduleId = view.readByte();
-            break;
-
-          case 2:
-            message.structuredModule = ModuleData.readFrom(view);
-            break;
-
-          case 3:
-            {
-          let length0 = view.readUint32();
-          message.dataModule = new Array<IDataItem>(length0);
-          for (let i0 = 0; i0 < length0; i0++) {
-            let x0: IDataItem;
-            x0 = DataItem.readFrom(view);
-            message.dataModule[i0] = x0;
-          }
-        }
-            break;
-
-          default:
-            view.index = end;
-            return message;
-        }
-      }
-    },
-  };
-
   export interface IBlobContainer {
-    blobs: Array<IBlob>;
+    blobs: Map<number, IModuleData>;
   }
 
   export const BlobContainer = {
@@ -725,12 +695,10 @@ export namespace DigitalAssetTypes {
 
     encodeInto(message: IBlobContainer, view: BebopView): number {
       const before = view.length;
-        {
-          const length0 = message.blobs.length;
-          view.writeUint32(length0);
-          for (let i0 = 0; i0 < length0; i0++) {
-            Blob.encodeInto(message.blobs[i0], view)
-          }
+        view.writeUint32(message.blobs.size);
+        for (const [k0, v0] of message.blobs) {
+          view.writeByte(k0);
+          ModuleData.encodeInto(v0, view)
         }
       const after = view.length;
       return after - before;
@@ -743,14 +711,16 @@ export namespace DigitalAssetTypes {
     },
 
     readFrom(view: BebopView): IBlobContainer {
-      let field0: Array<IBlob>;
+      let field0: Map<number, IModuleData>;
       {
         let length0 = view.readUint32();
-        field0 = new Array<IBlob>(length0);
+        field0 = new Map<number, IModuleData>();
         for (let i0 = 0; i0 < length0; i0++) {
-          let x0: IBlob;
-          x0 = Blob.readFrom(view);
-          field0[i0] = x0;
+          let k0: number;
+          let v0: IModuleData;
+          k0 = view.readByte();
+          v0 = ModuleData.readFrom(view);
+          field0.set(k0, v0);
         }
       }
       let message: IBlobContainer = {
@@ -918,6 +888,7 @@ export namespace DigitalAssetTypes {
     creatorShares?: Uint8Array;
     royaltyTarget?: Array<IRoyaltyTarget>;
     authorities?: Array<IAuthority>;
+    uuid?: string;
   }
 
   export const CreateAssetV1 = {
@@ -976,6 +947,10 @@ export namespace DigitalAssetTypes {
             Authority.encodeInto(message.authorities[i0], view)
           }
         }
+        }
+        if (message.uuid != null) {
+          view.writeByte(9);
+          view.writeGuid(message.uuid);
         }
         view.writeByte(0);
         const end = view.length;
@@ -1045,6 +1020,10 @@ export namespace DigitalAssetTypes {
             message.authorities[i0] = x0;
           }
         }
+            break;
+
+          case 9:
+            message.uuid = view.readGuid();
             break;
 
           default:

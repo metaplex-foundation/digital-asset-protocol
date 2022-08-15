@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap};
+use std::collections::{BTreeMap, HashMap};
 use std::rc::Rc;
 use std::sync::Arc;
 use bebop::SliceWrapper;
@@ -12,7 +12,7 @@ use crate::interfaces::ContextAction;
 use crate::lifecycle::Lifecycle;
 use crate::module::{ModuleDataWrapper};
 use crate::blob::Asset;
-use crate::generated::schema::Interface;
+use crate::generated::schema::{DataItem, Interface};
 use crate::generated::schema::{
     Authority,
     ModuleData,
@@ -65,6 +65,9 @@ impl<'info> CreateV1<'info> {
             let payer = &accounts[3];
             let payer_authority = &payer;
             let shares: SliceWrapper<u8> = required_field!(creator_shares)?;
+            if accounts.len() < 5 {
+                return Err(DigitalAssetProtocolError::InterfaceError("Creators Must be Present".to_string()));
+            }
             let creators = &accounts[4..accounts.len()];
             let remaining_accounts_index = 4 + creators.len();
             validate_creator_shares(creators, &shares)?;
@@ -75,7 +78,7 @@ impl<'info> CreateV1<'info> {
                     share: shares[i],
                     verified,
                 }
-            }).collect();
+            }).collect_vec();
             let uri = required_field!(uri)?;
             let ownership_model = required_field!(ownership_model)?;
             let royalty_model = required_field!(royalty_model)?;
@@ -88,7 +91,7 @@ impl<'info> CreateV1<'info> {
                     id,
                     owner,
                     payer,
-                    creators: creator_list,
+                    creators: creator_list.as_slice(),
                     ownership_model,
                     royalty: royalty.unwrap_or(0),
                     authorities: authorities.unwrap_or(vec![Authority {
@@ -101,7 +104,7 @@ impl<'info> CreateV1<'info> {
                     royalty_target: royalty_target,
                     off_chain_schema: data_schema.unwrap_or(JsonDataSchema::Core),
                     uri,
-                    uuid: uuid.as_slice()
+                    uuid: uuid.as_slice(),
                 },
                 remaining_accounts_index
             ));
@@ -128,41 +131,39 @@ impl<'info> ContextAction for CreateV1<'info> {
         let mut new_asset = Asset::new();
         let owner_key = self.owner.key.to_bytes();
         for m in modules {
-            let processor = ModuleType::to_processor(m);
-            let data: Option<ModuleDataWrapper> = match m {
+            match m {
                 ModuleType::Ownership => {
-                    Some(ModuleDataWrapper::Structured(ModuleData::OwnershipData {
+                    new_asset.set_module(ModuleType::Ownership, ModuleData::OwnershipData {
                         model: self.ownership_model,
                         owner: SliceWrapper::Raw(owner_key.as_ref()),
-                    }))
+                    })
                 }
                 ModuleType::Royalty => {
-                    Some(ModuleDataWrapper::Structured(ModuleData::RoyaltyData {
+                    new_asset.set_module(ModuleType::Royalty, ModuleData::RoyaltyData {
                         model: self.royalty_model,
                         target: self.royalty_target.to_owned(),
                         royalty: self.royalty,
-                        locked: false
-                    }))
+                        locked: false,
+                    });
                 }
                 ModuleType::Data => {
-                    let mut data: BTreeMap<String, DataItemValue> = BTreeMap::new();
-                    data.insert("uri".to_string(), DataItemValue::String { value: Some(self.uri.clone()) });
-                    data.insert("schema".to_string(), DataItemValue::Int { value: Some(self.off_chain_schema as i32) });
-                    Some(
-                        ModuleDataWrapper::Unstructured(data)
-                    )
+                    let mut data: HashMap<u8, DataItem> = HashMap::with_capacity(2);
+                    data.insert(0, DataItem { key: "uri", value: DataItemValue::String { value: Some(self.uri.clone()) } });
+                    data.insert(1, DataItem { key: "schema", value: DataItemValue::Int { value: Some(self.off_chain_schema as i32) } });
+                    new_asset.set_module(ModuleType::Data, ModuleData::Data {
+                        layout: data
+                    });
                 }
-                _ => {
-                    None
-                }
+                _ => {}
             };
-            let data = data.ok_or(DigitalAssetProtocolError::ActionError("Unknown Error".to_string()))?;
-            new_asset.set_module(m, data);
+        }
+        for m in modules {
+            let processor = ModuleType::to_processor(m);
             processor.create(&mut new_asset)?;
         }
         //Save asset
         let rent = Rent::get()?;
-        let size = new_asset.serialized_size();
+        let size = new_asset.size();
         let lamports = rent.minimum_balance(size);
         //validate address get bump
         let seeds = [
@@ -172,7 +173,7 @@ impl<'info> ContextAction for CreateV1<'info> {
         ];
         invoke_signed(
             &system_instruction::create_account(self.payer.key, self.id.key, lamports, size as u64, &crate::id()),
-            &[self.id, self.system, self.payer],
+            &[self.id.clone(), self.system.clone(), self.payer.clone()],
             &[seeds.as_slice()],
         )?;
         let mut data = self.id.try_borrow_mut_data().map_err(|_| {

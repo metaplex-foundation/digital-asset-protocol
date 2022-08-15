@@ -6,7 +6,7 @@ import debug from 'debug';
 import * as beetSolana from '@metaplex-foundation/beet-solana';
 import * as beet from '@metaplex-foundation/beet';
 import {DigitalAssetTypes} from "../ts/generated/models";
-import uuid from "uuid";
+import {v4} from "uuid";
 
 const persistLabelsPath = process.env.ADDRESS_LABEL_PATH;
 const PROGRAM = new PublicKey("assetbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
@@ -61,7 +61,7 @@ test("Create An Identity", async () => {
 
   let [owner, ownerPair] = await a.addr.genLabeledKeypair("🔨 Owner 1");
   let idbuf = new Buffer(16);
-  uuid.v4(null, idbuf)
+  v4(null, idbuf)
   let [id, bump] = await PublicKey.findProgramAddress([
     Buffer.from("asset"),
     idbuf
@@ -108,7 +108,7 @@ test("Create An Identity", async () => {
         pubkey: payer,
         isSigner: true,
         isWritable: true
-      }
+      },
     ]
   }));
 

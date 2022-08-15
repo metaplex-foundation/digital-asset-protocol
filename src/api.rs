@@ -21,7 +21,7 @@ use crate::interfaces::ContextAction;
 pub struct Action<'info> {
     pub standard: Interface,
     pub program_id: Pubkey,
-    pub context: Box<dyn ContextAction + 'info>,
+    pub context: Box<&'info dyn ContextAction + 'info>,
     pub remaining_accounts: Vec<AccountInfo<'info>>,
 }
 
@@ -30,15 +30,15 @@ impl<'info> Action<'info> {
         self.context.run()
     }
 
-    fn match_context(accounts: &[AccountInfo<'info>], action_data: ActionData) -> Result<(Box<&'info dyn ContextAction + 'info>, usize), DigitalAssetProtocolError> {
+    fn match_context(accounts: &'info [AccountInfo<'info>], action_data: ActionData) -> Result<(Box<&'info dyn ContextAction + 'info>, usize), DigitalAssetProtocolError> {
         match action_data {
             ActionData::CreateAssetV1 { .. } => {
                 let d = asset::CreateV1::new(accounts, action_data)?;
-                Ok((Box::new(d.0), d.1))
+                Ok((Box::new(&d.0), d.1))
             }
             ActionData::UpdateAssetV1 { .. } => {
                 let d = asset::UpdateV1::new(accounts, action_data)?;
-                Ok((Box::new(d.0), d.1))
+                Ok((Box::new(&d.0), d.1))
             }
             _ => Err(DigitalAssetProtocolError::InterfaceNoImpl)
         }

@@ -22,6 +22,9 @@ pub type SchemaId = [u8; 16];
 pub trait ModuleProcessor {
     fn create<'raw>(&self, asset: &mut Asset)
                     -> Result<(), DigitalAssetProtocolError>;
+
+    fn update<'raw>(&self, asset: &mut Asset, new_data: ModuleData)
+                    -> Result<(), DigitalAssetProtocolError>;
 }
 
 pub struct NullModuleProcessor {}
