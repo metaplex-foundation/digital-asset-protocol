@@ -24,7 +24,9 @@ pub trait ModuleProcessor {
                     -> Result<(), DigitalAssetProtocolError>;
 
     fn update<'raw>(&self, asset: &mut Asset, new_data: ModuleData)
-                    -> Result<(), DigitalAssetProtocolError>;
+                    -> Result<(), DigitalAssetProtocolError> {
+        Ok(())
+    }
 }
 
 pub struct NullModuleProcessor {}
@@ -64,7 +66,7 @@ impl ModuleType {
             })
     }
 
-    pub fn to_processor(module: ModuleType) -> &'static dyn ModuleProcessor {
+    pub fn to_processor(module: &ModuleType) -> &'static dyn ModuleProcessor {
         match module {
             ModuleType::Ownership => &OWNERSHIP_MODULE_PROCESSOR,
             _ => &NULL_MODULE_PROCESSOR

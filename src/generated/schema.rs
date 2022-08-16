@@ -22,7 +22,7 @@ use ::bebop::FixedSized as _;
 
 #[repr(u8)]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub enum Interface {
+pub enum InterfaceType {
     Unknown = 0,
     NFTv1 = 1,
     Nft = 2,
@@ -32,38 +32,38 @@ pub enum Interface {
     IdentityAsset = 6,
 }
 
-impl ::core::convert::TryFrom<u8> for Interface {
+impl ::core::convert::TryFrom<u8> for InterfaceType {
     type Error = ::bebop::DeserializeError;
 
     fn try_from(value: u8) -> ::bebop::DeResult<Self> {
         match value {
-            0 => Ok(Interface::Unknown),
-            1 => Ok(Interface::NFTv1),
-            2 => Ok(Interface::Nft),
-            3 => Ok(Interface::NFTPrintable),
-            4 => Ok(Interface::NFTGroup),
-            5 => Ok(Interface::FungibleAsset),
-            6 => Ok(Interface::IdentityAsset),
+            0 => Ok(InterfaceType::Unknown),
+            1 => Ok(InterfaceType::NFTv1),
+            2 => Ok(InterfaceType::Nft),
+            3 => Ok(InterfaceType::NFTPrintable),
+            4 => Ok(InterfaceType::NFTGroup),
+            5 => Ok(InterfaceType::FungibleAsset),
+            6 => Ok(InterfaceType::IdentityAsset),
             d => Err(::bebop::DeserializeError::InvalidEnumDiscriminator(d.into())),
         }
     }
 }
 
-impl ::core::convert::From<Interface> for u8 {
-    fn from(value: Interface) -> Self {
+impl ::core::convert::From<InterfaceType> for u8 {
+    fn from(value: InterfaceType) -> Self {
         match value {
-            Interface::Unknown => 0,
-            Interface::NFTv1 => 1,
-            Interface::Nft => 2,
-            Interface::NFTPrintable => 3,
-            Interface::NFTGroup => 4,
-            Interface::FungibleAsset => 5,
-            Interface::IdentityAsset => 6,
+            InterfaceType::Unknown => 0,
+            InterfaceType::NFTv1 => 1,
+            InterfaceType::Nft => 2,
+            InterfaceType::NFTPrintable => 3,
+            InterfaceType::NFTGroup => 4,
+            InterfaceType::FungibleAsset => 5,
+            InterfaceType::IdentityAsset => 6,
         }
     }
 }
 
-impl ::bebop::SubRecord<'_> for Interface {
+impl ::bebop::SubRecord<'_> for InterfaceType {
     const MIN_SERIALIZED_SIZE: usize = ::std::mem::size_of::<u8>();
     const EXACT_SERIALIZED_SIZE: Option<usize> = Some(::std::mem::size_of::<u8>());
 
@@ -82,7 +82,7 @@ impl ::bebop::SubRecord<'_> for Interface {
     }
 }
 
-impl ::bebop::FixedSized for Interface {
+impl ::bebop::FixedSized for InterfaceType {
     const SERIALIZED_SIZE: usize = ::std::mem::size_of::<u8>();
 }
 
@@ -895,24 +895,24 @@ impl<'raw> ::bebop::Record<'raw> for Authority<'raw> {}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Action<'raw> {
-    pub standard: Interface,
+    pub interface: InterfaceType,
     pub data: ActionData<'raw>,
 }
 
 impl<'raw> ::bebop::SubRecord<'raw> for Action<'raw> {
     const MIN_SERIALIZED_SIZE: usize =
-        <Interface>::MIN_SERIALIZED_SIZE +
+        <InterfaceType>::MIN_SERIALIZED_SIZE +
         <ActionData<'raw>>::MIN_SERIALIZED_SIZE;
 
     #[inline]
     fn serialized_size(&self) -> usize {
-        self.standard.serialized_size() +
+        self.interface.serialized_size() +
         self.data.serialized_size()
     }
 
     fn _serialize_chained<W: ::std::io::Write>(&self, dest: &mut W) -> ::bebop::SeResult<usize> {
         Ok(
-            self.standard._serialize_chained(dest)? +
+            self.interface._serialize_chained(dest)? +
             self.data._serialize_chained(dest)?
         )
     }
@@ -930,7 +930,7 @@ impl<'raw> ::bebop::SubRecord<'raw> for Action<'raw> {
         i += read;
 
         Ok((i, Self {
-            standard: v0,
+            interface: v0,
             data: v1,
         }))
     }
@@ -1776,7 +1776,7 @@ pub mod owned {
     use ::core::convert::TryInto as _;
     use ::bebop::FixedSized as _;
 
-    pub use super::Interface;
+    pub use super::InterfaceType;
 
     pub use super::ModuleType;
 
@@ -2590,14 +2590,14 @@ pub mod owned {
 
     #[derive(Clone, Debug, PartialEq)]
     pub struct Action {
-        pub standard: Interface,
+        pub interface: InterfaceType,
         pub data: ActionData,
     }
 
     impl<'raw> ::core::convert::From<super::Action<'raw>> for Action {
         fn from(value: super::Action) -> Self {
             Self {
-                standard: value.standard,
+                interface: value.interface,
                 data: value.data.into(),
             }
         }
@@ -2605,18 +2605,18 @@ pub mod owned {
 
     impl<'raw> ::bebop::SubRecord<'raw> for Action {
         const MIN_SERIALIZED_SIZE: usize =
-            <Interface>::MIN_SERIALIZED_SIZE +
+            <InterfaceType>::MIN_SERIALIZED_SIZE +
             <ActionData>::MIN_SERIALIZED_SIZE;
 
         #[inline]
         fn serialized_size(&self) -> usize {
-            self.standard.serialized_size() +
+            self.interface.serialized_size() +
             self.data.serialized_size()
         }
 
         fn _serialize_chained<W: ::std::io::Write>(&self, dest: &mut W) -> ::bebop::SeResult<usize> {
             Ok(
-                self.standard._serialize_chained(dest)? +
+                self.interface._serialize_chained(dest)? +
                 self.data._serialize_chained(dest)?
             )
         }
@@ -2634,7 +2634,7 @@ pub mod owned {
             i += read;
 
             Ok((i, Self {
-                standard: v0,
+                interface: v0,
                 data: v1,
             }))
         }

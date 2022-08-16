@@ -1,71 +1,35 @@
 use std::cell::{Ref, RefMut};
+use std::collections::HashMap;
 use bebop::{DeserializeError, Record};
-use solana_program::{
-    decode_error::DecodeError,
-    msg,
-    program_error::{PrintProgramError, ProgramError},
-};
+use solana_program::{decode_error::DecodeError, msg, program_error::{PrintProgramError, ProgramError}, system_instruction};
 use solana_program::account_info::AccountInfo;
+use solana_program::hash::Hash;
+use solana_program::program::invoke_signed;
 use solana_program::pubkey::Pubkey;
+use solana_program::rent::Rent;
+use solana_program::sysvar::Sysvar;
 use thiserror::Error;
 use crate::api::DigitalAssetProtocolError::ActionError;
-use crate::interfaces::{asset};
+use crate::interfaces::{asset, GetInterface};
 use crate::validation::{assert_key_equal, cmp_pubkeys};
-use crate::generated::schema::{
-    Action as IxAction,
-    Interface,
-    ActionData,
-};
+use crate::generated::schema::{Action as IxAction, Interface, ActionData, Action};
 use crate::interfaces::ContextAction;
 
-pub struct Action<'info> {
-    pub standard: Interface,
-    pub program_id: Pubkey,
-    pub context: Box<&'info dyn ContextAction + 'info>,
-    pub remaining_accounts: Vec<AccountInfo<'info>>,
-}
-
-impl<'info> Action<'info> {
-    pub fn run(&mut self) -> Result<(), DigitalAssetProtocolError> {
-        self.context.run()
-    }
-
-    fn match_context(accounts: &'info [AccountInfo<'info>], action_data: ActionData) -> Result<(Box<&'info dyn ContextAction + 'info>, usize), DigitalAssetProtocolError> {
-        match action_data {
-            ActionData::CreateAssetV1 { .. } => {
-                let d = asset::CreateV1::new(accounts, action_data)?;
-                Ok((Box::new(&d.0), d.1))
-            }
-            ActionData::UpdateAssetV1 { .. } => {
-                let d = asset::UpdateV1::new(accounts, action_data)?;
-                Ok((Box::new(&d.0), d.1))
-            }
-            _ => Err(DigitalAssetProtocolError::InterfaceNoImpl)
-        }
-    }
-
-    pub fn from_instruction(program_id: &Pubkey,
-                            accounts: &'info [AccountInfo<'info>],
-                            instruction_data: &'info [u8]) -> Result<Action<'info>, DigitalAssetProtocolError> {
-        let action = IxAction::deserialize(instruction_data)
-            .map_err(|res| {
-                DigitalAssetProtocolError::DeError(res.to_string())
-            })?;
-
-        return match action.standard {
-            Interface::Nft => {
-                let action_context = Action::match_context(accounts, action.data)?;
-                Ok(Action {
-                    standard: action.standard,
-                    program_id: program_id.clone(),
-                    context: action_context.0,
-                    remaining_accounts: accounts[action_context.1..].to_vec(),
-                })
-            }
-            _ => Err(DigitalAssetProtocolError::InterfaceNoImpl)
-        };
-    }
-}
+// pub struct Action<'entry> {
+//     pub standard: Interface,
+//     pub program_id: Pubkey,
+//     pub context: &'entry dyn ContextAction,
+//     pub remaining_accounts: Vec<AccountInfo<'entry>>,
+// }
+//
+// impl<'entry> Action<'entry> {
+//     pub fn run(&mut self) -> Result<(), DigitalAssetProtocolError> {
+//         self.context.run()
+//     }
+//
+//
+//
+// }
 
 
 #[derive(Error, Debug)]
@@ -127,41 +91,191 @@ pub fn derive(seeds: &[&[u8]], program_id: &Pubkey) -> (Pubkey, u8) {
     Pubkey::find_program_address(seeds, program_id)
 }
 
-#[derive()]
-pub struct Constraints<'info> {
-    seeds: Option<&'info [&'info [u8]]>,
-    program_id: Option<Pubkey>,
-    key_equals: Option<Pubkey>,
-    writable: bool,
-    signer: bool,
-    program: bool,
-    empty: bool,
+
+pub struct Message<'entry> {
+    accounts: &'entry [&'entry AccountInfo<'entry>],
+    pub constrained_accounts: HashMap<&'static str, AccountInfoContext<'entry>>,
+    data: RefMut<'entry, &'entry mut [u8]>,
+    pub action: Action<'entry>,
 }
 
-pub struct AccountInfoContext<'info> {
-    pub info: AccountInfo<'info>,
-    mut_data_ref: Option<RefMut<'info, &'info mut [u8]>>,
-    data_ref: Option<Ref<'info, &'info mut [u8]>>,
-    pub seeds: Option<&'info [&'info [u8]]>,
+impl<'entry> Message<'entry> {
+    pub fn new(accounts: &'entry [&'entry AccountInfo<'entry>], data: RefMut<'entry, &'entry mut [u8]>) -> Result<Self, DigitalAssetProtocolError> {
+        Ok(Message {
+            data,
+            accounts,
+            constrained_accounts: HashMap::new(),
+            action: Action::deserialize(&**data)?,
+        })
+    }
+
+    pub fn system_program(&mut self, index: usize) -> Result<(), DigitalAssetProtocolError> {
+        self.prepare_account(index, "system", Constraints::system_program())
+    }
+
+    pub fn get_account(&mut self, name: &'static str) -> Result<&mut AccountInfoContext, DigitalAssetProtocolError> {
+        self.constrained_accounts.get_mut(name).ok_or(DigitalAssetProtocolError::InterfaceError(format!("Missing Account {}", name)))
+    }
+
+    pub fn prepare_account(&mut self, index: usize, name: &'static str, constraints: Constraints<'entry>) -> Result<(), DigitalAssetProtocolError> {
+        let mut accx = AccountInfoContext {
+            name,
+            info: &self.accounts[index],
+            mut_data_ref: None,
+            data_ref: None,
+            seeds: constraints.seeds,
+            bump: None,
+            constraints,
+        };
+        accx.validate_constraint()?;
+        self.constrained_accounts.insert(name, accx);
+        Ok(())
+    }
+
+    pub fn accounts_length(&self) -> usize {
+        self.accounts.len()
+    }
+}
+
+
+#[derive()]
+pub struct Constraints<'entry> {
+    pub(crate) seeds: Option<&'entry [&'entry [u8]]>,
+    pub(crate) program_id: Option<Pubkey>,
+    pub(crate) key_equals: Option<Pubkey>,
+    pub(crate) writable: bool,
+    pub(crate) signer: bool,
+    pub(crate) program: bool,
+    pub(crate) empty: bool,
+    pub(crate) owned_by: Option<Pubkey>,
+}
+
+impl<'entry> Constraints {
+    pub fn pda(name: &'static str,
+               seeds: &[&[u8]],
+               program_id: Pubkey,
+               write: bool,
+               empty: bool,
+    ) -> Self {
+        Constraints {
+            seeds: Some(seeds),
+            program_id: Some(program_id),
+            key_equals: None,
+            writable: write,
+            signer: false,
+            program: false,
+            empty,
+            owned_by: None,
+        }
+    }
+
+    pub fn system_program() -> Self {
+        Constraints {
+            seeds: None,
+            program_id: None,
+            key_equals: Some(solana_program::system_program::id()),
+            writable: false,
+            signer: false,
+            program: true,
+            empty: false,
+            owned_by: None,
+        }
+    }
+
+    pub fn read_only(name: &'static str) -> Self {
+        Constraints {
+            seeds: None,
+            program_id: None,
+            key_equals: None,
+            writable: false,
+            signer: false,
+            program: false,
+            empty: false,
+            owned_by: None,
+        }
+    }
+
+    pub fn payer(name: &'static str) -> Self {
+        Constraints {
+            seeds: None,
+            program_id: None,
+            key_equals: None,
+            writable: true,
+            signer: true,
+            program: false,
+            empty: false,
+            owned_by: None,
+        }
+    }
+}
+
+pub struct AccountInfoContext<'entry> {
+    pub name: &'static str,
+    pub info: &'entry AccountInfo<'entry>,
+    mut_data_ref: Option<RefMut<'entry, &'entry mut [u8]>>,
+    data_ref: Option<RefMut<'entry, &'entry mut [u8]>>,
+    pub seeds: Option<&'entry [&'entry [u8]]>,
     pub bump: Option<u8>,
-    pub constraints: Constraints<'info>,
+    pub constraints: Constraints<'entry>,
+}
+
+impl<'entry> AccountInfoContext {
+    pub fn initialize_account(&mut self,
+                              initial_size: u64,
+                              system: &'entry AccountInfoContext,
+                              payer: &'entry AccountInfoContext,
+    ) {
+        let rent = Rent::get()?;
+        let lamports = rent.minimum_balance(initial_size as usize);
+        //validate address get bump
+        invoke_signed(
+            &system_instruction::create_account(payer.info.key, self.info.key, lamports, initial_size, &crate::id()),
+            &[self.info.clone(), system.info.clone(), payer.info.clone()],
+            &[seeds.as_slice()],
+        )?;
+        let mut data = self.id.try_borrow_mut_data().map_err(|_| {
+            DigitalAssetProtocolError::ActionError("Issue with Borrowing Data".to_string())
+        })?;
+        new_asset.save(data)?;
+    }
 }
 
 pub trait AccountConstraints {
     fn validate_constraint(&mut self) -> Result<(), DigitalAssetProtocolError>;
 }
 
-impl<'info> AccountConstraints for AccountInfoContext<'info> {
+impl<'entry> AccountConstraints for AccountInfoContext<'entry> {
     fn validate_constraint(&mut self) -> Result<(), DigitalAssetProtocolError> {
         if self.constraints.program && !self.info.executable {
             return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} needs to be a program", self.info.key)));
         }
+        if !self.constraints.program && self.info.executable {
+            return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} can't be a program", self.info.key)));
+        }
+
         if self.constraints.writable && !self.info.is_writable {
             return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} needs to be writable", self.info.key)));
         }
+        if !self.constraints.writable && self.info.is_writable {
+            return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} can't be writable", self.info.key)));
+        }
+
+        // May need to change this to support optional signers
         if self.constraints.signer && !self.info.is_signer {
             return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} needs to be a signer", self.info.key)));
         }
+        if !self.constraints.signer && self.info.is_signer {
+            return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} can't be a signer", self.info.key)));
+        }
+
+        if let Some(ob) = self.constraints.owned_by {
+            assert_key_equal(&ob, self.info.owner)?;
+        }
+
+        if self.constraints.empty && self.info.data_len() > 0 && self.info.lamports() > 0 {
+            return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} can't be a signer", self.info.key)));
+        }
+
         if let Some(kef) = self.constraints.key_equals {
             assert_key_equal(&kef, self.info.key)?;
         }

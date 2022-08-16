@@ -48,7 +48,6 @@ impl<'info> ContextAction for UpdateV1<'info> {
             DigitalAssetProtocolError::ActionError("Issue with Borrowing Data".to_string())
         })?;
         let mut asset = Asset::load_mut(&mut *data)?;
-        asset.
         asset.save(data)?;
         Ok(())
     }

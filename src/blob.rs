@@ -5,8 +5,7 @@ use bebop::{Record, SeResult, SliceWrapper, SubRecord};
 use solana_program::account_info::AccountInfo;
 use solana_program::program_memory::sol_memset;
 use solana_program::pubkey::Pubkey;
-use crate::generated::schema::{Blob, BlobContainer, DataItem, ModuleType, DataItemValue, ModuleData};
-
+use crate::generated::schema::{BlobContainer, DataItem, ModuleType, DataItemValue, ModuleData};
 use crate::module::{ModuleDataWrapper, SchemaId};
 use crate::required_field;
 
@@ -16,7 +15,7 @@ pub struct Asset<'info> {
 }
 
 
-impl<'info> Asset {
+impl<'info> Asset<'info> {
     pub fn new() -> Asset<'info> {
         Asset {
             raw: None,
@@ -24,19 +23,19 @@ impl<'info> Asset {
         }
     }
 
-    pub fn set_module(&mut self, id: ModuleType, data: ModuleData) {
+    pub fn set_module(&mut self, id: ModuleType, data: ModuleData<'info>) {
         if !self.dirty {
             self.dirty = true;
         }
-        self.raw.and_then(|mut f| f.blobs.insert(id as u8, data));
+        self.raw.as_mut().and_then(|f| f.blobs.insert(id as u8, data));
     }
 
-    pub fn get_module(&mut self, id: ModuleType) -> Option<&mut ModuleData> {
-        self.raw.and_then(|mut f| f.blobs.get_mut(&(id as u8)))
+    pub fn get_module(&mut self, id: ModuleType) -> Option<&mut ModuleData<'info>> {
+        self.raw.as_mut().and_then(|f| f.blobs.get_mut(&(id as u8)))
     }
 
     pub fn size(&mut self) -> usize {
-        self.raw.and_then(|mut f| Some(f.serialized_size())).unwrap_or(0)
+        self.raw.as_mut().and_then(|f| Some(f.serialized_size())).unwrap_or(0)
     }
 
     pub fn save(mut self, destination: RefMut<&mut [u8]>) -> Result<(), DigitalAssetProtocolError> {

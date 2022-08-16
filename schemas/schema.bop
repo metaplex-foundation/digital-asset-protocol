@@ -1,4 +1,4 @@
-enum Interface: uint8 {
+enum InterfaceType: uint8 {
     Unknown = 0;
     NFTv1 = 1;
     NFT = 2;
@@ -81,7 +81,7 @@ struct Authority {
 }
 
 struct Action {
-    Interface standard;
+    InterfaceType interface;
     ActionData data;
 }
 

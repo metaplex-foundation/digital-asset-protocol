@@ -14,9 +14,9 @@ pub static OWNERSHIP_MODULE_PROCESSOR: OwnershipModuleProcessor = OwnershipModul
 
 impl ModuleProcessor for OwnershipModuleProcessor {
     fn create(&self,
-                    asset: &mut Asset
+              asset: &mut Asset,
     )
-                    -> Result<(), DigitalAssetProtocolError> {
+              -> Result<(), DigitalAssetProtocolError> {
         match asset.get_module(ModuleType::Ownership) {
             Some(ModuleData::OwnershipData { .. }) => Ok(()),
             _ => {
@@ -24,10 +24,6 @@ impl ModuleProcessor for OwnershipModuleProcessor {
             }
         }?;
         Ok(())
-    }
-
-    fn update<'raw>(&self, asset: &mut Asset, new_data: ModuleData) -> Result<(), DigitalAssetProtocolError> {
-        todo!()
     }
 }
 
