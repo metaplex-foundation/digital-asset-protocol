@@ -1,6 +1,5 @@
 pub mod asset;
 
-use core::panicking::panic;
 use crate::api::{DigitalAssetProtocolError, Message};
 use crate::generated::schema::InterfaceType;
 use crate::interfaces::asset::ASSET_INTERFACE;

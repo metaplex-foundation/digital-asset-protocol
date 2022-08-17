@@ -1,4 +1,5 @@
 use std::collections::{BTreeMap, HashMap};
+use std::fmt::format;
 use std::rc::Rc;
 use std::sync::Arc;
 use bebop::SliceWrapper;
@@ -57,12 +58,12 @@ impl CreateV1 {
                 uuid.as_slice()
             ];
             // TODO -> make fluent interface for this or macros
-            message.set_account_constraints(0, Constraints::system_program())?;
-            message.set_account_constraints(1, Constraints::pda("asset", seeds.as_slice(), crate::id(), true, true))?;
-            message.set_account_constraints(2, Constraints::read_only("owner"))?;
-            message.set_account_constraints(3, Constraints::payer("payer"))?;
+            let system = message.system_program(0)?;
+            let mut asset_account = message.prepare_account(1, "asset", Constraints::pda(seeds.as_slice(), crate::id(), true, true))?;
+            let owner = message.prepare_account(2, "owner", Constraints::read_only())?;
+            let payer = message.prepare_account(3, "payer", Constraints::payer())?;
             for c in 4..accounts.len() {
-                message.read_only(c as usize, Constraints::payer("creator"))?;
+                message.read_only(c as usize, format!("creator {}", c), Constraints::payer())?;
             }
             let mut new_asset = Asset::new();
             for mt in &MODULE_LAYOUT {
@@ -74,7 +75,7 @@ impl CreateV1 {
                     ModuleType::Ownership => {
                         new_asset.set_module(ModuleType::Ownership, ModuleData::OwnershipData {
                             model: ownership_model,
-                            owner: SliceWrapper::Raw(message.get_account("owner")?.info.key.as_ref()),
+                            owner: SliceWrapper::Raw(owner.info.key.as_ref()),
                         })
                     }
                     ModuleType::Royalty => {
@@ -97,8 +98,13 @@ impl CreateV1 {
                 }
                 processor.create(&mut new_asset)
             }
-            message.constrained_accounts.get("asset")?.initialize_account();
-
+            asset_account.initialize_account(
+                new_asset.size() as u64,
+                system,
+                payer,
+            );
+            let buffer = asset_account.mut_data();
+            new_asset.save(buffer)?;
             return Ok(());
         }
         Err(DigitalAssetProtocolError::ActionError("Invalid Action format, action must be CreateAssetV1".to_string()))

@@ -34,7 +34,7 @@ fn process_instruction<'entry>(
     )?;
     let iface = get_interface(&msg)?;
     // Instead of showing any concrete types here, we let the interface selected by the client handle the message, it will be in charge of all validation instead of outside the interface.
-    iface.handle_message(&msg);
+    iface.handle_message(&msg)?;
     Ok(())
 }
 

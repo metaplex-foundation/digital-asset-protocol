@@ -1,5 +1,6 @@
 use std::cell::{Ref, RefMut};
 use std::collections::HashMap;
+use std::ops::Deref;
 use bebop::{DeserializeError, Record};
 use solana_program::{decode_error::DecodeError, msg, program_error::{PrintProgramError, ProgramError}, system_instruction};
 use solana_program::account_info::AccountInfo;
@@ -109,15 +110,15 @@ impl<'entry> Message<'entry> {
         })
     }
 
-    pub fn system_program(&mut self, index: usize) -> Result<(), DigitalAssetProtocolError> {
-        self.prepare_account(index, "system", Constraints::system_program())
+    pub fn system_program(&mut self, index: usize) -> Result<&'entry AccountInfoContext, DigitalAssetProtocolError> {
+        self.prepare_account(index, "system", Constraints::system_program()).map(|a| a.deref())
     }
 
     pub fn get_account(&mut self, name: &'static str) -> Result<&mut AccountInfoContext, DigitalAssetProtocolError> {
         self.constrained_accounts.get_mut(name).ok_or(DigitalAssetProtocolError::InterfaceError(format!("Missing Account {}", name)))
     }
 
-    pub fn prepare_account(&mut self, index: usize, name: &'static str, constraints: Constraints<'entry>) -> Result<(), DigitalAssetProtocolError> {
+    pub fn prepare_account(&mut self, index: usize, name: &'static str, constraints: Constraints<'entry>) -> Result<&'entry mut AccountInfoContext, DigitalAssetProtocolError> {
         let mut accx = AccountInfoContext {
             name,
             info: &self.accounts[index],
@@ -151,11 +152,11 @@ pub struct Constraints<'entry> {
 }
 
 impl<'entry> Constraints {
-    pub fn pda(name: &'static str,
-               seeds: &[&[u8]],
-               program_id: Pubkey,
-               write: bool,
-               empty: bool,
+    pub fn pda(
+        seeds: &[&[u8]],
+        program_id: Pubkey,
+        write: bool,
+        empty: bool,
     ) -> Self {
         Constraints {
             seeds: Some(seeds),
@@ -182,7 +183,7 @@ impl<'entry> Constraints {
         }
     }
 
-    pub fn read_only(name: &'static str) -> Self {
+    pub fn read_only() -> Self {
         Constraints {
             seeds: None,
             program_id: None,
@@ -195,7 +196,7 @@ impl<'entry> Constraints {
         }
     }
 
-    pub fn payer(name: &'static str) -> Self {
+    pub fn payer(name: ) -> Self {
         Constraints {
             seeds: None,
             program_id: None,
@@ -220,6 +221,13 @@ pub struct AccountInfoContext<'entry> {
 }
 
 impl<'entry> AccountInfoContext {
+    pub fn mut_data(&mut self) -> RefMut<'entry, &'entry mut [u8]> {
+        if self.mut_data_ref.is_none() {
+            self.mut_data_ref = Some(self.info.data.borrow_mut());
+        }
+        self.mut_data_ref.unwrap()
+    }
+
     pub fn initialize_account(&mut self,
                               initial_size: u64,
                               system: &'entry AccountInfoContext,
