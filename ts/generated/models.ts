@@ -17,7 +17,7 @@
 import { BebopView, BebopRuntimeError } from "bebop";
 
 export namespace DigitalAssetTypes {
-  export enum Interface {
+  export enum InterfaceType {
     Unknown = 0,
     NFTv1 = 1,
     NFT = 2,
@@ -785,7 +785,7 @@ export namespace DigitalAssetTypes {
   };
 
   export interface IAction {
-    standard: Interface;
+    interface: InterfaceType;
     data: IActionData;
   }
 
@@ -799,7 +799,7 @@ export namespace DigitalAssetTypes {
 
     encodeInto(message: IAction, view: BebopView): number {
       const before = view.length;
-        view.writeByte(message.standard);
+        view.writeByte(message.interface);
         ActionData.encodeInto(message.data, view)
       const after = view.length;
       return after - before;
@@ -812,12 +812,12 @@ export namespace DigitalAssetTypes {
     },
 
     readFrom(view: BebopView): IAction {
-      let field0: Interface;
-      field0 = view.readByte() as Interface;
+      let field0: InterfaceType;
+      field0 = view.readByte() as InterfaceType;
       let field1: IActionData;
       field1 = ActionData.readFrom(view);
       let message: IAction = {
-        standard: field0,
+        interface: field0,
         data: field1,
       };
       return message;
@@ -888,7 +888,7 @@ export namespace DigitalAssetTypes {
     creatorShares?: Uint8Array;
     royaltyTarget?: Array<IRoyaltyTarget>;
     authorities?: Array<IAuthority>;
-    uuid?: string;
+    uuid?: Uint8Array;
   }
 
   export const CreateAssetV1 = {
@@ -950,7 +950,7 @@ export namespace DigitalAssetTypes {
         }
         if (message.uuid != null) {
           view.writeByte(9);
-          view.writeGuid(message.uuid);
+          view.writeBytes(message.uuid);
         }
         view.writeByte(0);
         const end = view.length;
@@ -1023,7 +1023,7 @@ export namespace DigitalAssetTypes {
             break;
 
           case 9:
-            message.uuid = view.readGuid();
+            message.uuid = view.readBytes();
             break;
 
           default:

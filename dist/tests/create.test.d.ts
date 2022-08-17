@@ -1,11 +1,11 @@
-import { Amman } from '@metaplex-foundation/amman';
+import { Amman } from '@metaplex-foundation/amman-client';
 import * as web3 from '@solana/web3.js';
 import debug from 'debug';
 import * as beet from '@metaplex-foundation/beet';
 export declare const logDebug: debug.Debugger;
 export declare function init(): Promise<{
     a: Amman;
-    transactionHandler: import("@metaplex-foundation/amman/dist/transactions/transaction-handler").PayerTransactionHandler;
+    transactionHandler: import("@metaplex-foundation/amman-client").PayerTransactionHandler;
     connection: web3.Connection;
     payer: web3.PublicKey;
     payerPair: web3.Keypair;

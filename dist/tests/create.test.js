@@ -28,7 +28,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.creatorBeet = exports.init = exports.logDebug = void 0;
 const tape_1 = __importDefault(require("tape"));
-const amman_1 = require("@metaplex-foundation/amman");
+const amman_client_1 = require("@metaplex-foundation/amman-client");
 const web3_js_1 = require("@solana/web3.js");
 const debug_1 = __importDefault(require("debug"));
 const beetSolana = __importStar(require("@metaplex-foundation/beet-solana"));
@@ -39,9 +39,9 @@ const persistLabelsPath = process.env.ADDRESS_LABEL_PATH;
 const PROGRAM = new web3_js_1.PublicKey("assetbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
 exports.logDebug = (0, debug_1.default)('dasset:test:debug');
 async function init() {
-    const a = amman_1.Amman.instance();
+    const a = amman_client_1.Amman.instance();
     const [payer, payerPair] = await a.addr.genLabeledKeypair('payer');
-    const connection = new web3_js_1.Connection(amman_1.LOCALHOST, 'confirmed');
+    const connection = new web3_js_1.Connection(amman_client_1.LOCALHOST, 'confirmed');
     const transactionHandler = a.payerTransactionHandler(connection, payerPair);
     await a.airdrop(connection, payer, 2);
     return {
@@ -53,7 +53,7 @@ async function init() {
     };
 }
 exports.init = init;
-var Interface = models_1.DigitalAssetTypes.Interface;
+var Interface = models_1.DigitalAssetTypes.InterfaceType;
 var Action = models_1.DigitalAssetTypes.Action;
 var OwnershipModel = models_1.DigitalAssetTypes.OwnershipModel;
 var RoyaltyModel = models_1.DigitalAssetTypes.RoyaltyModel;
@@ -67,14 +67,14 @@ exports.creatorBeet = new beet.BeetArgsStruct([
     ['verified', beet.bool],
     ['share', beet.u8],
 ], 'Creator');
-(0, tape_1.default)("Create An Identity", async () => {
+(0, tape_1.default)("Create An Asset", async () => {
     const { a, transactionHandler, connection, payer, payerPair } = await init();
     let [owner, ownerPair] = await a.addr.genLabeledKeypair("🔨 Owner 1");
     let idbuf = new Buffer(16);
     (0, uuid_1.v4)(null, idbuf);
     let [id, bump] = await web3_js_1.PublicKey.findProgramAddress([
-        Buffer.from("asset"),
-        idbuf
+        Buffer.from("ASSET", 'utf8'),
+        idbuf.slice(0, 8)
     ], PROGRAM);
     await a.addr.addLabel("Asset", id);
     let g = new web3_js_1.Transaction();
@@ -86,10 +86,11 @@ exports.creatorBeet = new beet.BeetArgsStruct([
                 address: new web3_js_1.PublicKey("Gsv13oph2i6nkJvNkVfuzkcbHWchz6viUtEg2vsxQMtM").toBytes(),
                 share: 100
             }],
-        dataSchema: JsonDataSchema.MultiMedia
+        dataSchema: JsonDataSchema.MultiMedia,
+        uuid: Uint8Array.from(idbuf)
     };
     let action = {
-        standard: Interface.NFT,
+        interface: Interface.NFT,
         data: { discriminator: 2, value: createAsset }
     };
     g.add(new web3_js_1.TransactionInstruction({
@@ -120,6 +121,6 @@ exports.creatorBeet = new beet.BeetArgsStruct([
     }));
     let tx = await transactionHandler.sendAndConfirmTransaction(g, [
         payerPair
-    ], { skipPreflight: true }, "🤓 Testing DAS Asset Creation");
+    ], { skipPreflight: true }, "🤓 Testing DAS Asset Creation").assertNone();
 });
 //# sourceMappingURL=create.test.js.map

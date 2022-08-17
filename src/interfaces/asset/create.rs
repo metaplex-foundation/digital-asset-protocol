@@ -1,22 +1,16 @@
 use std::collections::{HashMap};
 
 
-
 use bebop::SliceWrapper;
 
 
-
-
-
 use crate::api::{Constraints, DigitalAssetProtocolError, AccountWrapper};
-
 
 
 use crate::blob::Asset;
 use crate::generated::schema::{ModuleData, ModuleType, ActionData, DataItemValue, DataItem};
 use crate::interfaces::asset::MODULE_LAYOUT;
 use crate::required_field;
-
 
 
 pub struct CreateV1 {}
@@ -38,17 +32,17 @@ impl CreateV1 {
             let accounts_size = accounts.accounts_length();
             let rng = 4..accounts_size;
             let mut accounts = accounts;
-            let uuid = &*required_field!(uuid)?;
+            let uuid = *required_field!(uuid)?;
             let seeds = [
                 "ASSET".as_bytes(),
-                uuid.as_ref(),
+                uuid[0..8].as_ref(),
             ];
             let system = accounts.system_program(0)?;
             let mut asset_account = accounts.prepare_account(1, "asset", Constraints::pda(seeds.as_slice(), crate::id(), true, true))?;
             let owner = accounts.prepare_account(2, "owner", Constraints::read_only())?;
             let payer = accounts.prepare_account(3, "payer", Constraints::payer())?;
             let mut creator_accounts = Vec::with_capacity(rng.len());
-            for c in rng  {
+            for c in rng {
                 creator_accounts.push(accounts.prepare_account(c as usize, "creator", Constraints::read_only())?);
             }
 
@@ -64,8 +58,9 @@ impl CreateV1 {
 
 
             let mut new_asset = Asset::new();
+            let mut processors = Vec::with_capacity(MODULE_LAYOUT.len());
             for mt in MODULE_LAYOUT.iter() {
-                let processor = ModuleType::to_processor(mt);
+                processors.push(ModuleType::to_processor(mt));
                 match mt {
                     ModuleType::Rights => {
                         //TODO set rules based on the interface
@@ -94,8 +89,12 @@ impl CreateV1 {
                     }
                     _ => {}
                 }
-                processor.create(&mut new_asset)?;
             }
+
+            for p in processors {
+                p.create(&mut new_asset)?;
+            }
+
             asset_account.initialize_account(
                 new_asset.size() as u64,
                 &system,

@@ -20,16 +20,16 @@ exports.DigitalAssetTypes = void 0;
 const bebop_1 = require("bebop");
 var DigitalAssetTypes;
 (function (DigitalAssetTypes) {
-    let Interface;
-    (function (Interface) {
-        Interface[Interface["Unknown"] = 0] = "Unknown";
-        Interface[Interface["NFTv1"] = 1] = "NFTv1";
-        Interface[Interface["NFT"] = 2] = "NFT";
-        Interface[Interface["NFTPrintable"] = 3] = "NFTPrintable";
-        Interface[Interface["NFTGroup"] = 4] = "NFTGroup";
-        Interface[Interface["FungibleAsset"] = 5] = "FungibleAsset";
-        Interface[Interface["IdentityAsset"] = 6] = "IdentityAsset";
-    })(Interface = DigitalAssetTypes.Interface || (DigitalAssetTypes.Interface = {}));
+    let InterfaceType;
+    (function (InterfaceType) {
+        InterfaceType[InterfaceType["Unknown"] = 0] = "Unknown";
+        InterfaceType[InterfaceType["NFTv1"] = 1] = "NFTv1";
+        InterfaceType[InterfaceType["NFT"] = 2] = "NFT";
+        InterfaceType[InterfaceType["NFTPrintable"] = 3] = "NFTPrintable";
+        InterfaceType[InterfaceType["NFTGroup"] = 4] = "NFTGroup";
+        InterfaceType[InterfaceType["FungibleAsset"] = 5] = "FungibleAsset";
+        InterfaceType[InterfaceType["IdentityAsset"] = 6] = "IdentityAsset";
+    })(InterfaceType = DigitalAssetTypes.InterfaceType || (DigitalAssetTypes.InterfaceType = {}));
     let ModuleType;
     (function (ModuleType) {
         ModuleType[ModuleType["Invalid"] = 0] = "Invalid";
@@ -666,7 +666,7 @@ var DigitalAssetTypes;
         },
         encodeInto(message, view) {
             const before = view.length;
-            view.writeByte(message.standard);
+            view.writeByte(message.interface);
             DigitalAssetTypes.ActionData.encodeInto(message.data, view);
             const after = view.length;
             return after - before;
@@ -682,7 +682,7 @@ var DigitalAssetTypes;
             let field1;
             field1 = DigitalAssetTypes.ActionData.readFrom(view);
             let message = {
-                standard: field0,
+                interface: field0,
                 data: field1,
             };
             return message;
@@ -791,7 +791,7 @@ var DigitalAssetTypes;
             }
             if (message.uuid != null) {
                 view.writeByte(9);
-                view.writeGuid(message.uuid);
+                view.writeBytes(message.uuid);
             }
             view.writeByte(0);
             const end = view.length;
@@ -853,7 +853,7 @@ var DigitalAssetTypes;
                         }
                         break;
                     case 9:
-                        message.uuid = view.readGuid();
+                        message.uuid = view.readBytes();
                         break;
                     default:
                         view.index = end;

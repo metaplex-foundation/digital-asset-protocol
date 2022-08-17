@@ -1,5 +1,5 @@
 import test from 'tape';
-import {Amman, LOCALHOST} from '@metaplex-foundation/amman';
+import {Amman, LOCALHOST} from '@metaplex-foundation/amman-client';
 import * as web3 from '@solana/web3.js';
 import {Connection, PublicKey, SystemProgram, Transaction, TransactionInstruction} from '@solana/web3.js';
 import debug from 'debug';
@@ -29,7 +29,7 @@ export async function init() {
 
 
 import IAction = DigitalAssetTypes.IAction;
-import Interface = DigitalAssetTypes.Interface;
+import Interface = DigitalAssetTypes.InterfaceType;
 import Action = DigitalAssetTypes.Action;
 import ICreateAssetV1 = DigitalAssetTypes.ICreateAssetV1;
 import OwnershipModel = DigitalAssetTypes.OwnershipModel;
@@ -56,15 +56,15 @@ export const creatorBeet = new beet.BeetArgsStruct<Creator>(
 );
 
 
-test("Create An Identity", async () => {
+test("Create An Asset", async () => {
   const {a, transactionHandler, connection, payer, payerPair} = await init();
 
   let [owner, ownerPair] = await a.addr.genLabeledKeypair("🔨 Owner 1");
   let idbuf = new Buffer(16);
-  v4(null, idbuf)
+  v4(null, idbuf);
   let [id, bump] = await PublicKey.findProgramAddress([
-    Buffer.from("asset"),
-    idbuf
+    Buffer.from("ASSET", 'utf8'),
+    idbuf.slice(0,8)
   ], PROGRAM);
   await a.addr.addLabel("Asset", id);
   let g = new Transaction();
@@ -78,10 +78,11 @@ test("Create An Identity", async () => {
       address: new PublicKey("Gsv13oph2i6nkJvNkVfuzkcbHWchz6viUtEg2vsxQMtM").toBytes(),
       share: 100
     }],
-    dataSchema: JsonDataSchema.MultiMedia
+    dataSchema: JsonDataSchema.MultiMedia,
+    uuid: Uint8Array.from(idbuf)
   };
   let action: IAction = {
-    standard: Interface.NFT,
+    interface: Interface.NFT,
     data: {discriminator: 2, value: createAsset}
   };
 
@@ -114,7 +115,5 @@ test("Create An Identity", async () => {
 
   let tx = await transactionHandler.sendAndConfirmTransaction(g, [
     payerPair
-  ], {skipPreflight: true}, "🤓 Testing DAS Asset Creation");
-
-
+  ], {skipPreflight: true}, "🤓 Testing DAS Asset Creation").assertNone();
 });

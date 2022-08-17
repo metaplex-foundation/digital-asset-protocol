@@ -5,6 +5,7 @@
   "main": "dist/src/mpl-asset.js",
   "types": "dist/src/mpl-asset.d.ts",
   "scripts": {
+    "watch-test": "onchange -i -k './target/deploy/**/*.so' -- yarn run amman:start",
     "compile-bebop": "bebopc",
     "check:publish-ready": "yarn build && yarn test",
     "preversion": "yarn check:publish-ready",
@@ -58,8 +59,10 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
-    "@metaplex-foundation/amman": "0.6.1",
+    "@metaplex-foundation/amman": "0.10.0",
+    "@metaplex-foundation/amman-client": "^0.1.0",
     "@metaplex-foundation/solita": "0.5.3",
+    "onchange": "^7.1.0",
     "@types/debug": "^4.1.7",
     "@types/tape": "^4.13.2",
     "bn.js": "^5.2.0",

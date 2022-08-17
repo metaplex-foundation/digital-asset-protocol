@@ -113,6 +113,7 @@ impl<'entry> AccountWrapper<'entry> {
             bump: None,
             constraints,
         };
+        msg!("{} {}", index, accx.info.key);
         accx.validate_constraint()?;
         Ok(accx)
     }
@@ -269,6 +270,7 @@ impl<'entry, 'action> AccountConstraints for AccountInfoContext<'entry, 'action>
                 self.bump = Some(bump);
                 Ok(())
             }
+            (None, None) => Ok(()),
             _ => Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} has incorrect seeds", self.info.key)))
         }?;
         Ok(())

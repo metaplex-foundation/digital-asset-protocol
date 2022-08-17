@@ -98,7 +98,7 @@ union ActionData {
         6 -> uint8[] creator_shares;
         7 -> RoyaltyTarget[] royalty_target;
         8 -> Authority[] authorities;
-        9 -> guid uuid;
+        9 -> byte[] uuid;
     };
     3 -> message UpdateAssetV1 {
        1 -> string msg;

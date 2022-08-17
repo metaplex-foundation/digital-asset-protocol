@@ -24,6 +24,7 @@ fn process_instruction<'entry>(
     accounts: &'entry [AccountInfo<'entry>],
     instruction_data: &'entry [u8],
 ) -> ProgramResult {
+    msg!("Hello");
     // Pin to this 'entry lifetime
     let ix_data = Action::deserialize(instruction_data)
         .map_err(|d| DigitalAssetProtocolError::DeError(d.to_string()))?;

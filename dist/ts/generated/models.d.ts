@@ -1,6 +1,6 @@
 import { BebopView } from "bebop";
 export declare namespace DigitalAssetTypes {
-    enum Interface {
+    enum InterfaceType {
         Unknown = 0,
         NFTv1 = 1,
         NFT = 2,
@@ -191,7 +191,7 @@ export declare namespace DigitalAssetTypes {
         readFrom(view: BebopView): IAuthority;
     };
     interface IAction {
-        standard: Interface;
+        interface: InterfaceType;
         data: IActionData;
     }
     const Action: {
@@ -219,7 +219,7 @@ export declare namespace DigitalAssetTypes {
         creatorShares?: Uint8Array;
         royaltyTarget?: Array<IRoyaltyTarget>;
         authorities?: Array<IAuthority>;
-        uuid?: string;
+        uuid?: Uint8Array;
     }
     const CreateAssetV1: {
         discriminator: 2;
