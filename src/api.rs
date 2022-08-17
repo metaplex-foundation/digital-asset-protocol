@@ -1,18 +1,18 @@
-use std::cell::{Ref, RefMut};
-use std::collections::HashMap;
-use std::ops::Deref;
-use bebop::{DeserializeError, Record};
+use std::cell::{RefMut};
+
+
+use bebop::{DeserializeError};
 use solana_program::{decode_error::DecodeError, msg, program_error::{PrintProgramError, ProgramError}, system_instruction};
 use solana_program::account_info::AccountInfo;
-use solana_program::hash::Hash;
+
 use solana_program::program::invoke_signed;
 use solana_program::pubkey::Pubkey;
 use solana_program::rent::Rent;
 use solana_program::sysvar::Sysvar;
 use thiserror::Error;
-use crate::validation::{assert_key_equal, cmp_pubkeys};
-use crate::generated::schema::{Action as IxAction, ActionData, Action};
-use crate::interfaces::ContextAction;
+use crate::validation::{assert_key_equal};
+
+
 
 // pub struct Action<'entry> {
 //     pub standard: Interface,
@@ -91,42 +91,30 @@ pub fn derive(seeds: &[&[u8]], program_id: &Pubkey) -> (Pubkey, u8) {
 }
 
 
-pub struct Message<'entry> {
+pub struct AccountWrapper<'entry> {
     accounts: &'entry [AccountInfo<'entry>],
-    pub constrained_accounts: HashMap<&'static str, AccountInfoContext<'entry>>,
-    data: RefMut<'entry, &'entry [u8]>,
-    pub action: Action<'entry>,
 }
 
-impl<'entry> Message<'entry> {
-    pub fn new(accounts: &'entry [AccountInfo<'entry>], data: RefMut<'entry, &'entry [u8]>) -> Result<Self, DigitalAssetProtocolError> {
-        Ok(Message {
-            data,
+impl<'entry> AccountWrapper<'entry> {
+    pub fn new(accounts: &'entry [AccountInfo<'entry>]) -> Result<Self, DigitalAssetProtocolError> {
+        Ok(AccountWrapper {
             accounts,
-            constrained_accounts: HashMap::new(),
-            action: Action::deserialize(&**data)?,
         })
     }
 
-    pub fn system_program(&mut self, index: usize) -> Result<&'entry AccountInfoContext<'entry>, DigitalAssetProtocolError> {
-        self.prepare_account(index, "system", Constraints::system_program()).map(|a| a.deref())
+    pub fn system_program<'action>(&mut self, index: usize) -> Result<AccountInfoContext<'entry, 'action>, DigitalAssetProtocolError> {
+        self.prepare_account(index, "system", Constraints::system_program())
     }
 
-    pub fn get_account(&'entry mut self, name: &str) -> Result<&'entry mut AccountInfoContext<'entry>, DigitalAssetProtocolError> {
-        self.constrained_accounts.get_mut(name).ok_or(DigitalAssetProtocolError::InterfaceError(format!("Missing Account {}", name)))
-    }
-
-    pub fn prepare_account(&mut self, index: usize, name: &'static str, constraints: Constraints<'entry>) -> Result<&'entry mut AccountInfoContext<'entry>, DigitalAssetProtocolError> {
+    pub fn prepare_account<'action>(&mut self, index: usize, name: &'static str, constraints: Constraints<'action>) -> Result<AccountInfoContext<'entry,'action>, DigitalAssetProtocolError> {
         let mut accx = AccountInfoContext {
             name,
             info: &self.accounts[index],
-            seeds: constraints.seeds,
             bump: None,
             constraints,
         };
         accx.validate_constraint()?;
-        self.constrained_accounts.insert(name, accx);
-        Ok(&mut accx)
+        Ok(accx)
     }
 
     pub fn accounts_length(&self) -> usize {
@@ -136,8 +124,8 @@ impl<'entry> Message<'entry> {
 
 
 #[derive()]
-pub struct Constraints<'entry> {
-    pub(crate) seeds: Option<&'entry [&'entry [u8]]>,
+pub struct Constraints<'action> {
+    pub(crate) seeds: Option<&'action [&'action [u8]]>,
     pub(crate) program_id: Option<Pubkey>,
     pub(crate) key_equals: Option<Pubkey>,
     pub(crate) writable: bool,
@@ -147,9 +135,9 @@ pub struct Constraints<'entry> {
     pub(crate) owned_by: Option<Pubkey>,
 }
 
-impl<'entry> Constraints<'entry> {
+impl<'action> Constraints<'action> {
     pub fn pda(
-        seeds: &'entry [&'entry [u8]],
+        seeds: &'action [&'action [u8]],
         program_id: Pubkey,
         write: bool,
         empty: bool,
@@ -206,23 +194,22 @@ impl<'entry> Constraints<'entry> {
     }
 }
 
-pub struct AccountInfoContext<'entry> {
+pub struct AccountInfoContext<'entry, 'action> {
     pub name: &'static str,
     pub info: &'entry AccountInfo<'entry>,
-    pub seeds: Option<&'entry [&'entry [u8]]>,
     pub bump: Option<u8>,
-    pub constraints: Constraints<'entry>,
+    pub constraints: Constraints<'action>,
 }
 
-impl<'entry> AccountInfoContext<'entry> {
-    pub fn mut_data(&mut self) -> &'entry mut RefMut<'entry, &'entry mut [u8]> {
-        &mut self.info.data.borrow_mut()
+impl<'entry, 'action> AccountInfoContext<'entry, 'action> {
+    pub fn mut_data(&mut self) -> RefMut<'entry, &'entry mut [u8]> {
+        self.info.data.borrow_mut()
     }
 
     pub fn initialize_account(&mut self,
                               initial_size: u64,
-                              system: &'entry AccountInfoContext<'entry>,
-                              payer: &'entry AccountInfoContext<'entry>,
+                              system: &AccountInfoContext<'entry, 'action>,
+                              payer: &AccountInfoContext<'entry, 'action>,
     ) -> Result<(), DigitalAssetProtocolError> {
         let rent = Rent::get()?;
         let lamports = rent.minimum_balance(initial_size as usize);
@@ -230,7 +217,7 @@ impl<'entry> AccountInfoContext<'entry> {
         invoke_signed(
             &system_instruction::create_account(payer.info.key, self.info.key, lamports, initial_size, &crate::id()),
             &[self.info.clone(), system.info.clone(), payer.info.clone()],
-            &[self.seeds.unwrap()], // TODO get bump
+            &[self.constraints.seeds.unwrap(), &[self.bump.unwrap().to_le_bytes().as_ref()]], // TODO get bump
         )?;
         Ok(())
     }
@@ -240,7 +227,7 @@ pub trait AccountConstraints {
     fn validate_constraint(&mut self) -> Result<(), DigitalAssetProtocolError>;
 }
 
-impl<'entry> AccountConstraints for AccountInfoContext<'entry> {
+impl<'entry, 'action> AccountConstraints for AccountInfoContext<'entry, 'action> {
     fn validate_constraint(&mut self) -> Result<(), DigitalAssetProtocolError> {
         if self.constraints.program && !self.info.executable {
             return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} needs to be a program", self.info.key)));

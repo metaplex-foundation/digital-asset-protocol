@@ -1,7 +1,7 @@
-use solana_program::account_info::AccountInfo;
+
 use crate::api::DigitalAssetProtocolError;
 use crate::blob::Asset;
-use crate::module::{ModuleProcessor, ModuleDataWrapper};
+use crate::module::{ModuleProcessor};
 
 pub struct SignatureModuleProcessor {}
 
@@ -9,7 +9,7 @@ pub static SIGNATURE_MODULE_PROCESSOR: SignatureModuleProcessor = SignatureModul
 
 impl ModuleProcessor for SignatureModuleProcessor {
     fn create(&self,
-                    asset: &mut Asset
+                    _asset: &mut Asset
     )
                     -> Result<(), DigitalAssetProtocolError> {
         Ok(())

@@ -65,7 +65,7 @@ pub fn validate_creator_shares(creators_list: &[AccountInfo], share_list: &[u8])
         return Err(DigitalAssetProtocolError::ActionError("Shares and Creators dont match".to_string()));
     }
     let mut total: u8 = 0;
-    for (share) in share_list.iter() {
+    for share in share_list.iter() {
         total += share;
     }
     if total != 100 {

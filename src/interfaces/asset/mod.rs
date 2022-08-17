@@ -1,11 +1,12 @@
 mod create;
 // mod update;
 
-use solana_program::pubkey::Pubkey;
+
+
 // pub use update::*;
 pub use create::*;
 
-use crate::api::{DigitalAssetProtocolError, Message};
+use crate::api::{DigitalAssetProtocolError, AccountWrapper};
 use crate::generated::schema::{ActionData, ModuleType};
 use super::Interface;
 
@@ -24,12 +25,12 @@ pub static ASSET_INTERFACE: AssetInterface = AssetInterface {};
 pub struct AssetInterface;
 
 
-impl<'entry> Interface<'entry> for AssetInterface {
-    fn handle_message(&self, message: &'entry mut Message<'entry>) -> Result<(), DigitalAssetProtocolError> {
-        let context = &message.action.data;
+impl Interface for AssetInterface {
+    fn process_action<'entry>(&self, accounts: AccountWrapper<'entry>, data: ActionData<'entry>) -> Result<(), DigitalAssetProtocolError> {
+        let context = data;
         match context {
             ActionData::CreateAssetV1 { .. } => {
-                CreateV1::run(message)
+                CreateV1::run(accounts, context)
             }
             _ => Err(DigitalAssetProtocolError::InterfaceNoImpl)
         }

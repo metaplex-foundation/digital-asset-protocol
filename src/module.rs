@@ -23,7 +23,7 @@ pub trait ModuleProcessor {
     fn create<'raw>(&self, asset: &mut Asset)
                     -> Result<(), DigitalAssetProtocolError>;
 
-    fn update<'raw>(&self, asset: &mut Asset, new_data: ModuleData)
+    fn update<'raw>(&self, _asset: &mut Asset, _new_data: ModuleData)
                     -> Result<(), DigitalAssetProtocolError> {
         Ok(())
     }
@@ -48,7 +48,7 @@ impl<'raw> AccountMap<'raw> {
 }
 
 impl ModuleProcessor for NullModuleProcessor {
-    fn create<'raw>(&self, asset: &mut Asset)
+    fn create<'raw>(&self, _asset: &mut Asset)
                     -> Result<(), DigitalAssetProtocolError> {
         Ok(())
     }

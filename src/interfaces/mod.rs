@@ -1,7 +1,8 @@
 pub mod asset;
 
-use crate::api::{DigitalAssetProtocolError, Message};
-use crate::generated::schema::InterfaceType;
+
+use crate::api::{DigitalAssetProtocolError, AccountWrapper};
+use crate::generated::schema::{ActionData, InterfaceType};
 use crate::interfaces::asset::ASSET_INTERFACE;
 use crate::lifecycle::Lifecycle;
 
@@ -11,13 +12,13 @@ pub trait ContextAction {
     fn run(self) -> Result<(), DigitalAssetProtocolError>;
 }
 
-pub trait Interface<'entry> {
-    fn handle_message(&self, message: &'entry mut Message<'entry>) -> Result<(), DigitalAssetProtocolError>;
+pub trait Interface {
+    fn process_action<'entry>(&self, accounts: AccountWrapper<'entry>, data: ActionData<'entry>) -> Result<(), DigitalAssetProtocolError>;
 }
 
 
-pub fn get_interface<'entry>(message: &'entry Message<'entry>) -> Result<&dyn Interface, DigitalAssetProtocolError> {
-    match message.action.interface {
+pub fn get_interface<'entry>(interface: InterfaceType) -> Result<&'entry dyn Interface, DigitalAssetProtocolError> {
+    match interface {
         InterfaceType::Nft => {
             Ok(
                 &ASSET_INTERFACE

@@ -1,13 +1,13 @@
-use std::cell::{Ref, RefMut};
-use std::collections::{BTreeMap, HashMap};
+use std::cell::{RefMut};
+
 use crate::api::DigitalAssetProtocolError;
-use bebop::{Record, SeResult, SliceWrapper, SubRecord};
-use solana_program::account_info::AccountInfo;
+use bebop::{Record, SubRecord};
+
 use solana_program::program_memory::sol_memset;
-use solana_program::pubkey::Pubkey;
-use crate::generated::schema::{BlobContainer, DataItem, ModuleType, DataItemValue, ModuleData};
-use crate::module::{ModuleDataWrapper, SchemaId};
-use crate::required_field;
+
+use crate::generated::schema::{BlobContainer, ModuleType, ModuleData};
+
+
 
 pub struct Asset<'info> {
     pub dirty: bool,
@@ -38,11 +38,12 @@ impl<'info> Asset<'info> {
         self.raw.as_mut().and_then(| f| Some(f.serialized_size())).unwrap_or(0)
     }
 
-    pub fn save(mut self, destination: &mut RefMut<&mut [u8]>) -> Result<(), DigitalAssetProtocolError> {
+    pub fn save(mut self, destination: RefMut<&mut [u8]>) -> Result<(), DigitalAssetProtocolError> {
         let len = destination.len();
-        let mut dest = destination;
+        let mut destination = destination;
+        let mut dest: &mut [u8] = &mut *destination;
         sol_memset(dest, 0, len);
-        self.raw.unwrap().serialize(&mut **dest)
+        self.raw.unwrap().serialize(&mut dest)
             .map_err(|e| {
                 DigitalAssetProtocolError::DeError(e.to_string())
             })?;
