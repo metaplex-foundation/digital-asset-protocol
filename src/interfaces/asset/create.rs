@@ -13,7 +13,6 @@ use crate::interfaces::ContextAction;
 use crate::lifecycle::Lifecycle;
 use crate::module::{ModuleDataWrapper};
 use crate::blob::Asset;
-use crate::generated::schema::{DataItem, Interface};
 use crate::generated::schema::{
     Authority,
     ModuleData,
@@ -25,6 +24,7 @@ use crate::generated::schema::{
     Creator,
     ActionData,
     DataItemValue,
+    DataItem,
 };
 use crate::interfaces::asset::MODULE_LAYOUT;
 use crate::required_field;
@@ -35,6 +35,7 @@ pub struct CreateV1 {}
 
 impl CreateV1 {
     pub fn run<'entry>(message: &'entry mut Message<'entry>) -> Result<(), DigitalAssetProtocolError> {
+        let data = &message.action.data;
         if let ActionData::CreateAssetV1 {
             uri,
             data_schema,
@@ -46,11 +47,13 @@ impl CreateV1 {
             royalty,
             uuid,
             ..
-        } = &message.action.data {
+        } = data {
             let uri = required_field!(uri)?;
             let ownership_model = required_field!(ownership_model)?;
             let royalty_model = required_field!(royalty_model)?;
-            let royalty_target = required_field!(royalty_target)?;
+            // Required field doesnt work here for some lifetime and borrow reason
+            let royalty_target = royalty_target.ok_or(DigitalAssetProtocolError::DeError("Royalty Target ".parse().unwrap()))?;
+            let off_chain_schema = required_field!(data_schema)?;
             let uuid = &*required_field!(uuid)?;
             let seeds = &[
                 "ASSET".as_bytes(),
@@ -58,15 +61,16 @@ impl CreateV1 {
                 uuid.as_slice()
             ];
             // TODO -> make fluent interface for this or macros
+            for c in 4..message.accounts_length() {
+                message.prepare_account(c as usize, "creator", Constraints::read_only())?;
+            }
             let system = message.system_program(0)?;
             let mut asset_account = message.prepare_account(1, "asset", Constraints::pda(seeds.as_slice(), crate::id(), true, true))?;
             let owner = message.prepare_account(2, "owner", Constraints::read_only())?;
             let payer = message.prepare_account(3, "payer", Constraints::payer())?;
-            for c in 4..accounts.len() {
-                message.read_only(c as usize, format!("creator {}", c), Constraints::payer())?;
-            }
+
             let mut new_asset = Asset::new();
-            for mt in &MODULE_LAYOUT {
+            for mt in MODULE_LAYOUT.iter() {
                 let processor = ModuleType::to_processor(mt);
                 match mt {
                     ModuleType::Rights => {
@@ -96,13 +100,13 @@ impl CreateV1 {
                     }
                     _ => {}
                 }
-                processor.create(&mut new_asset)
+                processor.create(&mut new_asset)?;
             }
             asset_account.initialize_account(
                 new_asset.size() as u64,
                 system,
                 payer,
-            );
+            )?;
             let buffer = asset_account.mut_data();
             new_asset.save(buffer)?;
             return Ok(());

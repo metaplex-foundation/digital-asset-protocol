@@ -1,8 +1,8 @@
 mod create;
-mod update;
+// mod update;
 
 use solana_program::pubkey::Pubkey;
-pub use update::*;
+// pub use update::*;
 pub use create::*;
 
 use crate::api::{DigitalAssetProtocolError, Message};
@@ -10,7 +10,7 @@ use crate::generated::schema::{ActionData, ModuleType};
 use super::Interface;
 
 
-static MODULE_LAYOUT: Vec<ModuleType> = vec![
+static MODULE_LAYOUT: &[ModuleType] = &[
     ModuleType::Rights,
     ModuleType::Data,
     ModuleType::Ownership,

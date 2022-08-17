@@ -27,22 +27,22 @@ impl<'info> Asset<'info> {
         if !self.dirty {
             self.dirty = true;
         }
-        self.raw.as_mut().and_then(|f| f.blobs.insert(id as u8, data));
+        self.raw.as_mut().and_then(| f| f.blobs.insert(id as u8, data));
     }
 
     pub fn get_module(&mut self, id: ModuleType) -> Option<&mut ModuleData<'info>> {
-        self.raw.as_mut().and_then(|f| f.blobs.get_mut(&(id as u8)))
+        self.raw.as_mut().and_then(| f| f.blobs.get_mut(&(id as u8)))
     }
 
     pub fn size(&mut self) -> usize {
-        self.raw.as_mut().and_then(|f| Some(f.serialized_size())).unwrap_or(0)
+        self.raw.as_mut().and_then(| f| Some(f.serialized_size())).unwrap_or(0)
     }
 
-    pub fn save(mut self, destination: RefMut<&mut [u8]>) -> Result<(), DigitalAssetProtocolError> {
+    pub fn save(mut self, destination: &mut RefMut<&mut [u8]>) -> Result<(), DigitalAssetProtocolError> {
         let len = destination.len();
         let mut dest = destination;
-        sol_memset(*dest, 0, len);
-        self.raw.unwrap().serialize(&mut *dest)
+        sol_memset(dest, 0, len);
+        self.raw.unwrap().serialize(&mut **dest)
             .map_err(|e| {
                 DigitalAssetProtocolError::DeError(e.to_string())
             })?;

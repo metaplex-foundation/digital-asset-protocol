@@ -10,10 +10,8 @@ use solana_program::pubkey::Pubkey;
 use solana_program::rent::Rent;
 use solana_program::sysvar::Sysvar;
 use thiserror::Error;
-use crate::api::DigitalAssetProtocolError::ActionError;
-use crate::interfaces::{asset, GetInterface};
 use crate::validation::{assert_key_equal, cmp_pubkeys};
-use crate::generated::schema::{Action as IxAction, Interface, ActionData, Action};
+use crate::generated::schema::{Action as IxAction, ActionData, Action};
 use crate::interfaces::ContextAction;
 
 // pub struct Action<'entry> {
@@ -94,14 +92,14 @@ pub fn derive(seeds: &[&[u8]], program_id: &Pubkey) -> (Pubkey, u8) {
 
 
 pub struct Message<'entry> {
-    accounts: &'entry [&'entry AccountInfo<'entry>],
+    accounts: &'entry [AccountInfo<'entry>],
     pub constrained_accounts: HashMap<&'static str, AccountInfoContext<'entry>>,
-    data: RefMut<'entry, &'entry mut [u8]>,
+    data: RefMut<'entry, &'entry [u8]>,
     pub action: Action<'entry>,
 }
 
 impl<'entry> Message<'entry> {
-    pub fn new(accounts: &'entry [&'entry AccountInfo<'entry>], data: RefMut<'entry, &'entry mut [u8]>) -> Result<Self, DigitalAssetProtocolError> {
+    pub fn new(accounts: &'entry [AccountInfo<'entry>], data: RefMut<'entry, &'entry [u8]>) -> Result<Self, DigitalAssetProtocolError> {
         Ok(Message {
             data,
             accounts,
@@ -110,27 +108,25 @@ impl<'entry> Message<'entry> {
         })
     }
 
-    pub fn system_program(&mut self, index: usize) -> Result<&'entry AccountInfoContext, DigitalAssetProtocolError> {
+    pub fn system_program(&mut self, index: usize) -> Result<&'entry AccountInfoContext<'entry>, DigitalAssetProtocolError> {
         self.prepare_account(index, "system", Constraints::system_program()).map(|a| a.deref())
     }
 
-    pub fn get_account(&mut self, name: &'static str) -> Result<&mut AccountInfoContext, DigitalAssetProtocolError> {
+    pub fn get_account(&'entry mut self, name: &str) -> Result<&'entry mut AccountInfoContext<'entry>, DigitalAssetProtocolError> {
         self.constrained_accounts.get_mut(name).ok_or(DigitalAssetProtocolError::InterfaceError(format!("Missing Account {}", name)))
     }
 
-    pub fn prepare_account(&mut self, index: usize, name: &'static str, constraints: Constraints<'entry>) -> Result<&'entry mut AccountInfoContext, DigitalAssetProtocolError> {
+    pub fn prepare_account(&mut self, index: usize, name: &'static str, constraints: Constraints<'entry>) -> Result<&'entry mut AccountInfoContext<'entry>, DigitalAssetProtocolError> {
         let mut accx = AccountInfoContext {
             name,
             info: &self.accounts[index],
-            mut_data_ref: None,
-            data_ref: None,
             seeds: constraints.seeds,
             bump: None,
             constraints,
         };
         accx.validate_constraint()?;
         self.constrained_accounts.insert(name, accx);
-        Ok(())
+        Ok(&mut accx)
     }
 
     pub fn accounts_length(&self) -> usize {
@@ -151,9 +147,9 @@ pub struct Constraints<'entry> {
     pub(crate) owned_by: Option<Pubkey>,
 }
 
-impl<'entry> Constraints {
+impl<'entry> Constraints<'entry> {
     pub fn pda(
-        seeds: &[&[u8]],
+        seeds: &'entry [&'entry [u8]],
         program_id: Pubkey,
         write: bool,
         empty: bool,
@@ -196,7 +192,7 @@ impl<'entry> Constraints {
         }
     }
 
-    pub fn payer(name: ) -> Self {
+    pub fn payer() -> Self {
         Constraints {
             seeds: None,
             program_id: None,
@@ -213,38 +209,30 @@ impl<'entry> Constraints {
 pub struct AccountInfoContext<'entry> {
     pub name: &'static str,
     pub info: &'entry AccountInfo<'entry>,
-    mut_data_ref: Option<RefMut<'entry, &'entry mut [u8]>>,
-    data_ref: Option<RefMut<'entry, &'entry mut [u8]>>,
     pub seeds: Option<&'entry [&'entry [u8]]>,
     pub bump: Option<u8>,
     pub constraints: Constraints<'entry>,
 }
 
-impl<'entry> AccountInfoContext {
-    pub fn mut_data(&mut self) -> RefMut<'entry, &'entry mut [u8]> {
-        if self.mut_data_ref.is_none() {
-            self.mut_data_ref = Some(self.info.data.borrow_mut());
-        }
-        self.mut_data_ref.unwrap()
+impl<'entry> AccountInfoContext<'entry> {
+    pub fn mut_data(&mut self) -> &'entry mut RefMut<'entry, &'entry mut [u8]> {
+        &mut self.info.data.borrow_mut()
     }
 
     pub fn initialize_account(&mut self,
                               initial_size: u64,
-                              system: &'entry AccountInfoContext,
-                              payer: &'entry AccountInfoContext,
-    ) {
+                              system: &'entry AccountInfoContext<'entry>,
+                              payer: &'entry AccountInfoContext<'entry>,
+    ) -> Result<(), DigitalAssetProtocolError> {
         let rent = Rent::get()?;
         let lamports = rent.minimum_balance(initial_size as usize);
         //validate address get bump
         invoke_signed(
             &system_instruction::create_account(payer.info.key, self.info.key, lamports, initial_size, &crate::id()),
             &[self.info.clone(), system.info.clone(), payer.info.clone()],
-            &[seeds.as_slice()],
+            &[self.seeds.unwrap()], // TODO get bump
         )?;
-        let mut data = self.id.try_borrow_mut_data().map_err(|_| {
-            DigitalAssetProtocolError::ActionError("Issue with Borrowing Data".to_string())
-        })?;
-        new_asset.save(data)?;
+        Ok(())
     }
 }
 

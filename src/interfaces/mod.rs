@@ -16,7 +16,7 @@ pub trait Interface<'entry> {
 }
 
 
-pub fn get_interface<'entry>(message: &'entry Message<'entry>) -> Result<&'static dyn Interface, DigitalAssetProtocolError> {
+pub fn get_interface<'entry>(message: &'entry Message<'entry>) -> Result<&dyn Interface, DigitalAssetProtocolError> {
     match message.action.interface {
         InterfaceType::Nft => {
             Ok(

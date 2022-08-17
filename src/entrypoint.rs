@@ -24,17 +24,17 @@ fn process_instruction<'entry>(
     instruction_data: &'entry [u8],
 ) -> ProgramResult {
     // Pin to this 'entry lifetime
-    let ix_data = RefCell::new(instruction_data);
+    let mut ix_data = RefCell::new(instruction_data);
     let accounts = accounts;
     // What im trying to do is pin the life times here, hence the descriptive liftime name, so that as the data flows through I can limit copy and always refer back to the to the entry point lifetime
     // Create a structure that wraps them to avoid copy
     let msg = Message::new(
-        accounts.iter().as_ref().map(|a|a).collect(),
+        accounts,
         ix_data.borrow_mut()
     )?;
     let iface = get_interface(&msg)?;
     // Instead of showing any concrete types here, we let the interface selected by the client handle the message, it will be in charge of all validation instead of outside the interface.
-    iface.handle_message(&msg)?;
+    iface.handle_message(&mut msg)?;
     Ok(())
 }
 
