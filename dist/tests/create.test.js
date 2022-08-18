@@ -69,7 +69,7 @@ exports.creatorBeet = new beet.BeetArgsStruct([
 ], 'Creator');
 (0, tape_1.default)("Create An Asset", async () => {
     const { a, transactionHandler, connection, payer, payerPair } = await init();
-    let [owner, ownerPair] = await a.addr.genLabeledKeypair("🔨 Owner 1");
+    let [owner, ownerPair] = await a.addr.genLabeledKeypair("Owner");
     let idbuf = new Buffer(16);
     (0, uuid_1.v4)(null, idbuf);
     let [id, bump] = await web3_js_1.PublicKey.findProgramAddress([
@@ -78,14 +78,27 @@ exports.creatorBeet = new beet.BeetArgsStruct([
     ], PROGRAM);
     await a.addr.addLabel("Asset", id);
     let g = new web3_js_1.Transaction();
+    let creators = new Array(5).fill(0);
+    let shares = [];
+    creators = creators.map(async (c, i) => {
+        shares.push(20);
+        return a.addr.genLabeledKeypair(`🔨 Creator ${i}`);
+    });
+    creators = await Promise.all(creators);
+    let creator_metas = creators.map((c) => ({
+        pubkey: c[0],
+        isSigner: true,
+        isWritable: false
+    }));
     let createAsset = {
         uri: `https://gist.githubusercontent.com/austbot/fcc45b63119d12a588cc6b5bda2c7fa3/raw/91f7297eeb203e69bb7d19fa9f77b34139f88e20/image.json`,
         ownershipModel: OwnershipModel.Single,
         royaltyModel: RoyaltyModel.Address,
         royaltyTarget: [{
                 address: new web3_js_1.PublicKey("Gsv13oph2i6nkJvNkVfuzkcbHWchz6viUtEg2vsxQMtM").toBytes(),
-                share: 100
+                share: 800
             }],
+        creatorShares: Uint8Array.from(shares),
         dataSchema: JsonDataSchema.MultiMedia,
         uuid: Uint8Array.from(idbuf)
     };
@@ -117,10 +130,12 @@ exports.creatorBeet = new beet.BeetArgsStruct([
                 isSigner: true,
                 isWritable: true
             },
+            ...creator_metas
         ]
     }));
     let tx = await transactionHandler.sendAndConfirmTransaction(g, [
-        payerPair
+        payerPair,
+        ...creators.map((c) => c[1])
     ], { skipPreflight: true }, "🤓 Testing DAS Asset Creation").assertNone();
 });
 //# sourceMappingURL=create.test.js.map

@@ -1,7 +1,9 @@
 use std::cell::{RefMut};
+use std::collections::HashMap;
 
 use crate::api::DigitalAssetProtocolError;
 use bebop::{Record, SubRecord};
+use solana_program::msg;
 
 use solana_program::program_memory::sol_memset;
 
@@ -26,6 +28,9 @@ impl<'info> Asset<'info> {
     pub fn set_module(&mut self, id: ModuleType, data: ModuleData<'info>) {
         if !self.dirty {
             self.dirty = true;
+        }
+        if self.raw.is_none() {
+            self.raw = Some(BlobContainer { blobs: HashMap::new() })
         }
         self.raw.as_mut().and_then(| f| f.blobs.insert(id as u8, data));
     }

@@ -1,7 +1,4 @@
-
-
-
-
+use solana_program::msg;
 use crate::api::DigitalAssetProtocolError;
 use crate::blob::{Asset};
 use crate::generated::schema::{ModuleData, ModuleType};

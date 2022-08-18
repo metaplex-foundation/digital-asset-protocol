@@ -13,7 +13,6 @@ use thiserror::Error;
 use crate::validation::{assert_key_equal};
 
 
-
 // pub struct Action<'entry> {
 //     pub standard: Interface,
 //     pub program_id: Pubkey,
@@ -106,14 +105,13 @@ impl<'entry> AccountWrapper<'entry> {
         self.prepare_account(index, "system", Constraints::system_program())
     }
 
-    pub fn prepare_account<'action>(&mut self, index: usize, name: &'static str, constraints: Constraints<'action>) -> Result<AccountInfoContext<'entry,'action>, DigitalAssetProtocolError> {
+    pub fn prepare_account<'action>(&mut self, index: usize, name: &'static str, constraints: Constraints<'action>) -> Result<AccountInfoContext<'entry, 'action>, DigitalAssetProtocolError> {
         let mut accx = AccountInfoContext {
             name,
             info: &self.accounts[index],
             bump: None,
             constraints,
         };
-        msg!("{} {}", index, accx.info.key);
         accx.validate_constraint()?;
         Ok(accx)
     }
@@ -134,6 +132,7 @@ pub struct Constraints<'action> {
     pub(crate) program: bool,
     pub(crate) empty: bool,
     pub(crate) owned_by: Option<Pubkey>,
+    pub(crate) optional_signer: bool,
 }
 
 impl<'action> Constraints<'action> {
@@ -152,6 +151,7 @@ impl<'action> Constraints<'action> {
             program: false,
             empty,
             owned_by: None,
+            optional_signer: false
         }
     }
 
@@ -165,6 +165,7 @@ impl<'action> Constraints<'action> {
             program: true,
             empty: false,
             owned_by: None,
+            optional_signer: false
         }
     }
 
@@ -178,8 +179,24 @@ impl<'action> Constraints<'action> {
             program: false,
             empty: false,
             owned_by: None,
+            optional_signer: false
         }
     }
+
+    pub fn read_only_optional_signer() -> Self {
+        Constraints {
+            seeds: None,
+            program_id: None,
+            key_equals: None,
+            writable: false,
+            signer: false,
+            optional_signer: true,
+            program: false,
+            empty: false,
+            owned_by: None,
+        }
+    }
+
 
     pub fn payer() -> Self {
         Constraints {
@@ -191,6 +208,7 @@ impl<'action> Constraints<'action> {
             program: false,
             empty: false,
             owned_by: None,
+            optional_signer: false
         }
     }
 }
@@ -209,16 +227,14 @@ impl<'entry, 'action> AccountInfoContext<'entry, 'action> {
 
     pub fn initialize_account(&mut self,
                               initial_size: u64,
-                              system: &AccountInfoContext<'entry, 'action>,
                               payer: &AccountInfoContext<'entry, 'action>,
     ) -> Result<(), DigitalAssetProtocolError> {
         let rent = Rent::get()?;
         let lamports = rent.minimum_balance(initial_size as usize);
-        //validate address get bump
         invoke_signed(
             &system_instruction::create_account(payer.info.key, self.info.key, lamports, initial_size, &crate::id()),
-            &[self.info.clone(), system.info.clone(), payer.info.clone()],
-            &[self.constraints.seeds.unwrap(), &[self.bump.unwrap().to_le_bytes().as_ref()]], // TODO get bump
+            &[payer.info.clone(), self.info.clone()],
+            &[&[self.constraints.seeds.unwrap(), &[&[self.bump.unwrap()]]].concat()],
         )?;
         Ok(())
     }
@@ -248,7 +264,7 @@ impl<'entry, 'action> AccountConstraints for AccountInfoContext<'entry, 'action>
         if self.constraints.signer && !self.info.is_signer {
             return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} needs to be a signer", self.info.key)));
         }
-        if !self.constraints.signer && self.info.is_signer {
+        if !self.constraints.optional_signer && !self.constraints.signer && self.info.is_signer {
             return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} can't be a signer", self.info.key)));
         }
 
