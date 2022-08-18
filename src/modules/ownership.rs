@@ -42,4 +42,7 @@ impl ModuleProcessor for OwnershipModuleProcessor {
     fn update<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError> {
         Ok(())
     }
+    fn sell<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError> {
+        Ok(())
+    }
 }

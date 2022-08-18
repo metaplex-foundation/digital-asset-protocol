@@ -4,6 +4,7 @@ mod delegate;
 mod delete;
 mod freeze;
 mod list_for_sale;
+mod sell;
 mod transfer;
 mod update;
 
@@ -13,5 +14,6 @@ pub use delegate::*;
 pub use delete::*;
 pub use freeze::*;
 pub use list_for_sale::*;
+pub use sell::*;
 pub use transfer::*;
 pub use update::*;

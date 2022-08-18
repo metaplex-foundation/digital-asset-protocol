@@ -55,12 +55,16 @@ impl<'info> Action<'info> {
                 let d = asset::ListForSaleV1::new(accounts, action_data)?;
                 Ok((Box::new(d.0), d.1))
             }
+            ActionData::SellAssetV1 { .. } => {
+                let d = asset::UpdateV1::new(accounts, action_data)?;
+                Ok((Box::new(d.0), d.1))
+            }
             ActionData::TransferAssetV1 { .. } => {
                 let d = asset::TransferV1::new(accounts, action_data)?;
                 Ok((Box::new(d.0), d.1))
             }
             ActionData::UpdateAssetV1 { .. } => {
-                let d = asset::UpdateV1::new(accounts, action_data)?;
+                let d = asset::SellV1::new(accounts, action_data)?;
                 Ok((Box::new(d.0), d.1))
             }
             _ => Err(DigitalAssetProtocolError::InterfaceNoImpl),

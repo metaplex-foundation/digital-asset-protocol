@@ -2,7 +2,9 @@ use crate::api::DigitalAssetProtocolError;
 use crate::blob::Asset;
 use crate::generated::schema::owned::{DataItemValue, ModuleData, ModuleType};
 use crate::lifecycle::Lifecycle;
-use crate::modules::OWNERSHIP_MODULE_PROCESSOR;
+use crate::modules::{
+    OWNERSHIP_MODULE_PROCESSOR, ROYALTY_MODULE_PROCESSOR, SIGNATURE_MODULE_PROCESSOR,
+};
 use bebop::Record;
 use solana_program::account_info::AccountInfo;
 use std::cmp::Ordering;
@@ -28,6 +30,7 @@ pub trait ModuleProcessor {
     fn list_for_sale<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError>;
     fn transfer<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError>;
     fn update<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError>;
+    fn sell<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError>;
 }
 
 pub struct NullModuleProcessor {}
@@ -76,6 +79,9 @@ impl ModuleProcessor for NullModuleProcessor {
     fn update<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError> {
         Ok(())
     }
+    fn sell<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError> {
+        Ok(())
+    }
 }
 
 impl ModuleType {
@@ -96,6 +102,8 @@ impl ModuleType {
     pub fn to_processor(module: ModuleType) -> &'static dyn ModuleProcessor {
         match module {
             ModuleType::Ownership => &OWNERSHIP_MODULE_PROCESSOR,
+            ModuleType::Royalty => &ROYALTY_MODULE_PROCESSOR,
+            ModuleType::Signature => &SIGNATURE_MODULE_PROCESSOR,
             _ => &NULL_MODULE_PROCESSOR,
         }
     }

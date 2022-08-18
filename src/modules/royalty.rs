@@ -1,6 +1,6 @@
 use crate::api::DigitalAssetProtocolError;
-use crate::blob::{Asset, Blob};
-use crate::generated::schema::ModuleType;
+use crate::blob::Asset;
+use crate::generated::schema::owned::{ModuleData, ModuleType};
 use crate::module::{ModuleDataWrapper, ModuleId, ModuleProcessor};
 use bebop::{Record, SliceWrapper, SubRecord};
 use lazy_static::lazy_static;
@@ -15,30 +15,13 @@ impl ModuleProcessor for RoyaltyModuleProcessor {
     fn cancel_sale<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError> {
         Ok(())
     }
-    fn create<'raw>(
-        &self,
-        asset: &mut Asset<'raw>,
-        module_data: Option<ModuleDataWrapper<'raw>>,
-    ) -> Result<(), DigitalAssetProtocolError> {
-        let royalty_data = match module_data {
-            Some(ModuleDataWrapper::Structured(d)) => Ok(d),
+    fn create<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError> {
+        match asset.get_module(ModuleType::Royalty) {
+            Some(ModuleDataWrapper::Structured(ModuleData::RoyaltyData { .. })) => Ok(()),
             _ => Err(DigitalAssetProtocolError::ModuleError(
                 "Incorrect Data Type for Module".to_string(),
             )),
         }?;
-
-        let mut raw_data = Vec::with_capacity(royalty_data.serialized_size());
-        royalty_data
-            .serialize(&mut raw_data)
-            .map_err(|e| DigitalAssetProtocolError::ModuleError(e.to_string()))?;
-        let blob = Blob {
-            schema: ModuleId::Module(ModuleType::Royalty),
-            data: raw_data,
-            _runtime_data: Some(royalty_data.to_owned()),
-        };
-        asset
-            .layout
-            .insert(ModuleId::Module(ModuleType::Royalty), blob);
         Ok(())
     }
     fn delegate<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError> {
@@ -57,6 +40,9 @@ impl ModuleProcessor for RoyaltyModuleProcessor {
         Ok(())
     }
     fn update<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError> {
+        Ok(())
+    }
+    fn sell<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError> {
         Ok(())
     }
 }

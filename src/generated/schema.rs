@@ -1045,7 +1045,15 @@ pub enum ActionData<'raw> {
     /// Discriminator 4
     TransferAssetV1 {
         /// Field 1
-        msg: ::core::option::Option<&'raw str>,
+        ownership_model: ::core::option::Option<OwnershipModel>,
+        /// Field 2
+        royalty_model: ::core::option::Option<RoyaltyModel>,
+        /// Field 3
+        royalty_target: ::core::option::Option<RoyaltyTarget<'raw>>,
+        /// Field 4
+        creator_shares: ::core::option::Option<::bebop::SliceWrapper<'raw, u8>>,
+        /// Field 5
+        authorities: ::core::option::Option<::std::vec::Vec<Authority<'raw>>>,
     },
 
     /// Discriminator 5
@@ -1076,6 +1084,20 @@ pub enum ActionData<'raw> {
     FreezeAssetV1 {
         /// Field 1
         msg: ::core::option::Option<&'raw str>,
+    },
+
+    /// Discriminator 10
+    SellAssetV1 {
+        /// Field 1
+        ownership_model: ::core::option::Option<OwnershipModel>,
+        /// Field 2
+        royalty_model: ::core::option::Option<RoyaltyModel>,
+        /// Field 3
+        royalty_target: ::core::option::Option<RoyaltyTarget<'raw>>,
+        /// Field 4
+        creator_shares: ::core::option::Option<::bebop::SliceWrapper<'raw, u8>>,
+        /// Field 5
+        authorities: ::core::option::Option<::std::vec::Vec<Authority<'raw>>>,
     },
 }
 
@@ -1134,10 +1156,35 @@ impl<'raw> ::bebop::SubRecord<'raw> for ActionData<'raw> {
                         + 1
                         + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
                 }
-                Self::TransferAssetV1 { msg: ref _msg } => {
+                Self::TransferAssetV1 {
+                    ownership_model: ref _ownership_model,
+                    royalty_model: ref _royalty_model,
+                    royalty_target: ref _royalty_target,
+                    creator_shares: ref _creator_shares,
+                    authorities: ref _authorities,
+                } => {
                     ::bebop::LEN_SIZE
                         + 1
-                        + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
+                        + _ownership_model
+                            .as_ref()
+                            .map(|v| v.serialized_size() + 1)
+                            .unwrap_or(0)
+                        + _royalty_model
+                            .as_ref()
+                            .map(|v| v.serialized_size() + 1)
+                            .unwrap_or(0)
+                        + _royalty_target
+                            .as_ref()
+                            .map(|v| v.serialized_size() + 1)
+                            .unwrap_or(0)
+                        + _creator_shares
+                            .as_ref()
+                            .map(|v| v.serialized_size() + 1)
+                            .unwrap_or(0)
+                        + _authorities
+                            .as_ref()
+                            .map(|v| v.serialized_size() + 1)
+                            .unwrap_or(0)
                 }
                 Self::ListForSaleAssetV1 { msg: ref _msg } => {
                     ::bebop::LEN_SIZE
@@ -1163,6 +1210,36 @@ impl<'raw> ::bebop::SubRecord<'raw> for ActionData<'raw> {
                     ::bebop::LEN_SIZE
                         + 1
                         + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
+                }
+                Self::SellAssetV1 {
+                    ownership_model: ref _ownership_model,
+                    royalty_model: ref _royalty_model,
+                    royalty_target: ref _royalty_target,
+                    creator_shares: ref _creator_shares,
+                    authorities: ref _authorities,
+                } => {
+                    ::bebop::LEN_SIZE
+                        + 1
+                        + _ownership_model
+                            .as_ref()
+                            .map(|v| v.serialized_size() + 1)
+                            .unwrap_or(0)
+                        + _royalty_model
+                            .as_ref()
+                            .map(|v| v.serialized_size() + 1)
+                            .unwrap_or(0)
+                        + _royalty_target
+                            .as_ref()
+                            .map(|v| v.serialized_size() + 1)
+                            .unwrap_or(0)
+                        + _creator_shares
+                            .as_ref()
+                            .map(|v| v.serialized_size() + 1)
+                            .unwrap_or(0)
+                        + _authorities
+                            .as_ref()
+                            .map(|v| v.serialized_size() + 1)
+                            .unwrap_or(0)
                 }
             }
     }
@@ -1233,11 +1310,33 @@ impl<'raw> ::bebop::SubRecord<'raw> for ActionData<'raw> {
                 }
                 0u8._serialize_chained(dest)?;
             }
-            Self::TransferAssetV1 { msg: ref _msg } => {
+            Self::TransferAssetV1 {
+                ownership_model: ref _ownership_model,
+                royalty_model: ref _royalty_model,
+                royalty_target: ref _royalty_target,
+                creator_shares: ref _creator_shares,
+                authorities: ref _authorities,
+            } => {
                 4u8._serialize_chained(dest)?;
                 ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
-                if let Some(ref v) = _msg {
+                if let Some(ref v) = _ownership_model {
                     1u8._serialize_chained(dest)?;
+                    v._serialize_chained(dest)?;
+                }
+                if let Some(ref v) = _royalty_model {
+                    2u8._serialize_chained(dest)?;
+                    v._serialize_chained(dest)?;
+                }
+                if let Some(ref v) = _royalty_target {
+                    3u8._serialize_chained(dest)?;
+                    v._serialize_chained(dest)?;
+                }
+                if let Some(ref v) = _creator_shares {
+                    4u8._serialize_chained(dest)?;
+                    v._serialize_chained(dest)?;
+                }
+                if let Some(ref v) = _authorities {
+                    5u8._serialize_chained(dest)?;
                     v._serialize_chained(dest)?;
                 }
                 0u8._serialize_chained(dest)?;
@@ -1283,6 +1382,37 @@ impl<'raw> ::bebop::SubRecord<'raw> for ActionData<'raw> {
                 ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
                 if let Some(ref v) = _msg {
                     1u8._serialize_chained(dest)?;
+                    v._serialize_chained(dest)?;
+                }
+                0u8._serialize_chained(dest)?;
+            }
+            Self::SellAssetV1 {
+                ownership_model: ref _ownership_model,
+                royalty_model: ref _royalty_model,
+                royalty_target: ref _royalty_target,
+                creator_shares: ref _creator_shares,
+                authorities: ref _authorities,
+            } => {
+                10u8._serialize_chained(dest)?;
+                ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                if let Some(ref v) = _ownership_model {
+                    1u8._serialize_chained(dest)?;
+                    v._serialize_chained(dest)?;
+                }
+                if let Some(ref v) = _royalty_model {
+                    2u8._serialize_chained(dest)?;
+                    v._serialize_chained(dest)?;
+                }
+                if let Some(ref v) = _royalty_target {
+                    3u8._serialize_chained(dest)?;
+                    v._serialize_chained(dest)?;
+                }
+                if let Some(ref v) = _creator_shares {
+                    4u8._serialize_chained(dest)?;
+                    v._serialize_chained(dest)?;
+                }
+                if let Some(ref v) = _authorities {
+                    5u8._serialize_chained(dest)?;
                     v._serialize_chained(dest)?;
                 }
                 0u8._serialize_chained(dest)?;
@@ -1556,7 +1686,11 @@ impl<'raw> ::bebop::SubRecord<'raw> for ActionData<'raw> {
                     return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
                 }
 
-                let mut _msg = None;
+                let mut _ownership_model = None;
+                let mut _royalty_model = None;
+                let mut _royalty_target = None;
+                let mut _creator_shares = None;
+                let mut _authorities = None;
 
                 #[cfg(not(feature = "unchecked"))]
                 let mut last = 0;
@@ -1579,13 +1713,53 @@ impl<'raw> ::bebop::SubRecord<'raw> for ActionData<'raw> {
                         }
                         1 => {
                             #[cfg(not(feature = "unchecked"))]
-                            if _msg.is_some() {
+                            if _ownership_model.is_some() {
                                 return Err(::bebop::DeserializeError::DuplicateMessageField);
                             }
                             let (read, value) =
                                 ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
                             i += read;
-                            _msg = Some(value)
+                            _ownership_model = Some(value)
+                        }
+                        2 => {
+                            #[cfg(not(feature = "unchecked"))]
+                            if _royalty_model.is_some() {
+                                return Err(::bebop::DeserializeError::DuplicateMessageField);
+                            }
+                            let (read, value) =
+                                ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                            i += read;
+                            _royalty_model = Some(value)
+                        }
+                        3 => {
+                            #[cfg(not(feature = "unchecked"))]
+                            if _royalty_target.is_some() {
+                                return Err(::bebop::DeserializeError::DuplicateMessageField);
+                            }
+                            let (read, value) =
+                                ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                            i += read;
+                            _royalty_target = Some(value)
+                        }
+                        4 => {
+                            #[cfg(not(feature = "unchecked"))]
+                            if _creator_shares.is_some() {
+                                return Err(::bebop::DeserializeError::DuplicateMessageField);
+                            }
+                            let (read, value) =
+                                ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                            i += read;
+                            _creator_shares = Some(value)
+                        }
+                        5 => {
+                            #[cfg(not(feature = "unchecked"))]
+                            if _authorities.is_some() {
+                                return Err(::bebop::DeserializeError::DuplicateMessageField);
+                            }
+                            let (read, value) =
+                                ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                            i += read;
+                            _authorities = Some(value)
                         }
                         _ => {
                             i = len;
@@ -1599,7 +1773,13 @@ impl<'raw> ::bebop::SubRecord<'raw> for ActionData<'raw> {
                     return Err(::bebop::DeserializeError::CorruptFrame);
                 }
 
-                ActionData::TransferAssetV1 { msg: _msg }
+                ActionData::TransferAssetV1 {
+                    ownership_model: _ownership_model,
+                    royalty_model: _royalty_model,
+                    royalty_target: _royalty_target,
+                    creator_shares: _creator_shares,
+                    authorities: _authorities,
+                }
             }
             5 => {
                 let len = ::bebop::read_len(&raw[i..])? + i + ::bebop::LEN_SIZE;
@@ -1890,6 +2070,114 @@ impl<'raw> ::bebop::SubRecord<'raw> for ActionData<'raw> {
                 }
 
                 ActionData::FreezeAssetV1 { msg: _msg }
+            }
+            10 => {
+                let len = ::bebop::read_len(&raw[i..])? + i + ::bebop::LEN_SIZE;
+                i += ::bebop::LEN_SIZE;
+
+                #[cfg(not(feature = "unchecked"))]
+                if len == 0 {
+                    return Err(::bebop::DeserializeError::CorruptFrame);
+                }
+
+                if raw.len() < len {
+                    return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+                }
+
+                let mut _ownership_model = None;
+                let mut _royalty_model = None;
+                let mut _royalty_target = None;
+                let mut _creator_shares = None;
+                let mut _authorities = None;
+
+                #[cfg(not(feature = "unchecked"))]
+                let mut last = 0;
+
+                while i < len {
+                    let di = raw[i];
+
+                    #[cfg(not(feature = "unchecked"))]
+                    if di != 0 {
+                        if di < last {
+                            return Err(::bebop::DeserializeError::CorruptFrame);
+                        }
+                        last = di;
+                    }
+
+                    i += 1;
+                    match di {
+                        0 => {
+                            break;
+                        }
+                        1 => {
+                            #[cfg(not(feature = "unchecked"))]
+                            if _ownership_model.is_some() {
+                                return Err(::bebop::DeserializeError::DuplicateMessageField);
+                            }
+                            let (read, value) =
+                                ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                            i += read;
+                            _ownership_model = Some(value)
+                        }
+                        2 => {
+                            #[cfg(not(feature = "unchecked"))]
+                            if _royalty_model.is_some() {
+                                return Err(::bebop::DeserializeError::DuplicateMessageField);
+                            }
+                            let (read, value) =
+                                ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                            i += read;
+                            _royalty_model = Some(value)
+                        }
+                        3 => {
+                            #[cfg(not(feature = "unchecked"))]
+                            if _royalty_target.is_some() {
+                                return Err(::bebop::DeserializeError::DuplicateMessageField);
+                            }
+                            let (read, value) =
+                                ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                            i += read;
+                            _royalty_target = Some(value)
+                        }
+                        4 => {
+                            #[cfg(not(feature = "unchecked"))]
+                            if _creator_shares.is_some() {
+                                return Err(::bebop::DeserializeError::DuplicateMessageField);
+                            }
+                            let (read, value) =
+                                ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                            i += read;
+                            _creator_shares = Some(value)
+                        }
+                        5 => {
+                            #[cfg(not(feature = "unchecked"))]
+                            if _authorities.is_some() {
+                                return Err(::bebop::DeserializeError::DuplicateMessageField);
+                            }
+                            let (read, value) =
+                                ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                            i += read;
+                            _authorities = Some(value)
+                        }
+                        _ => {
+                            i = len;
+                            break;
+                        }
+                    }
+                }
+
+                if i != len {
+                    debug_assert!(i > len);
+                    return Err(::bebop::DeserializeError::CorruptFrame);
+                }
+
+                ActionData::SellAssetV1 {
+                    ownership_model: _ownership_model,
+                    royalty_model: _royalty_model,
+                    royalty_target: _royalty_target,
+                    creator_shares: _creator_shares,
+                    authorities: _authorities,
+                }
             }
             _ => {
                 i = len;
@@ -3239,7 +3527,15 @@ pub mod owned {
         /// Discriminator 4
         TransferAssetV1 {
             /// Field 1
-            msg: ::core::option::Option<String>,
+            ownership_model: ::core::option::Option<OwnershipModel>,
+            /// Field 2
+            royalty_model: ::core::option::Option<RoyaltyModel>,
+            /// Field 3
+            royalty_target: ::core::option::Option<RoyaltyTarget>,
+            /// Field 4
+            creator_shares: ::core::option::Option<::std::vec::Vec<u8>>,
+            /// Field 5
+            authorities: ::core::option::Option<::std::vec::Vec<Authority>>,
         },
 
         /// Discriminator 5
@@ -3270,6 +3566,20 @@ pub mod owned {
         FreezeAssetV1 {
             /// Field 1
             msg: ::core::option::Option<String>,
+        },
+
+        /// Discriminator 10
+        SellAssetV1 {
+            /// Field 1
+            ownership_model: ::core::option::Option<OwnershipModel>,
+            /// Field 2
+            royalty_model: ::core::option::Option<RoyaltyModel>,
+            /// Field 3
+            royalty_target: ::core::option::Option<RoyaltyTarget>,
+            /// Field 4
+            creator_shares: ::core::option::Option<::std::vec::Vec<u8>>,
+            /// Field 5
+            authorities: ::core::option::Option<::std::vec::Vec<Authority>>,
         },
     }
 
@@ -3302,8 +3612,20 @@ pub mod owned {
                 super::ActionData::UpdateAssetV1 { msg: _msg } => Self::UpdateAssetV1 {
                     msg: _msg.map(|value| value.into()),
                 },
-                super::ActionData::TransferAssetV1 { msg: _msg } => Self::TransferAssetV1 {
-                    msg: _msg.map(|value| value.into()),
+                super::ActionData::TransferAssetV1 {
+                    ownership_model: _ownership_model,
+                    royalty_model: _royalty_model,
+                    royalty_target: _royalty_target,
+                    creator_shares: _creator_shares,
+                    authorities: _authorities,
+                } => Self::TransferAssetV1 {
+                    ownership_model: _ownership_model,
+                    royalty_model: _royalty_model,
+                    royalty_target: _royalty_target.map(|value| value.into()),
+                    creator_shares: _creator_shares
+                        .map(|value| value.iter().map(|value| value).collect()),
+                    authorities: _authorities
+                        .map(|value| value.into_iter().map(|value| value.into()).collect()),
                 },
                 super::ActionData::ListForSaleAssetV1 { msg: _msg } => Self::ListForSaleAssetV1 {
                     msg: _msg.map(|value| value.into()),
@@ -3319,6 +3641,21 @@ pub mod owned {
                 },
                 super::ActionData::FreezeAssetV1 { msg: _msg } => Self::FreezeAssetV1 {
                     msg: _msg.map(|value| value.into()),
+                },
+                super::ActionData::SellAssetV1 {
+                    ownership_model: _ownership_model,
+                    royalty_model: _royalty_model,
+                    royalty_target: _royalty_target,
+                    creator_shares: _creator_shares,
+                    authorities: _authorities,
+                } => Self::SellAssetV1 {
+                    ownership_model: _ownership_model,
+                    royalty_model: _royalty_model,
+                    royalty_target: _royalty_target.map(|value| value.into()),
+                    creator_shares: _creator_shares
+                        .map(|value| value.iter().map(|value| value).collect()),
+                    authorities: _authorities
+                        .map(|value| value.into_iter().map(|value| value.into()).collect()),
                 },
             }
         }
@@ -3378,10 +3715,35 @@ pub mod owned {
                             + 1
                             + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
                     }
-                    Self::TransferAssetV1 { msg: ref _msg } => {
+                    Self::TransferAssetV1 {
+                        ownership_model: ref _ownership_model,
+                        royalty_model: ref _royalty_model,
+                        royalty_target: ref _royalty_target,
+                        creator_shares: ref _creator_shares,
+                        authorities: ref _authorities,
+                    } => {
                         ::bebop::LEN_SIZE
                             + 1
-                            + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
+                            + _ownership_model
+                                .as_ref()
+                                .map(|v| v.serialized_size() + 1)
+                                .unwrap_or(0)
+                            + _royalty_model
+                                .as_ref()
+                                .map(|v| v.serialized_size() + 1)
+                                .unwrap_or(0)
+                            + _royalty_target
+                                .as_ref()
+                                .map(|v| v.serialized_size() + 1)
+                                .unwrap_or(0)
+                            + _creator_shares
+                                .as_ref()
+                                .map(|v| v.serialized_size() + 1)
+                                .unwrap_or(0)
+                            + _authorities
+                                .as_ref()
+                                .map(|v| v.serialized_size() + 1)
+                                .unwrap_or(0)
                     }
                     Self::ListForSaleAssetV1 { msg: ref _msg } => {
                         ::bebop::LEN_SIZE
@@ -3407,6 +3769,36 @@ pub mod owned {
                         ::bebop::LEN_SIZE
                             + 1
                             + _msg.as_ref().map(|v| v.serialized_size() + 1).unwrap_or(0)
+                    }
+                    Self::SellAssetV1 {
+                        ownership_model: ref _ownership_model,
+                        royalty_model: ref _royalty_model,
+                        royalty_target: ref _royalty_target,
+                        creator_shares: ref _creator_shares,
+                        authorities: ref _authorities,
+                    } => {
+                        ::bebop::LEN_SIZE
+                            + 1
+                            + _ownership_model
+                                .as_ref()
+                                .map(|v| v.serialized_size() + 1)
+                                .unwrap_or(0)
+                            + _royalty_model
+                                .as_ref()
+                                .map(|v| v.serialized_size() + 1)
+                                .unwrap_or(0)
+                            + _royalty_target
+                                .as_ref()
+                                .map(|v| v.serialized_size() + 1)
+                                .unwrap_or(0)
+                            + _creator_shares
+                                .as_ref()
+                                .map(|v| v.serialized_size() + 1)
+                                .unwrap_or(0)
+                            + _authorities
+                                .as_ref()
+                                .map(|v| v.serialized_size() + 1)
+                                .unwrap_or(0)
                     }
                 }
         }
@@ -3480,11 +3872,33 @@ pub mod owned {
                     }
                     0u8._serialize_chained(dest)?;
                 }
-                Self::TransferAssetV1 { msg: ref _msg } => {
+                Self::TransferAssetV1 {
+                    ownership_model: ref _ownership_model,
+                    royalty_model: ref _royalty_model,
+                    royalty_target: ref _royalty_target,
+                    creator_shares: ref _creator_shares,
+                    authorities: ref _authorities,
+                } => {
                     4u8._serialize_chained(dest)?;
                     ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
-                    if let Some(ref v) = _msg {
+                    if let Some(ref v) = _ownership_model {
                         1u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    if let Some(ref v) = _royalty_model {
+                        2u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    if let Some(ref v) = _royalty_target {
+                        3u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    if let Some(ref v) = _creator_shares {
+                        4u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    if let Some(ref v) = _authorities {
+                        5u8._serialize_chained(dest)?;
                         v._serialize_chained(dest)?;
                     }
                     0u8._serialize_chained(dest)?;
@@ -3530,6 +3944,37 @@ pub mod owned {
                     ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
                     if let Some(ref v) = _msg {
                         1u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    0u8._serialize_chained(dest)?;
+                }
+                Self::SellAssetV1 {
+                    ownership_model: ref _ownership_model,
+                    royalty_model: ref _royalty_model,
+                    royalty_target: ref _royalty_target,
+                    creator_shares: ref _creator_shares,
+                    authorities: ref _authorities,
+                } => {
+                    10u8._serialize_chained(dest)?;
+                    ::bebop::write_len(dest, size - ::bebop::LEN_SIZE * 2 - 1)?;
+                    if let Some(ref v) = _ownership_model {
+                        1u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    if let Some(ref v) = _royalty_model {
+                        2u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    if let Some(ref v) = _royalty_target {
+                        3u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    if let Some(ref v) = _creator_shares {
+                        4u8._serialize_chained(dest)?;
+                        v._serialize_chained(dest)?;
+                    }
+                    if let Some(ref v) = _authorities {
+                        5u8._serialize_chained(dest)?;
                         v._serialize_chained(dest)?;
                     }
                     0u8._serialize_chained(dest)?;
@@ -3803,7 +4248,11 @@ pub mod owned {
                         return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
                     }
 
-                    let mut _msg = None;
+                    let mut _ownership_model = None;
+                    let mut _royalty_model = None;
+                    let mut _royalty_target = None;
+                    let mut _creator_shares = None;
+                    let mut _authorities = None;
 
                     #[cfg(not(feature = "unchecked"))]
                     let mut last = 0;
@@ -3826,13 +4275,53 @@ pub mod owned {
                             }
                             1 => {
                                 #[cfg(not(feature = "unchecked"))]
-                                if _msg.is_some() {
+                                if _ownership_model.is_some() {
                                     return Err(::bebop::DeserializeError::DuplicateMessageField);
                                 }
                                 let (read, value) =
                                     ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
                                 i += read;
-                                _msg = Some(value)
+                                _ownership_model = Some(value)
+                            }
+                            2 => {
+                                #[cfg(not(feature = "unchecked"))]
+                                if _royalty_model.is_some() {
+                                    return Err(::bebop::DeserializeError::DuplicateMessageField);
+                                }
+                                let (read, value) =
+                                    ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                                i += read;
+                                _royalty_model = Some(value)
+                            }
+                            3 => {
+                                #[cfg(not(feature = "unchecked"))]
+                                if _royalty_target.is_some() {
+                                    return Err(::bebop::DeserializeError::DuplicateMessageField);
+                                }
+                                let (read, value) =
+                                    ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                                i += read;
+                                _royalty_target = Some(value)
+                            }
+                            4 => {
+                                #[cfg(not(feature = "unchecked"))]
+                                if _creator_shares.is_some() {
+                                    return Err(::bebop::DeserializeError::DuplicateMessageField);
+                                }
+                                let (read, value) =
+                                    ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                                i += read;
+                                _creator_shares = Some(value)
+                            }
+                            5 => {
+                                #[cfg(not(feature = "unchecked"))]
+                                if _authorities.is_some() {
+                                    return Err(::bebop::DeserializeError::DuplicateMessageField);
+                                }
+                                let (read, value) =
+                                    ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                                i += read;
+                                _authorities = Some(value)
                             }
                             _ => {
                                 i = len;
@@ -3846,7 +4335,13 @@ pub mod owned {
                         return Err(::bebop::DeserializeError::CorruptFrame);
                     }
 
-                    ActionData::TransferAssetV1 { msg: _msg }
+                    ActionData::TransferAssetV1 {
+                        ownership_model: _ownership_model,
+                        royalty_model: _royalty_model,
+                        royalty_target: _royalty_target,
+                        creator_shares: _creator_shares,
+                        authorities: _authorities,
+                    }
                 }
                 5 => {
                     let len = ::bebop::read_len(&raw[i..])? + i + ::bebop::LEN_SIZE;
@@ -4137,6 +4632,114 @@ pub mod owned {
                     }
 
                     ActionData::FreezeAssetV1 { msg: _msg }
+                }
+                10 => {
+                    let len = ::bebop::read_len(&raw[i..])? + i + ::bebop::LEN_SIZE;
+                    i += ::bebop::LEN_SIZE;
+
+                    #[cfg(not(feature = "unchecked"))]
+                    if len == 0 {
+                        return Err(::bebop::DeserializeError::CorruptFrame);
+                    }
+
+                    if raw.len() < len {
+                        return Err(::bebop::DeserializeError::MoreDataExpected(len - raw.len()));
+                    }
+
+                    let mut _ownership_model = None;
+                    let mut _royalty_model = None;
+                    let mut _royalty_target = None;
+                    let mut _creator_shares = None;
+                    let mut _authorities = None;
+
+                    #[cfg(not(feature = "unchecked"))]
+                    let mut last = 0;
+
+                    while i < len {
+                        let di = raw[i];
+
+                        #[cfg(not(feature = "unchecked"))]
+                        if di != 0 {
+                            if di < last {
+                                return Err(::bebop::DeserializeError::CorruptFrame);
+                            }
+                            last = di;
+                        }
+
+                        i += 1;
+                        match di {
+                            0 => {
+                                break;
+                            }
+                            1 => {
+                                #[cfg(not(feature = "unchecked"))]
+                                if _ownership_model.is_some() {
+                                    return Err(::bebop::DeserializeError::DuplicateMessageField);
+                                }
+                                let (read, value) =
+                                    ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                                i += read;
+                                _ownership_model = Some(value)
+                            }
+                            2 => {
+                                #[cfg(not(feature = "unchecked"))]
+                                if _royalty_model.is_some() {
+                                    return Err(::bebop::DeserializeError::DuplicateMessageField);
+                                }
+                                let (read, value) =
+                                    ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                                i += read;
+                                _royalty_model = Some(value)
+                            }
+                            3 => {
+                                #[cfg(not(feature = "unchecked"))]
+                                if _royalty_target.is_some() {
+                                    return Err(::bebop::DeserializeError::DuplicateMessageField);
+                                }
+                                let (read, value) =
+                                    ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                                i += read;
+                                _royalty_target = Some(value)
+                            }
+                            4 => {
+                                #[cfg(not(feature = "unchecked"))]
+                                if _creator_shares.is_some() {
+                                    return Err(::bebop::DeserializeError::DuplicateMessageField);
+                                }
+                                let (read, value) =
+                                    ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                                i += read;
+                                _creator_shares = Some(value)
+                            }
+                            5 => {
+                                #[cfg(not(feature = "unchecked"))]
+                                if _authorities.is_some() {
+                                    return Err(::bebop::DeserializeError::DuplicateMessageField);
+                                }
+                                let (read, value) =
+                                    ::bebop::SubRecord::_deserialize_chained(&raw[i..])?;
+                                i += read;
+                                _authorities = Some(value)
+                            }
+                            _ => {
+                                i = len;
+                                break;
+                            }
+                        }
+                    }
+
+                    if i != len {
+                        debug_assert!(i > len);
+                        return Err(::bebop::DeserializeError::CorruptFrame);
+                    }
+
+                    ActionData::SellAssetV1 {
+                        ownership_model: _ownership_model,
+                        royalty_model: _royalty_model,
+                        royalty_target: _royalty_target,
+                        creator_shares: _creator_shares,
+                        authorities: _authorities,
+                    }
                 }
                 _ => {
                     i = len;

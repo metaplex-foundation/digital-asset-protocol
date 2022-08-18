@@ -10,7 +10,7 @@ use crate::required_field;
 use crate::validation::validate_creator_shares;
 use solana_program::account_info::AccountInfo;
 
-pub struct TransferV1<'info> {
+pub struct SellV1<'info> {
     pub id: AccountInfo<'info>,
     pub owner: AccountInfo<'info>,
     pub new_owner: AccountInfo<'info>,
@@ -22,12 +22,12 @@ pub struct TransferV1<'info> {
     pub royalty_target: Option<RoyaltyTarget>,
 }
 
-impl<'info> TransferV1<'info> {
+impl<'info> SellV1<'info> {
     pub fn new(
         accounts: &[AccountInfo<'info>],
         action: ActionData,
     ) -> Result<(Self, usize), DigitalAssetProtocolError> {
-        if let ActionData::TransferAssetV1 {
+        if let ActionData::SellAssetV1 {
             royalty_model,
             royalty_target,
             ownership_model,
@@ -66,7 +66,7 @@ impl<'info> TransferV1<'info> {
             let royalty_target = royalty_target;
 
             return Ok((
-                TransferV1 {
+                SellV1 {
                     id,
                     owner,
                     new_owner,
@@ -86,14 +86,14 @@ impl<'info> TransferV1<'info> {
             ));
         }
         Err(DigitalAssetProtocolError::ActionError(
-            "Invalid Action format, action must be TransferAssetV1".to_string(),
+            "Invalid Action format, action must be SellAssetV1".to_string(),
         ))
     }
 }
 
-impl<'info> ContextAction for TransferV1<'info> {
+impl<'info> ContextAction for SellV1<'info> {
     fn lifecycle(&self) -> &Lifecycle {
-        &Lifecycle::Transfer
+        &Lifecycle::Sell
     }
 
     fn run(&self) -> Result<(), DigitalAssetProtocolError> {
@@ -115,7 +115,7 @@ impl<'info> ContextAction for TransferV1<'info> {
         for m in modules {
             let processor = ModuleType::to_processor(m);
             let _module_data: Option<&mut ModuleDataWrapper> = asset.get_module(m);
-            processor.transfer(&mut asset)?;
+            processor.sell(&mut asset)?;
         }
         //Save asset
         asset.save(raw_data)?;

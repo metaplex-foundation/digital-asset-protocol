@@ -16,4 +16,5 @@ pub enum Lifecycle {
     Delegate,
     Delete,
     ListForSale,
+    Sell,
 }
