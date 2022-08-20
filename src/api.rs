@@ -256,16 +256,9 @@ impl<'entry, 'action> AccountConstraints for AccountInfoContext<'entry, 'action>
         if self.constraints.writable && !self.info.is_writable {
             return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} needs to be writable", self.info.key)));
         }
-        if !self.constraints.writable && self.info.is_writable {
-            return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} can't be writable", self.info.key)));
-        }
-
         // May need to change this to support optional signers
         if self.constraints.signer && !self.info.is_signer {
             return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} needs to be a signer", self.info.key)));
-        }
-        if !self.constraints.optional_signer && !self.constraints.signer && self.info.is_signer {
-            return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} can't be a signer", self.info.key)));
         }
 
         if let Some(ob) = self.constraints.owned_by {

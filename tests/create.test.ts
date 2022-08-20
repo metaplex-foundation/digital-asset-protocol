@@ -59,7 +59,6 @@ export const creatorBeet = new beet.BeetArgsStruct<Creator>(
 
 test("Create An Asset", async () => {
   const {a, transactionHandler, connection, payer, payerPair} = await init();
-
   let [owner, ownerPair] = await a.addr.genLabeledKeypair("Owner");
   let idbuf = new Buffer(16);
   v4(null, idbuf);
