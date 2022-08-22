@@ -1,22 +1,21 @@
-use std::collections::{HashMap};
-
+use std::collections::HashMap;
 
 use bebop::SliceWrapper;
 
-
-use crate::api::{Constraints, DigitalAssetProtocolError, AccountWrapper};
-
+use crate::api::{AccountWrapper, Constraints, DigitalAssetProtocolError};
 
 use crate::blob::Asset;
-use crate::generated::schema::{ModuleData, ModuleType, ActionData, DataItemValue, DataItem};
+use crate::generated::schema::{ActionData, DataItem, DataItemValue, ModuleData, ModuleType};
 use crate::interfaces::asset::MODULE_LAYOUT;
 use crate::required_field;
-
 
 pub struct CreateV1 {}
 
 impl CreateV1 {
-    pub fn run<'entry>(accounts: AccountWrapper<'entry>, data: ActionData<'entry>) -> Result<(), DigitalAssetProtocolError> {
+    pub fn run<'entry>(
+        accounts: AccountWrapper<'entry>,
+        data: ActionData<'entry>,
+    ) -> Result<(), DigitalAssetProtocolError> {
         if let ActionData::CreateAssetV1 {
             uri,
             data_schema,
@@ -28,34 +27,43 @@ impl CreateV1 {
             royalty,
             uuid,
             ..
-        } = &data {
+        } = &data
+        {
             let accounts_size = accounts.accounts_length();
             let rng = 4..accounts_size;
             let mut accounts = accounts;
             let uuid = *required_field!(uuid)?;
-            let seeds = [
-                "ASSET".as_bytes(),
-                uuid[0..8].as_ref(),
-            ];
+            let seeds = ["ASSET".as_bytes(), uuid[0..8].as_ref()];
             let system = accounts.system_program(0)?;
-            let mut asset_account = accounts.prepare_account(1, "asset", Constraints::pda(seeds.as_slice(), crate::id(), true, true))?;
+            let mut asset_account = accounts.prepare_account(
+                1,
+                "asset",
+                Constraints::pda(seeds.as_slice(), crate::id(), true, true),
+            )?;
             let owner = accounts.prepare_account(2, "owner", Constraints::read_only())?;
             let payer = accounts.prepare_account(3, "payer", Constraints::payer())?;
             let mut creator_accounts = Vec::with_capacity(rng.len());
             for c in rng {
-                creator_accounts.push(accounts.prepare_account(c as usize, "creator", Constraints::read_only())?);
+                creator_accounts.push(accounts.prepare_account(
+                    c as usize,
+                    "creator",
+                    Constraints::read_only(),
+                )?);
             }
-
 
             let uri = required_field!(uri)?;
             let ownership_model = required_field!(ownership_model)?;
             let royalty_model = required_field!(royalty_model)?;
             // Required field doesnt work here for some lifetime and borrow reason
-            let royalty_target = royalty_target.as_ref().ok_or(DigitalAssetProtocolError::DeError("Royalty Target ".parse().unwrap()))?;
+            let royalty_target =
+                royalty_target
+                    .as_ref()
+                    .ok_or(DigitalAssetProtocolError::DeError(
+                        "Royalty Target ".parse().unwrap(),
+                    ))?;
             let off_chain_schema = required_field!(data_schema)?;
 
             // TODO -> make fluent interface for this or macros
-
 
             let mut new_asset = Asset::new();
             let mut processors = Vec::with_capacity(MODULE_LAYOUT.len());
@@ -65,27 +73,45 @@ impl CreateV1 {
                     ModuleType::Rights => {
                         //TODO set rules based on the interface
                     }
-                    ModuleType::Ownership => {
-                        new_asset.set_module(ModuleType::Ownership, ModuleData::OwnershipData {
+                    ModuleType::Ownership => new_asset.set_module(
+                        ModuleType::Ownership,
+                        ModuleData::OwnershipData {
                             model: ownership_model,
                             owner: SliceWrapper::Raw(owner.info.key.as_ref()),
-                        })
-                    }
+                        },
+                    ),
                     ModuleType::Royalty => {
-                        new_asset.set_module(ModuleType::Royalty, ModuleData::RoyaltyData {
-                            model: royalty_model,
-                            target: royalty_target.to_owned(),
-                            royalty: royalty.unwrap_or(0),
-                            locked: false,
-                        });
+                        new_asset.set_module(
+                            ModuleType::Royalty,
+                            ModuleData::RoyaltyData {
+                                model: royalty_model,
+                                target: royalty_target.to_owned(),
+                                royalty: royalty.unwrap_or(0),
+                                locked: false,
+                            },
+                        );
                     }
                     ModuleType::Data => {
                         let mut data: HashMap<u8, DataItem> = HashMap::with_capacity(2);
-                        data.insert(0, DataItem { key: "uri", value: DataItemValue::String { value: Some(uri.clone()) } });
-                        data.insert(1, DataItem { key: "schema", value: DataItemValue::Int { value: Some(off_chain_schema as i32) } });
-                        new_asset.set_module(ModuleType::Data, ModuleData::Data {
-                            layout: data
-                        });
+                        data.insert(
+                            0,
+                            DataItem {
+                                key: "uri",
+                                value: DataItemValue::String {
+                                    value: Some(<&str>::clone(&uri)),
+                                },
+                            },
+                        );
+                        data.insert(
+                            1,
+                            DataItem {
+                                key: "schema",
+                                value: DataItemValue::Int {
+                                    value: Some(off_chain_schema as i32),
+                                },
+                            },
+                        );
+                        new_asset.set_module(ModuleType::Data, ModuleData::Data { layout: data });
                     }
                     _ => {}
                 }
@@ -95,19 +121,16 @@ impl CreateV1 {
                 p.create(&mut new_asset)?;
             }
 
-            asset_account.initialize_account(
-                new_asset.size() as u64,
-                &system,
-                &payer,
-            )?;
+            asset_account.initialize_account(new_asset.size() as u64, &system, &payer)?;
             let buffer = asset_account.mut_data();
             new_asset.save(buffer)?;
             return Ok(());
         }
-        Err(DigitalAssetProtocolError::ActionError("Invalid Action format, action must be CreateAssetV1".to_string()))
+        Err(DigitalAssetProtocolError::ActionError(
+            "Invalid Action format, action must be CreateAssetV1".to_string(),
+        ))
     }
 }
-
 
 // pub struct CreateV1<'info> {
 //     pub system: &'info AccountInfo<'info>,
@@ -264,5 +287,3 @@ impl CreateV1 {
 //         Ok(())
 //     }
 // }
-
-

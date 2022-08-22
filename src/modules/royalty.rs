@@ -1,41 +1,45 @@
-use std::io::BufWriter;
-use bebop::{Record, SliceWrapper, SubRecord};
-use lazy_static::lazy_static;
-use solana_program::account_info::AccountInfo;
 use crate::api::DigitalAssetProtocolError;
-use crate::blob::{Asset, Blob};
-use crate::generated::schema::{ModuleType};
-use crate::module::{ModuleDataWrapper, ModuleId, ModuleProcessor};
+use crate::blob::Asset;
+use crate::generated::schema::{ModuleData, ModuleType};
+use crate::module::ModuleProcessor;
 
+pub struct RoyaltyModuleProcessor {}
 
-pub struct OwnershipModuleProcessor {}
+pub static ROYALTY_MODULE_PROCESSOR: RoyaltyModuleProcessor = RoyaltyModuleProcessor {};
 
-pub static OWNERSHIP_MODULE_PROCESSOR: OwnershipModuleProcessor = OwnershipModuleProcessor {};
-
-impl ModuleProcessor for OwnershipModuleProcessor {
-    fn create<'raw>(&self,
-                    asset: &mut Asset<'raw>,
-                    module_data: Option<ModuleDataWrapper<'raw>>,
-    )
-                    -> Result<(), DigitalAssetProtocolError> {
-        let ownership_data = match module_data {
-            Some(ModuleDataWrapper::Structured(d)) => Ok(d),
-            _ => {
-                Err(DigitalAssetProtocolError::ModuleError("Incorrect Data Type for Module".to_string()))
-            }
+impl ModuleProcessor for RoyaltyModuleProcessor {
+    fn cancel_sale<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError> {
+        Ok(())
+    }
+    fn create(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError> {
+        match asset.get_module(ModuleType::Royalty) {
+            Some(ModuleData::RoyaltyData { .. }) => Ok(()),
+            _ => Err(DigitalAssetProtocolError::ModuleError(
+                "Incorrect Data Type for Module".to_string(),
+            )),
         }?;
-
-        let mut raw_data = Vec::with_capacity(ownership_data.serialized_size());
-        ownership_data.serialize(&mut raw_data)
-            .map_err(|e| {
-                DigitalAssetProtocolError::ModuleError(e.to_string())
-            })?;
-        let blob = Blob {
-            schema: ModuleId::Module(ModuleType::Ownership),
-            data: raw_data,
-            _runtime_data: Some(ownership_data.to_owned()),
-        };
-        asset.layout.insert(ModuleId::Module(ModuleType::Ownership), blob);
+        Ok(())
+    }
+    fn delegate<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError> {
+        Ok(())
+    }
+    fn delete<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError> {
+        Ok(())
+    }
+    fn freeze<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError> {
+        Ok(())
+    }
+    fn list_for_sale<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError> {
+        // TODO: Code that freezes royalties so they can't be changed when listed.
+        Ok(())
+    }
+    fn transfer<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError> {
+        Ok(())
+    }
+    fn update<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError> {
+        Ok(())
+    }
+    fn sell<'raw>(&self, asset: &mut Asset) -> Result<(), DigitalAssetProtocolError> {
         Ok(())
     }
 }

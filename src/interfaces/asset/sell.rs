@@ -9,18 +9,26 @@ use crate::generated::schema::{ActionData, DataItem, DataItemValue, ModuleData, 
 use crate::interfaces::asset::MODULE_LAYOUT;
 use crate::required_field;
 
-pub struct FreezeV1 {}
+pub struct SellV1 {}
 
-impl FreezeV1 {
+impl SellV1 {
     pub fn run<'entry>(
         accounts: AccountWrapper<'entry>,
         data: ActionData<'entry>,
     ) -> Result<(), DigitalAssetProtocolError> {
-        if let ActionData::FreezeAssetV1 { msg, .. } = &data {
+        if let ActionData::SellAssetV1 {
+            ownership_model,
+            royalty_model,
+            royalty_target,
+            creator_shares,
+            authorities,
+            ..
+        } = &data
+        {
             return Ok(());
         }
         Err(DigitalAssetProtocolError::ActionError(
-            "Invalid Action format, action must be FreezeAssetV1".to_string(),
+            "Invalid Action format, action must be SellAssetV1".to_string(),
         ))
     }
 }

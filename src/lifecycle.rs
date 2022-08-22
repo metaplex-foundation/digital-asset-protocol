@@ -11,5 +11,10 @@ pub enum Lifecycle {
     SupplyIncrease,
     SupplyDecrease,
     ActivateExtension,
-    DeactivateExtension
+    DeactivateExtension,
+    CancelSale,
+    Delegate,
+    Delete,
+    ListForSale,
+    Sell,
 }
