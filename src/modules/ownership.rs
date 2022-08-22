@@ -2,6 +2,7 @@ use crate::api::DigitalAssetProtocolError;
 use crate::blob::Asset;
 use crate::generated::schema::{ModuleData, ModuleType};
 use crate::module::ModuleProcessor;
+use solana_program::msg;
 
 pub struct OwnershipModuleProcessor {}
 

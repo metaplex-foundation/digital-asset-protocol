@@ -189,5 +189,4 @@ enum JsonDataSchema: uint8 {
     SimpleText = 6;
 
     MusicRecording = 7;
-
 }
