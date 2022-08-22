@@ -1,7 +1,5 @@
-mod ownership;
-mod royalty;
 mod signature;
+mod ownership;
 
-pub use ownership::*;
-pub use royalty::*;
 pub use signature::*;
+pub use ownership::*;

@@ -1,20 +1,34 @@
-use std::cell::RefMut;
+use std::cell::{RefMut};
 
-use bebop::DeserializeError;
+
+use bebop::{DeserializeError};
+use solana_program::{decode_error::DecodeError, msg, program_error::{PrintProgramError, ProgramError}, system_instruction};
 use solana_program::account_info::AccountInfo;
-use solana_program::{
-    decode_error::DecodeError,
-    msg,
-    program_error::{PrintProgramError, ProgramError},
-    system_instruction,
-};
 
-use crate::validation::assert_key_equal;
 use solana_program::program::invoke_signed;
 use solana_program::pubkey::Pubkey;
 use solana_program::rent::Rent;
 use solana_program::sysvar::Sysvar;
 use thiserror::Error;
+use crate::validation::{assert_key_equal};
+
+
+// pub struct Action<'entry> {
+//     pub standard: Interface,
+//     pub program_id: Pubkey,
+//     pub context: &'entry dyn ContextAction,
+//     pub remaining_accounts: Vec<AccountInfo<'entry>>,
+// }
+//
+// impl<'entry> Action<'entry> {
+//     pub fn run(&mut self) -> Result<(), DigitalAssetProtocolError> {
+//         self.context.run()
+//     }
+//
+//
+//
+// }
+
 
 #[derive(Error, Debug)]
 pub enum DigitalAssetProtocolError {
@@ -35,6 +49,7 @@ pub enum DigitalAssetProtocolError {
 
     #[error("Interface has no implementation")]
     InterfaceNoImpl,
+
 }
 
 impl PrintProgramError for DigitalAssetProtocolError {
@@ -69,9 +84,11 @@ impl From<DeserializeError> for DigitalAssetProtocolError {
     }
 }
 
+
 pub fn derive(seeds: &[&[u8]], program_id: &Pubkey) -> (Pubkey, u8) {
     Pubkey::find_program_address(seeds, program_id)
 }
+
 
 pub struct AccountWrapper<'entry> {
     accounts: &'entry [AccountInfo<'entry>],
@@ -79,22 +96,16 @@ pub struct AccountWrapper<'entry> {
 
 impl<'entry> AccountWrapper<'entry> {
     pub fn new(accounts: &'entry [AccountInfo<'entry>]) -> Result<Self, DigitalAssetProtocolError> {
-        Ok(AccountWrapper { accounts })
+        Ok(AccountWrapper {
+            accounts,
+        })
     }
 
-    pub fn system_program<'action>(
-        &mut self,
-        index: usize,
-    ) -> Result<AccountInfoContext<'entry, 'action>, DigitalAssetProtocolError> {
+    pub fn system_program<'action>(&mut self, index: usize) -> Result<AccountInfoContext<'entry, 'action>, DigitalAssetProtocolError> {
         self.prepare_account(index, "system", Constraints::system_program())
     }
 
-    pub fn prepare_account<'action>(
-        &mut self,
-        index: usize,
-        name: &'static str,
-        constraints: Constraints<'action>,
-    ) -> Result<AccountInfoContext<'entry, 'action>, DigitalAssetProtocolError> {
+    pub fn prepare_account<'action>(&mut self, index: usize, name: &'static str, constraints: Constraints<'action>) -> Result<AccountInfoContext<'entry, 'action>, DigitalAssetProtocolError> {
         let mut accx = AccountInfoContext {
             name,
             info: &self.accounts[index],
@@ -109,6 +120,7 @@ impl<'entry> AccountWrapper<'entry> {
         self.accounts.len()
     }
 }
+
 
 #[derive()]
 pub struct Constraints<'action> {
@@ -139,7 +151,7 @@ impl<'action> Constraints<'action> {
             program: false,
             empty,
             owned_by: None,
-            optional_signer: false,
+            optional_signer: false
         }
     }
 
@@ -153,7 +165,7 @@ impl<'action> Constraints<'action> {
             program: true,
             empty: false,
             owned_by: None,
-            optional_signer: false,
+            optional_signer: false
         }
     }
 
@@ -167,7 +179,7 @@ impl<'action> Constraints<'action> {
             program: false,
             empty: false,
             owned_by: None,
-            optional_signer: false,
+            optional_signer: false
         }
     }
 
@@ -185,6 +197,7 @@ impl<'action> Constraints<'action> {
         }
     }
 
+
     pub fn payer() -> Self {
         Constraints {
             seeds: None,
@@ -195,7 +208,7 @@ impl<'action> Constraints<'action> {
             program: false,
             empty: false,
             owned_by: None,
-            optional_signer: false,
+            optional_signer: false
         }
     }
 }
@@ -212,21 +225,14 @@ impl<'entry, 'action> AccountInfoContext<'entry, 'action> {
         self.info.data.borrow_mut()
     }
 
-    pub fn initialize_account(
-        &mut self,
-        initial_size: u64,
-        payer: &AccountInfoContext<'entry, 'action>,
+    pub fn initialize_account(&mut self,
+                              initial_size: u64,
+                              payer: &AccountInfoContext<'entry, 'action>,
     ) -> Result<(), DigitalAssetProtocolError> {
         let rent = Rent::get()?;
         let lamports = rent.minimum_balance(initial_size as usize);
         invoke_signed(
-            &system_instruction::create_account(
-                payer.info.key,
-                self.info.key,
-                lamports,
-                initial_size,
-                &crate::id(),
-            ),
+            &system_instruction::create_account(payer.info.key, self.info.key, lamports, initial_size, &crate::id()),
             &[payer.info.clone(), self.info.clone()],
             &[&[self.constraints.seeds.unwrap(), &[&[self.bump.unwrap()]]].concat()],
         )?;
@@ -241,30 +247,18 @@ pub trait AccountConstraints {
 impl<'entry, 'action> AccountConstraints for AccountInfoContext<'entry, 'action> {
     fn validate_constraint(&mut self) -> Result<(), DigitalAssetProtocolError> {
         if self.constraints.program && !self.info.executable {
-            return Err(DigitalAssetProtocolError::InterfaceError(format!(
-                "Account with key {} needs to be a program",
-                self.info.key
-            )));
+            return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} needs to be a program", self.info.key)));
         }
         if !self.constraints.program && self.info.executable {
-            return Err(DigitalAssetProtocolError::InterfaceError(format!(
-                "Account with key {} can't be a program",
-                self.info.key
-            )));
+            return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} can't be a program", self.info.key)));
         }
 
         if self.constraints.writable && !self.info.is_writable {
-            return Err(DigitalAssetProtocolError::InterfaceError(format!(
-                "Account with key {} needs to be writable",
-                self.info.key
-            )));
+            return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} needs to be writable", self.info.key)));
         }
         // May need to change this to support optional signers
         if self.constraints.signer && !self.info.is_signer {
-            return Err(DigitalAssetProtocolError::InterfaceError(format!(
-                "Account with key {} needs to be a signer",
-                self.info.key
-            )));
+            return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} needs to be a signer", self.info.key)));
         }
 
         if let Some(ob) = self.constraints.owned_by {
@@ -272,10 +266,7 @@ impl<'entry, 'action> AccountConstraints for AccountInfoContext<'entry, 'action>
         }
 
         if self.constraints.empty && self.info.data_len() > 0 && self.info.lamports() > 0 {
-            return Err(DigitalAssetProtocolError::InterfaceError(format!(
-                "Account with key {} can't be a signer",
-                self.info.key
-            )));
+            return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} can't be a signer", self.info.key)));
         }
 
         if let Some(kef) = self.constraints.key_equals {
@@ -289,10 +280,7 @@ impl<'entry, 'action> AccountConstraints for AccountInfoContext<'entry, 'action>
                 Ok(())
             }
             (None, None) => Ok(()),
-            _ => Err(DigitalAssetProtocolError::InterfaceError(format!(
-                "Account with key {} has incorrect seeds",
-                self.info.key
-            ))),
+            _ => Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} has incorrect seeds", self.info.key)))
         }?;
         Ok(())
     }

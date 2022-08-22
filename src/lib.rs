@@ -1,13 +1,13 @@
 extern crate core;
 
 mod api;
-pub mod blob;
 mod entrypoint;
-mod generated;
 mod interfaces;
 mod lifecycle;
-pub mod module;
+mod generated;
 mod modules;
+pub mod blob;
+pub mod module;
 
 #[macro_use]
 pub mod validation;
