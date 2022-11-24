@@ -100,8 +100,26 @@ union ActionData {
         7 -> Authority[] authorities;
     };
     3 -> message UpdateAssetV1 {
-       1 -> string msg;
+        1 -> string msg;
     };
+    4 -> message TransferAssetV1 {
+        1 -> string msg;
+    }
+    5 -> message ListForSaleAssetV1 {
+        1 -> string msg;
+    }
+    6 -> message CancelSaleAssetV1 {
+        1 -> string msg;
+    }
+    7 -> message DelegateAssetV1 {
+        1 -> string msg;
+    }
+    8 -> message DeleteAssetV1 {
+        1 -> string msg;
+    }
+    9 -> message FreezeAssetV1 {
+        1 -> string msg;
+    }
 }
 
 const int32 MAX_MODULES = 10;
